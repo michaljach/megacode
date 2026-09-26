@@ -1,0 +1,51 @@
+{
+  "name": "@megacode/cli",
+  "version": "0.1.0",
+  "description": "Minimal multi-provider coding agent for the terminal (Anthropic, OpenAI, Gemini, OpenAI-compatible)",
+  "keywords": [
+    "ai",
+    "agent",
+    "coding-agent",
+    "cli",
+    "llm",
+    "anthropic",
+    "claude",
+    "openai",
+    "gemini",
+    "ollama"
+  ],
+  "author": "Michal Jach",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "megacode": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.14"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "tsx src/cli.tsx",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc",
+    "prepublishOnly": "npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@google/genai": "^2.24.0",
+    "ink": "^7.1.1",
+    "openai": "^7.23.0",
+    "react": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
