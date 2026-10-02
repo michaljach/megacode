@@ -12,6 +12,8 @@ megacode -m openai:gpt-5
 megacode -m gemini:gemini-2.5-pro
 megacode -m ollama:qwen3:8b
 megacode -m openrouter:anthropic/claude-sonnet-5
+megacode -w                      # work in a new git worktree
+megacode -w fix-auth "fix login" # named worktree, one-shot
 ```
 
 ## Providers
@@ -50,24 +52,68 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 | Key                        | Action                                                        |
 | -------------------------- | ------------------------------------------------------------- |
 | `enter`                    | send (while a turn runs, the message is queued)               |
+| `ctrl+s`                   | send queued messages now (interrupts the running turn)        |
 | `\` + `enter`, `option+enter` | newline                                                    |
 | `↑` / `↓`                  | prompt history (saved in `~/.megacode/history.json`)          |
-| `/`                        | commands: `/model`, `/login`, `/logout`, `/clear`, `/usage`, `/help`, `/exit` |
+| `/`                        | commands: `/model`, `/config`, `/mcp`, `/worktree`, `/login`, `/logout`, `/clear`, `/usage`, `/help`, `/exit` |
 | `?`                        | shortcut help                                                 |
 | `esc`                      | interrupt the running turn, or clear the input                |
-| `shift+tab`                | cycle permission mode: ask → accept edits → bypass            |
+| `shift+tab`                | cycle permission mode: ask → accept edits → bypass (default)  |
 | `ctrl+a` `ctrl+e` `ctrl+u` `ctrl+k` `ctrl+w` | readline-style editing                      |
 | `ctrl+c`                   | interrupt, clear input, or exit (press twice)                 |
 
+## Settings
+
+`/config` opens a menu with every setting; changes apply immediately and are saved to `~/.megacode/settings.json`.
+
+| Setting                    | Default   | Options                                       |
+| -------------------------- | --------- | --------------------------------------------- |
+| Model                      | –         | opens the model picker                        |
+| Permission mode            | bypass    | ask · accept edits · bypass (also the session's current mode) |
+| Max steps per turn         | 50        | 25 · 50 · 100 · 200                           |
+| Shell command timeout      | 2m        | 30s · 2m · 5m · 10m                           |
+| Max tool output            | 12k chars | 6k · 12k · 30k · 100k                         |
+| Load AGENTS.md / CLAUDE.md | on        | on · off                                      |
+| Worktree base              | default branch | default branch (origin/HEAD) · current commit |
+| Save prompt history        | on        | on · off                                      |
+
+## MCP servers
+
+`/mcp` lists your [MCP](https://modelcontextprotocol.io) servers with their status and tools, and lets you add, reconnect, disable or remove them. Servers are saved in `~/.megacode/mcp.json`, in the same format Claude Code and Claude Desktop use, so existing entries can be pasted in:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/me/projects"] },
+    "github": { "command": "github-mcp-server", "args": ["stdio"], "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "…" } },
+    "docs": { "type": "http", "url": "https://example.com/mcp", "headers": { "Authorization": "Bearer …" } }
+  }
+}
+```
+
+- Transports: `stdio` (local command; it inherits your environment plus `env`), `http` (streamable HTTP) and `sse`. Add `"disabled": true` to keep a server configured but off.
+- Servers connect in the background at startup; failures are reported and shown in `/mcp`. Tools that servers add or remove while running are picked up.
+- Tools appear to the model as `mcp__<server>__<tool>` and go through the same approval as shell commands (asked in ask / accept-edits mode, automatic in bypass). Server instructions are added to the system prompt.
+- Not supported yet: OAuth sign-in for remote servers (use a header with a token), project-level `.mcp.json`, and MCP resources and prompts.
+
+## Worktrees
+
+Like Claude Code, megacode can work in a separate git worktree so the agent's changes stay off your checkout. Worktrees live in `<repo>/.megacode/worktrees/<name>` (hidden from `git status`) on a branch named `worktree-<name>`, branched from the remote's default branch or your current commit (see `/config`).
+
+- `megacode -w [name]` starts in a worktree, creating it if needed (random name if omitted). The argument after `-w` is taken as the name if it looks like one (letters, digits, `-`, `_`); otherwise it's part of the prompt.
+- `/worktree` opens a menu to create a worktree, switch between them, or return to the main checkout (keeping or removing the worktree). `/worktree <name>` switches directly.
+- Exiting while in a worktree asks whether to keep it or remove it along with its branch, showing any uncommitted files and unmerged commits that removal would discard.
+- In one-shot mode there's no one to ask: a worktree created by that run and left untouched is removed; anything else is kept.
+
 ## Tools
 
-`read_file`, `write_file`, `edit_file`, `bash`, `list_files`, `grep`. Writes, edits and shell commands open an approval dialog: yes, always for this session, or no (esc), which stops the turn so you can redirect. `-y/--yolo` starts in bypass mode. In one-shot mode without a terminal, approvals are refused unless `-y` is given. If `AGENTS.md` or `CLAUDE.md` exists in the working directory, it is added to the system prompt.
+`read_file`, `write_file`, `edit_file`, `bash`, `list_files`, `grep`. Tools run without asking by default (bypass mode; change it in `/config`). `-a/--ask` starts in ask mode, where writes, edits and shell commands open an approval dialog: yes, always for this session, or no (esc), which stops the turn so you can redirect. In one-shot mode with `-a` and no terminal, approvals are refused. If `AGENTS.md` or `CLAUDE.md` exists in the working directory, it is added to the system prompt (unless turned off in `/config`).
 
 ### Token-efficient context
 
 File reads default to 200 lines and a 12,000-character budget, with an exact continuation offset. Lines are never silently cut (a single oversized line can exceed the budget). Scope searches and read only the ranges you need.
 
-Long shell, search, and listing results show the first and last 6,000 characters. Full output is saved in a private `megacode-output-*` directory under the OS temporary directory, with a path the agent can read/search. Exit status stays visible. These logs may contain sensitive command output; remove them when no longer needed (they are not automatically deleted by megacode). Listings capped at 1,000 entries explicitly request a narrower glob.
+Long shell, search, listing and MCP results show the first and last halves of the "Max tool output" budget (12,000 characters by default, so 6,000 each; see `/config`). Full output is saved in a private `megacode-output-*` directory under the OS temporary directory, with a path the agent can read/search. Exit status stays visible, and a non-zero exit marks the result as an error. These logs may contain sensitive command output; remove them when no longer needed (they are not automatically deleted by megacode). Listings capped at 1,000 entries explicitly request a narrower glob.
 
 Conversation history, project instructions, and provider-native reasoning/signatures are retained; there is no lossy automatic history summarization. Existing provider prompt caching remains enabled where supported.
 
@@ -92,8 +138,13 @@ src/
     Select.tsx        arrow-key list
     ModelPicker.tsx   searchable live model list
     LoginDialog.tsx   provider login flow
+    ConfigMenu.tsx    /config settings menu
+    WorktreeMenu.tsx  /worktree menu, exit prompt
+    McpMenu.tsx       /mcp server list, add wizard, details
     format.ts         Markdown rendering, tool labels
   config.ts           ~/.megacode: auth.json, settings.json, history.json
+  worktree.ts         git worktree create / list / status / remove
+  mcp.ts              MCP client: ~/.megacode/mcp.json, connections, tools
   oauth.ts            PKCE, local callback server, browser launch
   login.ts            OpenRouter OAuth, Anthropic CLI login
 ```
@@ -115,6 +166,7 @@ npm run bench -- --model openai:gpt-6-astra --repeats 5
 ```sh
 npm install
 npm start               # runs src/cli.tsx via tsx
+npm test                # tool safety and OAuth regression tests
 npm run typecheck
 npm run build           # compiles to dist/, which is what gets published
 ```

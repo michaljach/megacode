@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
+import { loadSettings } from "./config.ts";
+import { mcp } from "./mcp.ts";
 import { resolve } from "./providers/index.ts";
 import { executeTool, toolSpecs, type Approve } from "./tools.ts";
 import type { Message, ToolCall, ToolResult } from "./types.ts";
-
-const MAX_STEPS = 50;
 
 export type AgentEvents = {
   approve: Approve;
@@ -21,8 +21,9 @@ function systemPrompt(): string {
     "Terminal coding agent. Read before editing; prefer targeted edit_file changes. Use scoped searches and file ranges; follow truncation pointers when needed. Verify changes with relevant checks. Be concise; report results and unverified work in Markdown.",
     `Working directory: ${process.cwd()}\nPlatform: ${os.platform()} ${os.release()}`,
   ];
-  for (const f of ["AGENTS.md", "CLAUDE.md"])
-    if (existsSync(f)) parts.push(`Project instructions from ${f}:\n${readFileSync(f, "utf8")}`);
+  if (loadSettings().projectInstructions)
+    for (const f of ["AGENTS.md", "CLAUDE.md"])
+      if (existsSync(f)) parts.push(`Project instructions from ${f}:\n${readFileSync(f, "utf8")}`);
   return parts.join("\n\n");
 }
 
@@ -37,6 +38,11 @@ export class Agent {
     this.model = model;
   }
 
+  /** Rebuild the system prompt, e.g. after the project-instructions setting changes. */
+  reloadSystemPrompt() {
+    this.system = systemPrompt();
+  }
+
   setModel(spec: string) {
     resolve(spec);
     this.model = spec;
@@ -45,14 +51,15 @@ export class Agent {
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
     this.messages.push({ role: "user", text });
     const { provider, model } = resolve(this.model);
+    const maxSteps = loadSettings().maxSteps;
 
     try {
-      for (let step = 0; step < MAX_STEPS; step++) {
+      for (let step = 0; step < maxSteps; step++) {
         const res = await provider.turn({
           model,
-          system: this.system,
+          system: [this.system, mcp.instructions()].filter(Boolean).join("\n\n"),
           messages: this.messages,
-          tools: toolSpecs,
+          tools: [...toolSpecs, ...mcp.toolSpecs()],
           signal,
           onText: ev.onText,
         });
@@ -75,14 +82,14 @@ export class Agent {
         for (const call of res.message.toolCalls) {
           if (signal.aborted) break;
           ev.onToolStart(call);
-          const r = await executeTool(call, ev.approve, signal);
+          const r = mcp.has(call.name) ? await mcp.execute(call, ev.approve, signal) : await executeTool(call, ev.approve, signal);
           ev.onToolEnd(call, r);
           results.push({ id: call.id, name: call.name, ...r });
         }
         this.messages.push({ role: "tool", results });
         if (signal.aborted) throw signal.reason;
       }
-      ev.onNotice(`Stopped after ${MAX_STEPS} steps.`, "warn");
+      ev.onNotice(`Stopped after ${maxSteps} steps (raise the limit in /config).`, "warn");
     } finally {
       this.repairHistory();
     }

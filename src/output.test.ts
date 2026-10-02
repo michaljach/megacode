@@ -38,7 +38,7 @@ test("character budget never silently splits a line", () => {
 test("long command output is recoverable and keeps exit status", async () => {
   const command = `${JSON.stringify(process.execPath)} -e 'console.log("x".repeat(30000)); console.log("FINAL FAILURE"); process.exit(2)'`;
   const result = await executeTool({ id: "1", name: "bash", input: { command } }, async () => true);
-  assert.equal(result.isError, false);
+  assert.equal(result.isError, true);
   assert.ok(result.output.includes("FINAL FAILURE"));
   assert.ok(result.output.endsWith("[exit code 2]"));
   const file = result.output.match(/\[Full output: (.*); read_file/)?.[1];

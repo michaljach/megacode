@@ -33,13 +33,14 @@
     "start": "tsx src/cli.tsx",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc",
-    "test": "tsx --test src/*.test.ts",
+    "test": "node --import tsx --test src/*.test.ts test/*.test.mjs",
     "bench": "tsx bench/run.ts",
-    "prepublishOnly": "npm run typecheck && npm run build"
+    "prepublishOnly": "npm test && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
     "@google/genai": "^2.24.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "ink": "^7.1.1",
     "openai": "^7.23.0",
     "react": "^19.3.0"

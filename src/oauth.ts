@@ -25,8 +25,12 @@ export function openBrowser(url: string) {
   }
 }
 
+const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (char) => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+})[char]!);
+
 const PAGE = (title: string, body: string) =>
-  `<!doctype html><meta charset="utf-8"><title>${title}</title><body style="font:16px system-ui;display:grid;place-items:center;height:90vh"><div><h2>${title}</h2><p>${body}</p></div>`;
+  `<!doctype html><meta charset="utf-8"><title>${escapeHtml(title)}</title><body style="font:16px system-ui;display:grid;place-items:center;height:90vh"><div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(body)}</p></div>`;
 
 /**
  * Local HTTP server that receives the OAuth redirect (`?code=…&state=…`) on 127.0.0.1.

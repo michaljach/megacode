@@ -1,16 +1,22 @@
 import { Box, Static, Text, useAnimation, useApp, useInput } from "ink";
-import { useRef, useState } from "react";
+import os from "node:os";
+import { useEffect, useRef, useState } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
-import { loadAuth, saveAuth, saveSettings } from "../config.ts";
+import { loadAuth, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
 import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
 import type { Approve } from "../tools.ts";
 import type { ToolCall } from "../types.ts";
+import { mcp } from "../mcp.ts";
+import { mainRoot, openWorktree, removeWorktree, type Worktree } from "../worktree.ts";
+import { ConfigMenu } from "./ConfigMenu.tsx";
 import { formatCall, lastSafeBreak, previewOutput, renderMarkdown } from "./format.ts";
 import { loadHistory, saveHistory } from "./history.ts";
 import { LoginDialog } from "./LoginDialog.tsx";
+import { McpMenu } from "./McpMenu.tsx";
 import { ModelPicker } from "./ModelPicker.tsx";
 import { PromptInput, type Command } from "./PromptInput.tsx";
 import { Select } from "./Select.tsx";
+import { ExitWorktreeDialog, WorktreeMenu } from "./WorktreeMenu.tsx";
 
 type Item =
   | { kind: "banner" }
@@ -19,11 +25,18 @@ type Item =
   | { kind: "tool"; call: ToolCall; output: string; isError: boolean }
   | { kind: "notice"; text: string; level: "info" | "warn" | "error" };
 
-type Mode = "ask" | "accept-edits" | "yolo";
+type Mode = PermissionMode;
 const MODES: Mode[] = ["ask", "accept-edits", "yolo"];
 const EDIT_TOOLS = new Set(["write_file", "edit_file"]);
 
-type Dialog = { type: "model"; query?: string } | { type: "login"; provider?: string; welcome?: boolean } | { type: "logout" };
+type Dialog =
+  | { type: "model"; query?: string }
+  | { type: "login"; provider?: string; welcome?: boolean }
+  | { type: "logout" }
+  | { type: "config" }
+  | { type: "worktree" }
+  | { type: "mcp" }
+  | { type: "exit-worktree" };
 
 type ApprovalRequest = Parameters<Approve>[0] & { resolve: (ok: boolean) => void };
 
@@ -31,6 +44,9 @@ const COMMANDS: Command[] = [
   { name: "/model", description: "Switch model (or /model provider:model)" },
   { name: "/login", description: "Connect a provider (API key or local server)" },
   { name: "/logout", description: "Remove saved credentials" },
+  { name: "/config", description: "View and change settings" },
+  { name: "/mcp", description: "Manage MCP servers (add, remove, reconnect, see tools)" },
+  { name: "/worktree", description: "Create or switch git worktrees (or /worktree name)" },
   { name: "/clear", description: "Clear conversation history and screen" },
   { name: "/usage", description: "Show token usage for this session" },
   { name: "/help", description: "Show commands and keyboard shortcuts" },
@@ -39,6 +55,7 @@ const COMMANDS: Command[] = [
 
 const SHORTCUTS: [string, string][] = [
   ["enter", "send message (queued while running)"],
+  ["ctrl+s", "send queued messages now (interrupts the running turn)"],
   ["\\ + enter, option+enter", "newline"],
   ["↑ / ↓", "prompt history"],
   ["/", "commands"],
@@ -51,8 +68,24 @@ const SHORTCUTS: [string, string][] = [
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
 
-export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode }) {
+export function App({
+  agent,
+  initialMode,
+  initialWorktree = null,
+  home = process.cwd(),
+  onExitMessage,
+}: {
+  agent: Agent;
+  initialMode: Mode;
+  /** Worktree the session started in (-w). */
+  initialWorktree?: Worktree | null;
+  /** Directory to return to when leaving a worktree. */
+  home?: string;
+  /** Receives a message to print after the UI closes. */
+  onExitMessage?: (message: string) => void;
+}) {
   const { exit } = useApp();
+  const [worktree, setWorktree] = useState<Worktree | null>(initialWorktree);
   const [items, setItems] = useState<Item[]>([{ kind: "banner" }]);
   const [epoch, setEpoch] = useState(0); // bump to remount <Static> after /clear
   const [streaming, setStreaming] = useState("");
@@ -76,6 +109,7 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
 
   const controller = useRef<AbortController | null>(null);
   const denied = useRef(false);
+  const sendNow = useRef(false); // interrupted with ctrl+s: run the queue instead of handing it back
   const buffer = useRef(""); // streamed text not yet moved into <Static>
   const firstChunk = useRef(true);
   const flushTimer = useRef<NodeJS.Timeout | null>(null);
@@ -138,6 +172,7 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
     setRunning(true);
     verb.current = VERBS[Math.floor(Math.random() * VERBS.length)]!;
     denied.current = false;
+    sendNow.current = false;
     const ctrl = (controller.current = new AbortController());
     let interrupted = false;
     try {
@@ -147,6 +182,7 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
       flush(true);
       interrupted = ctrl.signal.aborted;
       if (denied.current) notice("Denied. Tell megacode what to do instead.", "warn");
+      else if (interrupted && sendNow.current) notice("Interrupted to send queued messages.");
       else if (interrupted) notice("Interrupted. What should megacode do instead?", "warn");
       else if ([401, 403].includes((e as { status?: number }).status!))
         notice(`${providerInfo(provider).label} rejected the credentials. Run /login to update them.`, "error");
@@ -157,10 +193,10 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
       setActiveTool(null);
       setRunning(false);
     }
-    // Send queued messages next; after an interrupt, hand them back to the input instead.
+    // Send queued messages next; after an interrupt (other than ctrl+s), hand them back to the input instead.
     const next = queue.current.join("\n");
     setQueued([]);
-    if (next && interrupted) setValue(next);
+    if (next && interrupted && !sendNow.current) setValue(next);
     else if (next) run(next);
   }
 
@@ -170,6 +206,19 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
       setApproval(null);
     }
     controller.current?.abort();
+  }
+
+  /** ctrl+s: queue whatever is in the input, then stop the running turn so the queue is sent right away. */
+  function sendQueuedNow() {
+    const text = value.trim();
+    if (!running) return text ? submit(text) : undefined;
+    if (text && !text.startsWith("/")) {
+      setValue("");
+      setQueued([...queue.current, text]);
+    }
+    if (!queue.current.length) return;
+    sendNow.current = true;
+    interrupt();
   }
 
   function answerApproval(choice: "yes" | "always" | "no") {
@@ -192,7 +241,7 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
     switch (cmd) {
       case "/exit":
       case "/quit":
-        return exit();
+        return quit();
       case "/help":
         return setShowHelp(true);
       case "/usage":
@@ -210,6 +259,19 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
       case "/login":
         if (arg && !PROVIDERS.includes(arg)) return notice(`Unknown provider "${arg}". Available: ${PROVIDERS.join(", ")}`, "warn");
         return setDialog({ type: "login", provider: arg || undefined });
+      case "/config":
+      case "/settings":
+        return setDialog({ type: "config" });
+      case "/mcp":
+        return setDialog({ type: "mcp" });
+      case "/worktree":
+        if (arg) return enterWorktree(arg);
+        try {
+          mainRoot();
+        } catch (e) {
+          return notice((e as Error).message, "warn");
+        }
+        return setDialog({ type: "worktree" });
       case "/logout":
         if (arg) return logout(arg);
         if (!Object.keys(loadAuth()).length) return notice("No saved credentials. (Keys from environment variables aren't stored by megacode.)");
@@ -224,7 +286,7 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
     try {
       agent.setModel(spec);
       setModel(spec);
-      saveSettings({ model: spec });
+      updateSettings({ model: spec });
       const provider = providerOf(spec);
       if (isConfigured(provider)) return notice(`Model set to ${spec}`);
       notice(`Model set to ${spec}. Log in to ${providerInfo(provider).label} to use it.`, "warn");
@@ -232,6 +294,75 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
     } catch (e) {
       notice((e as Error).message, "error");
     }
+  }
+
+  // Connect MCP servers in the background; their tools join the next turn once ready.
+  useEffect(() => {
+    mcp.start().then(() => {
+      for (const s of mcp.servers())
+        if (s.status.state === "failed") notice(`MCP server ${s.name} failed to connect: ${s.status.error} (/mcp to manage)`, "warn");
+    });
+  }, []);
+
+  // Leaving a worktree asks whether to keep it, like Claude Code.
+  function quit() {
+    if (worktree) return setDialog({ type: "exit-worktree" });
+    exit();
+  }
+
+  function moveTo(dir: string) {
+    process.chdir(dir);
+    agent.reloadSystemPrompt(); // the system prompt includes the working directory
+  }
+
+  /** Switches to the named worktree, creating it if needed; no name creates one with a random name. */
+  function enterWorktree(name?: string) {
+    setDialog(null);
+    if (running) return notice("Can't switch worktrees while a turn is running (esc to interrupt).", "warn");
+    try {
+      const wt = openWorktree(name);
+      moveTo(wt.path);
+      setWorktree(wt);
+      notice(`${wt.created ? "Created" : "Switched to"} worktree ${wt.name} on branch ${wt.branch} · ${wt.path}`);
+    } catch (e) {
+      notice((e as Error).message, "error");
+    }
+  }
+
+  /** Returns to `home`, optionally removing the worktree and its branch. Returns what happened. */
+  function leaveWorktree(remove: boolean): string {
+    const wt = worktree!;
+    moveTo(home);
+    setWorktree(null);
+    if (!remove) return `Kept worktree ${wt.name} at ${wt.path} (branch ${wt.branch}). Return with megacode -w ${wt.name}.`;
+    removeWorktree(wt);
+    return `Removed worktree ${wt.name} and branch ${wt.branch}.`;
+  }
+
+  function leaveFromMenu(remove: boolean) {
+    setDialog(null);
+    if (running) return notice("Can't leave the worktree while a turn is running (esc to interrupt).", "warn");
+    try {
+      notice(leaveWorktree(remove));
+    } catch (e) {
+      notice((e as Error).message, "error");
+    }
+  }
+
+  function exitWorktree(remove: boolean) {
+    controller.current?.abort();
+    try {
+      onExitMessage?.(leaveWorktree(remove));
+    } catch (e) {
+      onExitMessage?.((e as Error).message);
+    }
+    exit();
+  }
+
+  function changeSettings(patch: Partial<Settings>) {
+    updateSettings(patch);
+    if (patch.permissionMode) setMode(patch.permissionMode);
+    if (patch.projectInstructions !== undefined) agent.reloadSystemPrompt();
   }
 
   function loggedIn(provider: string, count: number) {
@@ -270,13 +401,14 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
       if (running) return interrupt();
       if (picker) return setDialog(null);
       if (value) return setValue("");
-      if (exitArmed) return exit();
+      if (exitArmed) return quit();
       setExitArmed(true);
       setTimeout(() => setExitArmed(false), 1500);
       return;
     }
-    if (key.ctrl && input === "d" && !value && !running) return exit();
+    if (key.ctrl && input === "d" && !value && !running) return quit();
     if (approval || picker) return; // those dialogs handle their own keys
+    if (key.ctrl && input === "s") return sendQueuedNow();
     if (key.escape) {
       if (running) return interrupt();
       setShowHelp(false);
@@ -352,6 +484,32 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
         />
       )}
 
+      {dialog?.type === "config" && (
+        <ConfigMenu
+          model={model}
+          mode={mode}
+          onChange={changeSettings}
+          onModel={() => setDialog({ type: "model" })}
+          onClose={() => setDialog(null)}
+        />
+      )}
+
+      {dialog?.type === "worktree" && (
+        <WorktreeMenu
+          current={worktree}
+          onCreate={enterWorktree}
+          onOpen={(wt) => enterWorktree(wt.name)}
+          onLeave={leaveFromMenu}
+          onCancel={() => setDialog(null)}
+        />
+      )}
+
+      {dialog?.type === "mcp" && <McpMenu onClose={() => setDialog(null)} />}
+
+      {dialog?.type === "exit-worktree" && worktree && (
+        <ExitWorktreeDialog worktree={worktree} onSelect={exitWorktree} onCancel={() => setDialog(null)} />
+      )}
+
       {dialog?.type === "logout" && (
         <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
           <Text bold>Remove saved credentials</Text>
@@ -367,12 +525,20 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
 
       {running && !approval && <Spinner verb={verb.current} />}
 
-      {queued.map((q, i) => (
-        <Text key={i} dimColor>
-          {"  ⏳ queued: "}
-          {q}
-        </Text>
-      ))}
+      {queued.length > 0 && (
+        <Box flexDirection="column" marginTop={1} paddingX={2}>
+          <Text>
+            <Text color="yellow">⏳ {queued.length} queued</Text>
+            <Text dimColor> · sent when megacode finishes · ctrl+s send now · esc move back to input</Text>
+          </Text>
+          {queued.map((q, i) => (
+            <Text key={i} dimColor wrap="truncate-end">
+              {"  › "}
+              {q.replace(/\n/g, " ⏎ ")}
+            </Text>
+          ))}
+        </Box>
+      )}
 
       {!picker && !approval && (
         <Box marginTop={1} flexDirection="column">
@@ -387,9 +553,9 @@ export function App({ agent, initialMode }: { agent: Agent; initialMode: Mode })
             isActive
             history={history}
             commands={COMMANDS}
-            placeholder={'Try "explain this codebase" or "fix the failing test"'}
+            placeholder={running ? "Queue a message for when megacode finishes (enter to queue · ctrl+s to send now)" : 'Try "explain this codebase" or "fix the failing test"'}
           />
-          <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} />
+          <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
           {showHelp && <Help />}
         </Box>
       )}
@@ -415,7 +581,8 @@ function ItemView({ item, model }: { item: Item; model: string }) {
     case "user":
       return (
         <Box marginTop={1}>
-          <Text color="gray">{"> " + item.text.replace(/\n/g, "\n  ")}</Text>
+          <Text dimColor>{"> "}</Text>
+          <Text>{item.text}</Text>
         </Box>
       );
     case "assistant":
@@ -476,31 +643,41 @@ function StatusLine({
   loggedIn,
   exitArmed,
   usage,
+  worktree,
 }: {
   mode: Mode;
   model: string;
   loggedIn: boolean;
   exitArmed: boolean;
   usage: { input: number; output: number };
+  worktree?: string;
 }) {
-  const left = exitArmed ? (
-    <Text color="yellow">Press Ctrl-C again to exit</Text>
-  ) : mode === "accept-edits" ? (
-    <Text color="magenta">⏵⏵ accept edits on (shift+tab to cycle)</Text>
-  ) : mode === "yolo" ? (
-    <Text color="red">⏵⏵ bypass permissions on (shift+tab to cycle)</Text>
-  ) : (
-    <Text dimColor>? for shortcuts</Text>
-  );
+  // Bypass is the default, so only the other modes get a label.
+  const modeLabel = mode === "accept-edits" ? <Text color="magenta">⏵⏵ accept edits </Text> : mode === "ask" ? <Text color="cyan">ask mode </Text> : null;
+  const cwd = process.cwd().replace(os.homedir(), "~");
   const tokens = usage.input + usage.output;
   return (
-    <Box paddingX={2} justifyContent="space-between">
-      {left}
-      <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"}>
-        {model}
-        {loggedIn ? "" : " · not logged in (/login)"}
-        {tokens ? ` · ${tokens < 1000 ? tokens : `${(tokens / 1000).toFixed(1)}k`} tokens` : ""}
-      </Text>
+    <Box paddingX={2} justifyContent="space-between" gap={2}>
+      <Box flexShrink={1}>
+        {exitArmed ? (
+          <Text color="yellow">Press Ctrl-C again to exit</Text>
+        ) : (
+          <>
+            {modeLabel}
+            <Text dimColor wrap="truncate-start">
+              {cwd}
+            </Text>
+          </>
+        )}
+      </Box>
+      <Box flexShrink={0}>
+        <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"}>
+          {model}
+          {loggedIn ? "" : " · not logged in (/login)"}
+          {worktree ? ` · ⎇ ${worktree}` : ""}
+          {tokens ? ` · ${tokens < 1000 ? tokens : `${(tokens / 1000).toFixed(1)}k`} tokens` : ""}
+        </Text>
+      </Box>
     </Box>
   );
 }
