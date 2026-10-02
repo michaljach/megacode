@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import OpenAI from "openai";
 import { loadAuth, saveAuth, type ChatGPTTokens } from "../config.ts";
-import { callbackServer, jwtClaims, openBrowser, pkce } from "../oauth.ts";
+import { callbackServer, jwtClaims, openBrowser, pkce } from "../auth/oauth.ts";
 import type { Message, Provider, StopReason, ToolCall, TurnRequest, TurnResult } from "../types.ts";
 
 // "Sign in with ChatGPT": the OAuth client and backend used by OpenAI's Codex CLI

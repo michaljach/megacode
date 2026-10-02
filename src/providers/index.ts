@@ -1,5 +1,5 @@
 import { loadAuth, loadSettings } from "../config.ts";
-import { hasAntProfile } from "../login.ts";
+import { hasAntProfile } from "../auth/login.ts";
 import type { Provider } from "../types.ts";
 import { AnthropicProvider } from "./anthropic.ts";
 import { ChatGPTProvider } from "./chatgpt.ts";
@@ -126,6 +126,15 @@ export function credentials(name: string): Credentials {
 
 export const isConfigured = (name: string) => !!credentials(name).source;
 
+/** The provider half of a "provider:model" spec. */
+export const providerOf = (spec: string) => spec.split(":", 1)[0]!;
+
+/** True when the spec names a known provider that has no credentials yet. */
+export function needsLogin(spec: string): boolean {
+  const name = providerOf(spec);
+  return PROVIDERS.includes(name) && !isConfigured(name);
+}
+
 /** Short human description of how a provider is authenticated. */
 export function authStatus(name: string): string {
   const info = providerInfo(name);
@@ -198,7 +207,7 @@ export function resolve(spec: string): { provider: Provider; providerName: strin
 export function defaultModel(): string {
   if (process.env.MEGACODE_MODEL) return process.env.MEGACODE_MODEL;
   const last = loadSettings().model;
-  if (last && PROVIDERS.includes(last.split(":")[0]!) && isConfigured(last.split(":")[0]!)) return last;
+  if (last && PROVIDERS.includes(providerOf(last)) && !needsLogin(last)) return last;
   const configured = PROVIDER_INFO.find((p) => p.defaultModel && isConfigured(p.name));
   return `${(configured ?? PROVIDER_INFO[0]!).name}:${(configured ?? PROVIDER_INFO[0]!).defaultModel}`;
 }

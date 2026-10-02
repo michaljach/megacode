@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import { useState } from "react";
-import type { Answer, Question } from "../questionnaire.ts";
+import type { Answer, Question } from "../tools/questions.ts";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 

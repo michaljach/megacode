@@ -1,13 +1,13 @@
 import { Box, Text, useInput } from "ink";
-import os from "node:os";
 import { useState } from "react";
 import { CONFIG_DIR, DEFAULT_SETTINGS, loadSettings, type PermissionMode, type Settings } from "../config.ts";
+import { tildify } from "./format.ts";
 
 type Key = Exclude<keyof Settings, "model">;
 type Choice = { value: Settings[Key]; label: string };
 type Entry = { key: Key; label: string; description: string; choices: Choice[] };
 
-const DIR = CONFIG_DIR.replace(os.homedir(), "~");
+const DIR = tildify(CONFIG_DIR);
 const seconds = (ms: number) => (ms < 60_000 ? `${ms / 1000}s` : `${ms / 60_000}m`);
 const onOff: Choice[] = [
   { value: true, label: "on" },

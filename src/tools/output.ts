@@ -1,13 +1,35 @@
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { loadSettings } from "../config.ts";
+
 /** Character budgets are provider-neutral bounds, not token estimates. */
 export const OUTPUT_CHARS = 12_000;
 export const READ_LINES = 200;
 
 /** Keep both setup/errors at the start and summaries/failures at the end. */
-export function previewOutput(text: string, budget = OUTPUT_CHARS): string {
+export function elideMiddle(text: string, budget = OUTPUT_CHARS): string {
   if (text.length <= budget) return text;
   const head = Math.ceil(budget / 2);
   const tail = Math.floor(budget / 2);
   return `${text.slice(0, head)}\n... [${text.length - budget} chars omitted]\n${text.slice(-tail)}`;
+}
+
+/**
+ * Fits output into the "Max tool output" budget (see /config), keeping both ends. The full text goes to a
+ * temporary file the model can read, so nothing is lost without filling every later request.
+ */
+export async function compactOutput(text: string, budget = loadSettings().maxToolOutput): Promise<string> {
+  if (text.length <= budget) return text;
+  try {
+    const dir = await mkdtemp(path.join(tmpdir(), "megacode-output-"));
+    const file = path.join(dir, "output.txt");
+    await writeFile(file, text, { mode: 0o600 });
+    return `${elideMiddle(text, budget)}\n[Full output: ${file}; read_file or search this file]`;
+  } catch {
+    // Do not silently discard evidence if the temporary directory is unavailable.
+    return text;
+  }
 }
 
 /** Never cut a source line silently. A single oversized line is returned in full. */

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { stripVTControlCharacters } from 'node:util';
 import { createElement } from 'react';
 import { Box, Static, Text, renderToString } from 'ink';
-import { ItemView } from '../src/ui/App.tsx';
+import { ItemView } from '../src/ui/Transcript.tsx';
 import { previewPrompt } from '../src/ui/format.ts';
 import { renderFileChange } from '../src/code.ts';
 import { PromptInput } from '../src/ui/PromptInput.tsx';
@@ -42,6 +42,25 @@ const renderItem = (item, columns) => stripVTControlCharacters(renderToString(
 const prompt = 'make benchamrk table better to visualise codex vs megacode and possibly other in future';
 
 for (const columns of [20, 40, 57, 80]) {
+  test(`short assistant replies use the available width at ${columns} columns`, () => {
+    const text = 'Ready. What would you like me to test?';
+    for (const first of [true, false]) {
+      const output = stripVTControlCharacters(renderToString(
+        createElement(Box, { flexDirection: 'column' },
+          createElement(Static, {
+            items: [{ kind: 'assistant', text, first }], style: { width: '100%' },
+          }, (item, key) => createElement(ItemView, { key, item, model: 'test' })),
+        ), { columns },
+      ));
+      const lines = output.split('\n').filter(line => line.trim());
+      assert.ok(lines[0].startsWith(first ? '⏺ Ready.' : '  Ready.'), output);
+      assert.ok(lines.every(line => line.length <= columns), output);
+      assert.ok(lines.slice(1).every(line => line.startsWith('  ')), output);
+      assert.equal(lines.map(line => line.slice(2)).join('').replace(/\s/g, ''), text.replace(/\s/g, ''));
+      if (columns >= text.length + 2) assert.equal(lines.length, 1, output);
+    }
+  });
+
   test(`tool output keeps its width and indentation at ${columns} columns`, () => {
     const path = '/Users/example/dev/megacode/.megacode/worktrees/nimble-river-737';
     for (const isError of [false, true]) {

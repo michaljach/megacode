@@ -133,29 +133,44 @@ src/
   cli.tsx             entry: flags, TUI or plain mode
   plain.ts            one-shot / piped output
   agent.ts            agent loop: model turn → run tools → repeat (emits events)
-  tools.ts            tool definitions + execution
   types.ts            provider-neutral message format
+  config.ts           ~/.megacode: auth.json, settings.json, history.json
+  code.ts             syntax highlighting, diff previews
+  mcp.ts              MCP client: ~/.megacode/mcp.json, connections, tools
+  worktree.ts         git worktree create / list / status / remove
+  tools/
+    index.ts          tool registry, argument validation, permission rules
+    files.ts          read / write / edit / list files, view images
+    shell.ts          bash, grep
+    questions.ts      ask_questions tool and input validation
+    output.ts         output budgets, temp-file spill, paged file reads
   providers/
     index.ts          "provider:model" resolution, OpenAI-compatible presets
     anthropic.ts      Messages API (streaming)
     openai.ts         Chat Completions (streaming), also used for compatible APIs
     chatgpt.ts        Sign in with ChatGPT + Responses API adapter
     gemini.ts         @google/genai (streaming)
+    usage.ts          /usage: account limits and balances
+  auth/
+    oauth.ts          PKCE, local callback server, browser launch
+    login.ts          OpenRouter OAuth, Anthropic CLI login
   ui/                 Ink (React) TUI
-    App.tsx           transcript, streaming, approvals, model picker, shortcuts
+    App.tsx           session state, turns, queue, slash commands, dialogs
+    Transcript.tsx    transcript items, streamed text, diff previews
+    hooks.ts          streamed-text buffering, prompt suggestions
+    commands.ts       slash command list
     PromptInput.tsx   multi-line editor, history, slash menu
-    Select.tsx        arrow-key list
+    StatusLine.tsx    mode, cwd, model, tokens
+    ApprovalDialog.tsx  tool permission prompt
     ModelPicker.tsx   searchable live model list
-    LoginDialog.tsx   provider login flow
+    LoginDialog.tsx   provider login / logout
     ConfigMenu.tsx    /config settings menu
     WorktreeMenu.tsx  /worktree menu, exit prompt
     McpMenu.tsx       /mcp server list, add wizard, details
-    format.ts         Markdown rendering, tool labels
-  config.ts           ~/.megacode: auth.json, settings.json, history.json
-  worktree.ts         git worktree create / list / status / remove
-  mcp.ts              MCP client: ~/.megacode/mcp.json, connections, tools
-  oauth.ts            PKCE, local callback server, browser launch
-  login.ts            OpenRouter OAuth, Anthropic CLI login
+    Questionnaire.tsx ask_questions form
+    Select.tsx, TextField.tsx, Spinner.tsx, Help.tsx   small building blocks
+    format.ts         Markdown rendering, tool labels, previews
+test/                 node:test suites (npm test)
 ```
 
 Conversation history is stored in a neutral format (`types.ts`). Each assistant turn also keeps the provider's native content. That content is sent back verbatim to the same provider, so Anthropic thinking blocks and Gemini thought signatures are preserved. When you switch providers, the next one gets the neutral text and tool calls instead.
@@ -175,7 +190,7 @@ npm run bench -- --model openai:gpt-6-astra --repeats 5
 ```sh
 npm install
 npm start               # runs src/cli.tsx via tsx
-npm test                # tool safety and OAuth regression tests
+npm test                # unit and UI rendering tests in test/
 npm run typecheck
 npm run build           # compiles to dist/, which is what gets published
 ```

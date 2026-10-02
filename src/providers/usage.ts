@@ -17,11 +17,13 @@ export function formatChatGPTUsage(value: unknown): string[] {
       if (!number(window.used_percent)) continue;
       const duration = window.limit_window_seconds;
       const labelWindow = number(duration) ? `${duration / 3600}-hour window` : fallback;
-      let line = `${label} (${labelWindow}): ${window.used_percent}% used · ${Math.max(0, 100 - window.used_percent)}% remaining`;
+      const filled = Math.round(Math.min(100, Math.max(0, window.used_percent)) / 100 * 24);
+      const bar = "█".repeat(filled) + "░".repeat(24 - filled);
+      let line = `${label} (${labelWindow})\n  ${bar}  ${window.used_percent}% used · ${Math.max(0, 100 - window.used_percent)}% remaining`;
       if (number(window.reset_at)) {
         const date = new Date(window.reset_at * 1000);
-        if (!Number.isNaN(date.getTime())) line += ` · resets ${date.toLocaleString()}`;
-      } else if (number(window.reset_after_seconds)) line += ` · resets in ${Math.ceil(window.reset_after_seconds / 60)} min`;
+        if (!Number.isNaN(date.getTime())) line += `\n  Resets ${date.toLocaleString()}`;
+      } else if (number(window.reset_after_seconds)) line += `\n  Resets in ${Math.ceil(window.reset_after_seconds / 60)} min`;
       lines.push(line);
     }
   }

@@ -1,8 +1,8 @@
 import { Box, Text } from "ink";
-import os from "node:os";
 import { useEffect, useReducer, useState } from "react";
 import { CONFIG_DIR } from "../config.ts";
 import { describeServer, mcp, MCP_FILE, SERVER_NAME, splitCommand, transportOf, type McpServerConfig, type McpStatus } from "../mcp.ts";
+import { tildify } from "./format.ts";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 
@@ -14,10 +14,10 @@ type Screen =
   | { type: "remove"; name: string }
   | { type: "add"; step: "name" | "type" | "target" | "extras"; draft: Draft };
 
-const FILE = `${CONFIG_DIR.replace(os.homedir(), "~")}/${MCP_FILE}`;
+const FILE = `${tildify(CONFIG_DIR)}/${MCP_FILE}`;
 const MAX_TOOLS_SHOWN = 15;
 
-export function statusText(s: McpStatus): string {
+function statusText(s: McpStatus): string {
   switch (s.state) {
     case "connected":
       return `✔ connected · ${s.tools.length} tool${s.tools.length === 1 ? "" : "s"}`;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { previewPrompt } from "./ui/format.ts";
+import { previewPrompt } from "../src/ui/format.ts";
 
 test("prompt previews preserve short text and flatten line breaks", () => {
   assert.equal(previewPrompt(""), "");

@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
-import { filePage, previewOutput, OUTPUT_CHARS } from "./output.ts";
-import { executeTool } from "./tools.ts";
+import { filePage, elideMiddle, OUTPUT_CHARS } from "../src/tools/output.ts";
+import { executeTool } from "../src/tools/index.ts";
 
 test("small outputs remain intact; long outputs retain both ends", () => {
-  assert.equal(previewOutput("hello"), "hello");
+  assert.equal(elideMiddle("hello"), "hello");
   const text = "start" + "x".repeat(30_000) + "failure at end";
-  const preview = previewOutput(text);
+  const preview = elideMiddle(text);
   assert.ok(preview.startsWith("start"));
   assert.ok(preview.endsWith("failure at end"));
   assert.ok(preview.length < OUTPUT_CHARS + 100);

@@ -5,7 +5,8 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { ToolListChangedNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 import { readJson, writeJson } from "./config.ts";
-import { compactOutput, type Approve } from "./tools.ts";
+import { compactOutput } from "./tools/output.ts";
+import type { Approve } from "./tools/types.ts";
 import type { ToolCall, ToolSpec } from "./types.ts";
 
 /** One server in ~/.megacode/mcp.json, in the same shape Claude Code and Claude Desktop use. */

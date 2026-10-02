@@ -1,8 +1,7 @@
 import { Box, Text, useInput, usePaste } from "ink";
 import { useEffect, useRef, useState } from "react";
 import { promptCompletion } from "./autocomplete.ts";
-
-export type Command = { name: string; description: string };
+import type { Command } from "./commands.ts";
 
 type Props = {
   value: string;

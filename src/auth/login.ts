@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { callbackServer, openBrowser, pkce } from "./oauth.ts";
 
-export { loginChatGPT } from "./providers/chatgpt.ts";
+export { loginChatGPT } from "../providers/chatgpt.ts";
 
 /** OpenRouter's OAuth PKCE flow for apps: returns a regular OpenRouter API key. */
 export async function loginOpenRouter(onUrl: (url: string) => void, signal: AbortSignal): Promise<string> {

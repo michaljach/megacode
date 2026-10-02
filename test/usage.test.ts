@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatChatGPTUsage, providerUsage } from "./providers/usage.ts";
+import { formatChatGPTUsage, providerUsage } from "../src/providers/usage.ts";
 
 test("ChatGPT reports actual windows, plan and credits without inventing missing usage", () => {
   const lines = formatChatGPTUsage({
@@ -8,9 +8,17 @@ test("ChatGPT reports actual windows, plan and credits without inventing missing
     rate_limit: { primary_window: { used_percent: 25, limit_window_seconds: 18000, reset_after_seconds: 120 } },
     credits: { balance: "3.5" },
   });
-  assert.deepEqual(lines, ["Plan: plus", "Usage (5-hour window): 25% used · 75% remaining · resets in 2 min", "Credits remaining: 3.5"]);
+  assert.deepEqual(lines, ["Plan: plus", `Usage (5-hour window)\n  ${"█".repeat(6)}${"░".repeat(18)}  25% used · 75% remaining\n  Resets in 2 min`, "Credits remaining: 3.5"]);
   assert.deepEqual(formatChatGPTUsage({ rate_limit: { primary_window: {} } }), []);
   assert.deepEqual(formatChatGPTUsage(null), []);
+});
+
+test("usage bars stay within their width at empty, full and out-of-range values", () => {
+  for (const [percent, filled] of [[0, 0], [100, 24], [-10, 0], [120, 24]]) {
+    const lines = formatChatGPTUsage({ rate_limit: { primary_window: { used_percent: percent } } });
+    assert.equal(lines.length, 1);
+    assert.ok(lines[0]!.includes(`${"█".repeat(filled!)}${"░".repeat(24 - filled!)}  ${percent}% used`));
+  }
 });
 
 test("OpenRouter fetches fresh key usage and propagates HTTP errors safely", async (t) => {

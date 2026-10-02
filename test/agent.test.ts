@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Agent } from "./agent.ts";
-import type { Message } from "./types.ts";
+import { Agent } from "../src/agent.ts";
+import type { Message } from "../src/types.ts";
 
 test("prompt suggestions require a completed assistant response", async () => {
   const histories: Message[][] = [

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseQuestions } from "./questionnaire.ts";
-import { executeTool, toolSpecs } from "./tools.ts";
+import { parseQuestions } from "../src/tools/questions.ts";
+import { executeTool, toolSpecs } from "../src/tools/index.ts";
 
 const call = { id: "q1", name: "ask_questions", input: { questions: [{ question: "Which framework?", options: ["React", "Vue"] }, { question: "Any constraints?" }] } };
 const approve = async () => { throw new Error("Questions must not use permission approvals"); };
