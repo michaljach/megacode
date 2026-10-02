@@ -425,8 +425,10 @@ export function App({
 
       {streaming.trim() && (
         <Box marginTop={firstChunk.current ? 1 : 0}>
-          <Text>{firstChunk.current ? "⏺ " : "  "}</Text>
-          <Text>{renderMarkdown(streaming.trimEnd())}</Text>
+          <Box width={2} flexShrink={0}><Text>{firstChunk.current ? "⏺ " : "  "}</Text></Box>
+          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+            <Text>{renderMarkdown(streaming.trimEnd())}</Text>
+          </Box>
         </Box>
       )}
 
@@ -588,8 +590,10 @@ function ItemView({ item, model }: { item: Item; model: string }) {
     case "assistant":
       return (
         <Box marginTop={item.first ? 1 : 0}>
-          <Text>{item.first ? "⏺ " : "  "}</Text>
-          <Text>{renderMarkdown(item.text)}</Text>
+          <Box width={2} flexShrink={0}><Text>{item.first ? "⏺ " : "  "}</Text></Box>
+          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+            <Text>{renderMarkdown(item.text)}</Text>
+          </Box>
         </Box>
       );
     case "tool":
