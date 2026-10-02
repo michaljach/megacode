@@ -49,6 +49,8 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 
 ## Interactive UI
 
+When the model needs clarification, it can call `ask_questions` to open an interactive questionnaire (up to eight questions). Choose a suggested answer with arrow keys and Enter, or choose **Other** to type your own; questions without options accept text directly. Review all answers before submitting, or start over. **Esc** or **Ctrl+C** cancels and interrupts the turn without submitting partial answers. Questions always require your input, even in bypass mode. In one-shot/plain mode, the tool tells the model to ask in text instead of waiting for an interactive form.
+
 Code blocks in replies use language-aware syntax highlighting when the fence specifies a language (for example, `typescript` or `python`). Unknown or unspecified languages stay plain.
 
 Successful `edit_file` and `write_file` calls show persistent, syntax-highlighted diffs in the conversation in every permission mode, including automatically accepted edits. Previews include old/new line numbers, nearby context, and red `-` / green `+` markers. Ask-mode approvals use the same preview; overwriting a file shows both removals and additions. Long previews are explicitly truncated to 60 diff lines and 240 characters per source line; very large or expensive diffs show an omission notice. These are interactive previews of built-in file tools, not a live Git diff viewer (shell/MCP edits aren't tracked).
@@ -80,6 +82,9 @@ Successful `edit_file` and `write_file` calls show persistent, syntax-highlighte
 | Load AGENTS.md / CLAUDE.md | on        | on · off                                      |
 | Worktree base              | default branch | default branch (origin/HEAD) · current commit |
 | Save prompt history        | on        | on · off                                      |
+| Prompt autocomplete       | on        | on · off                                      |
+
+Prompt autocomplete suggests a next prompt based on the current conversation and recent tool results, displayed as dimmed inline text after a turn finishes. **Tab** accepts without sending; **Enter** sends only text you've entered or accepted. Typing a different prompt hides the suggestion. Suggestions use an additional, tool-free request to the selected model (normal provider costs apply, tokens count toward `/usage`); they never execute actions or change conversation history. Failures silently leave the prompt unchanged. Toggle **Prompt autocomplete** in `/config`, or set `"promptAutocomplete": false` in `~/.megacode/settings.json` to disable requests and suggestions. Slash-command completion remains available independently.
 
 ## MCP servers
 

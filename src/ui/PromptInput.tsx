@@ -1,5 +1,6 @@
 import { Box, Text, useInput, usePaste } from "ink";
 import { useEffect, useRef, useState } from "react";
+import { promptCompletion } from "./autocomplete.ts";
 
 export type Command = { name: string; description: string };
 
@@ -10,6 +11,8 @@ type Props = {
   onHelp: () => void;
   isActive: boolean;
   history: string[];
+  autocomplete: boolean;
+  suggestion: string;
   commands: Command[];
   placeholder: string;
 };
@@ -18,7 +21,7 @@ type Props = {
  * Multi-line prompt editor with readline-style shortcuts, history and a slash-command menu.
  * Newline: "\" + enter, or option/alt + enter.
  */
-export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, history, commands, placeholder }: Props) {
+export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, history, autocomplete, suggestion, commands, placeholder }: Props) {
   const [cursor, setCursor] = useState(value.length);
   const [menuIndex, setMenuIndex] = useState(0);
   const historyPos = useRef(-1); // -1 = editing a fresh draft
@@ -27,6 +30,7 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
   // Keep the cursor valid when the value is changed from outside (clear, history, etc.).
   useEffect(() => setCursor((c) => Math.min(c, value.length)), [value]);
 
+  const completion = promptCompletion(value, cursor, suggestion, autocomplete && isActive);
   const menu = /^\/\S*$/.test(value) ? commands.filter((c) => c.name.startsWith(value)) : [];
   useEffect(() => setMenuIndex(0), [value]);
 
@@ -106,6 +110,7 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
       }
       if (key.tab) {
         if (menu.length) set(menu[menuIndex]!.name + " ");
+        else if (completion) set(value + completion);
         return;
       }
       if (key.upArrow) {
@@ -146,7 +151,7 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
   );
 
   // Render with a block cursor.
-  const lines = value.split("\n");
+  const lines = (value + completion).split("\n");
   let offset = 0;
   const rendered = lines.map((line, i) => {
     const start = offset;
@@ -161,10 +166,10 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
             {showCursor ? (
               <>
                 {line.slice(0, col)}
-                <Text inverse>{line[col] ?? " "}</Text>
-                {line.slice(col + 1)}
+                <Text inverse dimColor={Boolean(completion)}>{line[col] ?? " "}</Text>
+                <Text dimColor={Boolean(completion)}>{line.slice(col + 1)}</Text>
               </>
-            ) : line || " "}
+            ) : <Text dimColor={start > value.length}>{line || " "}</Text>}
           </Text>
         </Box>
       </Box>
@@ -174,7 +179,7 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
   return (
     <Box flexDirection="column">
       <Box borderStyle="round" borderColor="gray" paddingX={1} flexDirection="column">
-        {value === "" ? (
+        {value === "" && !completion ? (
           <Box>
             <Box flexShrink={0}><Text>{"> "}</Text></Box>
             <Box flexGrow={1} flexShrink={1} minWidth={0}>
@@ -188,6 +193,7 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
           rendered
         )}
       </Box>
+      {completion && <Text dimColor>  tab to accept suggestion</Text>}
       {menu.length > 0 && (
         <Box flexDirection="column" paddingX={2}>
           {menu.map((c, i) => (

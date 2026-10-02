@@ -87,6 +87,23 @@ async function currentTokens(force = false): Promise<ChatGPTTokens> {
   return refreshed;
 }
 
+/** Live subscription limits from the same backend used by Codex. */
+export async function chatGPTUsage(): Promise<unknown> {
+  const signal = AbortSignal.timeout(15_000);
+  const url = `${BASE_URL.replace(/\/codex\/?$/, "")}/wham/usage`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const t = await currentTokens(attempt > 0);
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${t.access}`, "ChatGPT-Account-ID": t.accountId, originator: ORIGINATOR },
+      signal,
+    });
+    if (res.status === 401 && attempt === 0) continue;
+    if (!res.ok) throw new Error(`Usage request failed (HTTP ${res.status}).${res.status === 401 || res.status === 403 ? " Run /login to update credentials." : ""}`);
+    return res.json();
+  }
+  throw new Error("Unable to fetch ChatGPT usage.");
+}
+
 /** OpenAI models through a ChatGPT subscription, via the Responses API. */
 export class ChatGPTProvider implements Provider {
   sessionId = randomUUID();

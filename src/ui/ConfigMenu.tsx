@@ -59,6 +59,12 @@ const ENTRIES: Entry[] = [
     ],
   },
   {
+    key: "promptAutocomplete",
+    label: "Prompt autocomplete",
+    description: "Suggest a next prompt from the current conversation; tab accepts without sending. Uses an extra model request after each turn",
+    choices: onOff,
+  },
+  {
     key: "saveHistory",
     label: "Save prompt history",
     description: `Keep ↑/↓ history across sessions in ${DIR}/history.json`,

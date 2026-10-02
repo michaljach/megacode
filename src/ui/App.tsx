@@ -1,9 +1,10 @@
 import { Box, Static, Text, useAnimation, useApp, useInput } from "ink";
 import os from "node:os";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
-import { loadAuth, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
+import { loadAuth, loadSettings, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
 import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
+import { providerUsage } from "../providers/usage.ts";
 import type { Approve } from "../tools.ts";
 import type { ToolCall } from "../types.ts";
 import { mcp } from "../mcp.ts";
@@ -16,6 +17,8 @@ import { McpMenu } from "./McpMenu.tsx";
 import { ModelPicker } from "./ModelPicker.tsx";
 import { PromptInput, type Command } from "./PromptInput.tsx";
 import { Select } from "./Select.tsx";
+import { Questionnaire } from "./Questionnaire.tsx";
+import type { Answer, Question } from "../questionnaire.ts";
 import { ExitWorktreeDialog, WorktreeMenu } from "./WorktreeMenu.tsx";
 
 type Item =
@@ -48,7 +51,7 @@ const COMMANDS: Command[] = [
   { name: "/mcp", description: "Manage MCP servers (add, remove, reconnect, see tools)" },
   { name: "/worktree", description: "Create or switch git worktrees (or /worktree name)" },
   { name: "/clear", description: "Clear conversation history and screen" },
-  { name: "/usage", description: "Show token usage for this session" },
+  { name: "/usage", description: "Fetch current provider's account usage and limits" },
   { name: "/help", description: "Show commands and keyboard shortcuts" },
   { name: "/exit", description: "Exit megacode" },
 ];
@@ -63,6 +66,7 @@ const SHORTCUTS: [string, string][] = [
   ["ctrl+s", "send queued messages now (interrupts the running turn)"],
   ["\\ + enter, option+enter", "newline"],
   ["↑ / ↓", "prompt history"],
+  ["tab", "accept prompt suggestion / complete command"],
   ["alt+← / alt+→", "move cursor by word"],
   ["/", "commands"],
   ["esc", "interrupt · clear input"],
@@ -98,6 +102,7 @@ export function App({
   const [running, setRunning] = useState(false);
   const [activeTool, setActiveTool] = useState<ToolCall | null>(null);
   const [approval, setApproval] = useState<ApprovalRequest | null>(null);
+  const [questionnaire, setQuestionnaire] = useState<{ questions: Question[]; resolve: (answers: Answer[] | null) => void } | null>(null);
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
     PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name)) ? null : { type: "login", welcome: true },
@@ -112,6 +117,21 @@ export function App({
   const [exitArmed, setExitArmed] = useState(false);
   const [model, setModel] = useState(agent.model);
   const [history, setHistory] = useState(loadHistory);
+  const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
+  const [suggestion, setSuggestion] = useState("");
+  const [completedTurn, setCompletedTurn] = useState(0);
+  useEffect(() => {
+    setSuggestion("");
+    if (!autocomplete || running || !completedTurn || !agent.messages.length) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      void agent.suggestPrompt(ctrl.signal).then((text) => {
+        if (!ctrl.signal.aborted) setSuggestion(text);
+      }).catch(() => {}); // Optional suggestions must never disrupt the main conversation.
+    }, 300);
+    const timeout = setTimeout(() => ctrl.abort(), 15_000);
+    return () => { clearTimeout(timer); clearTimeout(timeout); ctrl.abort(); };
+  }, [agent, autocomplete, running, completedTurn, epoch, model]);
 
   const controller = useRef<AbortController | null>(null);
   const denied = useRef(false);
@@ -148,6 +168,17 @@ export function App({
 
   const events: AgentEvents = {
     approve,
+    askQuestions: (questions, signal) => new Promise((resolve) => {
+      if (signal?.aborted) return resolve(null);
+      const finish = (answers: Answer[] | null) => {
+        signal?.removeEventListener("abort", abort);
+        setQuestionnaire(null);
+        resolve(answers);
+      };
+      const abort = () => finish(null);
+      signal?.addEventListener("abort", abort, { once: true });
+      setQuestionnaire({ questions, resolve: finish });
+    }),
     onText(delta) {
       buffer.current += delta;
       flushTimer.current ??= setTimeout(() => flush(false), 40);
@@ -183,6 +214,7 @@ export function App({
     let interrupted = false;
     try {
       await agent.send(text, ctrl.signal, events);
+      if (!ctrl.signal.aborted) setCompletedTurn((n) => n + 1);
     } catch (e) {
       if (flushTimer.current) clearTimeout(flushTimer.current);
       flush(true);
@@ -250,8 +282,15 @@ export function App({
         return quit();
       case "/help":
         return setShowHelp(true);
-      case "/usage":
-        return notice(`Tokens this session: ${agent.usage.input.toLocaleString()} in · ${agent.usage.output.toLocaleString()} out`);
+      case "/usage": {
+        const provider = providerOf(model);
+        notice(`Fetching ${providerInfo(provider).label} usage…`);
+        void providerUsage(provider).then(
+          (text) => notice(text),
+          (error: unknown) => notice(`${providerInfo(provider).label}: ${error instanceof Error ? error.message : "Unable to fetch usage."}`, "error"),
+        );
+        return;
+      }
       case "/clear":
         if (running) return notice("Can't clear while a turn is running (esc to interrupt).", "warn");
         agent.clear();
@@ -367,6 +406,7 @@ export function App({
 
   function changeSettings(patch: Partial<Settings>) {
     updateSettings(patch);
+    if (patch.promptAutocomplete !== undefined) setAutocomplete(patch.promptAutocomplete);
     if (patch.permissionMode) setMode(patch.permissionMode);
     if (patch.projectInstructions !== undefined) agent.reloadSystemPrompt();
   }
@@ -413,7 +453,7 @@ export function App({
       return;
     }
     if (key.ctrl && input === "d" && !value && !running) return quit();
-    if (approval || picker) return; // those dialogs handle their own keys
+    if (approval || questionnaire || picker) return; // those dialogs handle their own keys
     if (key.ctrl && input === "s") return sendQueuedNow();
     if (key.escape) {
       if (running) return interrupt();
@@ -431,20 +471,23 @@ export function App({
 
       {streaming.trim() && (
         <Box marginTop={firstChunk.current ? 1 : 0}>
-          <Box width={2} flexShrink={0}><Text>{firstChunk.current ? "⏺ " : "  "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <TranscriptRow prefix={<Text>{firstChunk.current ? "⏺ " : "  "}</Text>} width={2}>
             <Text>{renderMarkdown(streaming.trimEnd())}</Text>
-          </Box>
+          </TranscriptRow>
         </Box>
       )}
 
-      {activeTool && !approval && (
+      {activeTool && !approval && !questionnaire && (
         <Box flexDirection="column" marginTop={1}>
           <Text>
             <Blink /> <Text bold>{formatCall(activeTool)}</Text>
           </Text>
           <Text dimColor>{"  ⎿  Running…"}</Text>
         </Box>
+      )}
+
+      {questionnaire && (
+        <Questionnaire questions={questionnaire.questions} onSubmit={questionnaire.resolve} onCancel={interrupt} />
       )}
 
       {approval && (
@@ -531,7 +574,7 @@ export function App({
         </Box>
       )}
 
-      {running && !approval && <Spinner verb={verb.current} />}
+      {running && !approval && !questionnaire && <Spinner verb={verb.current} />}
 
       {queued.length > 0 && (
         <Box flexDirection="column" marginTop={1} paddingX={2}>
@@ -545,7 +588,7 @@ export function App({
         </Box>
       )}
 
-      {!picker && !approval && (
+      {!picker && !approval && !questionnaire && (
         <Box marginTop={1} flexDirection="column">
           <PromptInput
             value={value}
@@ -557,6 +600,8 @@ export function App({
             onHelp={() => setShowHelp((s) => !s)}
             isActive
             history={history}
+            autocomplete={autocomplete && !running}
+            suggestion={suggestion}
             commands={COMMANDS}
             placeholder={running ? "queue another message..." : 'tiny moon vibes'}
           />
@@ -587,7 +632,7 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
       return (
         <Box marginTop={1}>
           <Box width={2} flexShrink={0}><Text dimColor>{"> "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <Box flexDirection="column" flexGrow={1} flexShrink={1} flexBasis={0} minWidth={0}>
             <Text wrap="wrap">{previewPrompt(item.text)}</Text>
           </Box>
         </Box>
@@ -595,41 +640,64 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
     case "assistant":
       return (
         <Box marginTop={item.first ? 1 : 0}>
-          <Box width={2} flexShrink={0}><Text>{item.first ? "⏺ " : "  "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <TranscriptRow prefix={<Text>{item.first ? "⏺ " : "  "}</Text>} width={2}>
             <Text>{renderMarkdown(item.text)}</Text>
-          </Box>
+          </TranscriptRow>
         </Box>
       );
     case "tool":
       return (
         <Box flexDirection="column" marginTop={1}>
-          <Text>
-            <Text color={item.isError ? "red" : "green"}>⏺</Text> <Text bold>{formatCall(item.call)}</Text>
-          </Text>
-          <Box>
-            <Box width={5} flexShrink={0}><Text dimColor>{"  ⎿  "}</Text></Box>
-            <Box flexGrow={1} flexShrink={1} minWidth={0}>
-              <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
-                {previewOutput(item.output) || "(no output)"}
-              </Text>
-            </Box>
-          </Box>
+          <TranscriptRow prefix={<Text color={item.isError ? "red" : "green"}>⏺ </Text>} width={2}>
+            <Text bold>{formatCall(item.call)}</Text>
+          </TranscriptRow>
+          <TranscriptRow prefix={<Text dimColor>{"  ⎿  "}</Text>} width={5}>
+            <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
+              {previewOutput(item.output) || "(no output)"}
+            </Text>
+          </TranscriptRow>
           {!item.isError && item.changePreview && (
-            <Box marginLeft={5}><Text>{item.changePreview}</Text></Box>
+            <Box marginLeft={5} flexDirection="column"><DiffPreview text={item.changePreview} /></Box>
           )}
         </Box>
       );
     case "notice":
       return (
         <Box marginTop={1}>
-          <Text color={item.level === "error" ? "red" : item.level === "warn" ? "yellow" : undefined} dimColor={item.level === "info"}>
-            {"  ⎿  "}
-            {item.text}
-          </Text>
+          <TranscriptRow prefix={<Text dimColor>{"  ⎿  "}</Text>} width={5}>
+            <Text color={item.level === "error" ? "red" : item.level === "warn" ? "yellow" : undefined} dimColor={item.level === "info"}>
+              {item.text}
+            </Text>
+          </TranscriptRow>
         </Box>
       );
   }
+}
+
+/** Keep prefixes out of the text's wrapping width, including on continuation lines. */
+function TranscriptRow({ prefix, width, children }: { prefix: ReactNode; width: number; children: ReactNode }) {
+  return (
+    <Box>
+      <Box width={width} flexShrink={0}>{prefix}</Box>
+      <Box flexDirection="column" flexGrow={1} flexShrink={1} flexBasis={0} minWidth={0}>
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+function DiffPreview({ text }: { text: string }) {
+  return text.split("\n").map((line, i) => {
+    // renderFileChange emits two padded line numbers and a sign, with an optional
+    // ANSI style around the gutter. Keep its styling separate from highlighted code.
+    const row = line.match(/^((?:\u001b\[[\d;]*m)*[ \d]{4,} [ \d]{4,} [ +\\-](?:\u001b\[[\d;]*m)* )([\s\S]*)$/);
+    if (!row) return <Text key={i}>{line}</Text>;
+    return (
+      <TranscriptRow key={i} prefix={<Text>{row[1]}</Text>} width={row[1]!.replace(/\u001b\[[\d;]*m/g, "").length}>
+        <Text>{row[2]}</Text>
+      </TranscriptRow>
+    );
+  });
 }
 
 const FRAMES = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
