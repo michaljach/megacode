@@ -558,7 +558,7 @@ export function App({
             isActive
             history={history}
             commands={COMMANDS}
-            placeholder={running ? "Queue another message..." : 'tiny moon vibes'}
+            placeholder={running ? "queue another message..." : 'tiny moon vibes'}
           />
           <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
           {showHelp && <Help />}
@@ -663,19 +663,21 @@ function StatusLine({
   const modeLabel = mode === "accept-edits" ? <Text color="magenta">⏵⏵ accept edits </Text> : mode === "ask" ? <Text color="cyan">ask mode </Text> : null;
   const cwd = process.cwd().replace(os.homedir(), "~");
   const tokens = usage.input + usage.output;
+  // Give exit confirmation the whole row instead of competing with model/worktree metadata.
+  if (exitArmed) {
+    return (
+      <Box paddingX={2}>
+        <Text color="yellow">Press Ctrl-C again to exit</Text>
+      </Box>
+    );
+  }
   return (
     <Box paddingX={2} justifyContent="space-between" gap={2}>
       <Box flexShrink={1}>
-        {exitArmed ? (
-          <Text color="yellow">Press Ctrl-C again to exit</Text>
-        ) : (
-          <>
-            {modeLabel}
-            <Text dimColor wrap="truncate-start">
-              {cwd}
-            </Text>
-          </>
-        )}
+        {modeLabel}
+        <Text dimColor wrap="truncate-start">
+          {cwd}
+        </Text>
       </Box>
       <Box flexShrink={0}>
         <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"}>
