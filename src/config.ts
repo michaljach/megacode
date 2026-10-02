@@ -37,6 +37,7 @@ export type PermissionMode = "ask" | "accept-edits" | "yolo";
 /** User preferences, edited with /config. */
 export type Settings = {
   model?: string;
+  effort?: import("./types.ts").Effort;
   permissionMode: PermissionMode;
   maxSteps: number;
   bashTimeoutMs: number;

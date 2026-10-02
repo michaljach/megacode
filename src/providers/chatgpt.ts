@@ -123,7 +123,7 @@ export class ChatGPTProvider implements Provider {
       tools: req.tools.map((t) => ({ type: "function", name: t.name, description: t.description, parameters: t.parameters, strict: false })),
       tool_choice: "auto",
       parallel_tool_calls: true,
-      reasoning: { effort: "medium", summary: "auto" },
+      reasoning: { effort: req.effort && req.effort !== "default" ? req.effort : "medium", summary: "auto" },
       store: false,
       stream: true,
       include: ["reasoning.encrypted_content"],

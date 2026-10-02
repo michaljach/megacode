@@ -26,6 +26,7 @@ export class OpenAIProvider implements Provider {
     const stream = await this.client.chat.completions.create(
       {
         model: req.model,
+        ...(req.effort && req.effort !== "default" ? { reasoning_effort: req.effort } : {}),
         stream: true,
         stream_options: { include_usage: true },
         messages: [{ role: "system", content: req.system }, ...toOpenAI(req.messages)],

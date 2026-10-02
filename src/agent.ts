@@ -51,12 +51,13 @@ export class Agent {
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
     this.messages.push({ role: "user", text });
     const { provider, model } = resolve(this.model);
-    const maxSteps = loadSettings().maxSteps;
+    const { maxSteps, effort } = loadSettings();
 
     try {
       for (let step = 0; step < maxSteps; step++) {
         const res = await provider.turn({
           model,
+          effort,
           system: [this.system, mcp.instructions()].filter(Boolean).join("\n\n"),
           messages: this.messages,
           tools: [...toolSpecs, ...mcp.toolSpecs()],

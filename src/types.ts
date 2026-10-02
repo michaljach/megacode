@@ -24,7 +24,11 @@ export type ToolSpec = {
 
 export type StopReason = "end" | "tool_use" | "max_tokens" | "refusal" | "other";
 
+export const EFFORTS = ["default", "low", "medium", "high"] as const;
+export type Effort = (typeof EFFORTS)[number];
+
 export type TurnRequest = {
+  effort?: Effort;
   model: string;
   system: string;
   messages: Message[];

@@ -41,6 +41,24 @@ test("diffs include real line numbers, context, and both sides of replacements",
   assert.match(plain(renderFileChange("a", "old\n", "")), /1\s+- old/);
 });
 
+test("diff backgrounds cover the gutter and source without token color overrides", () => {
+  const output = execFileSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e",
+    `import { renderFileChange } from './src/code.ts'; console.log(renderFileChange('a.ts', 'const x = 1;\\n\\nkeep\\n', 'const x = 2;\\nadded\\nkeep\\n'));`],
+  { env: { ...process.env, FORCE_COLOR: "1", NO_COLOR: undefined }, encoding: "utf8" });
+  const lines = output.trimEnd().split("\n");
+  for (const [marker, background] of [["-", 41], ["+", 42]] as const) {
+    const changed = lines.filter((line) => /^\s*\d*\s+\d*\s[+-] /.test(plain(line)) && plain(line).includes(`${marker} `));
+    assert.equal(changed.length, 2);
+    for (const line of changed) {
+      assert.ok(line.startsWith(`\u001b[${background}m\u001b[37m`), JSON.stringify(line));
+      assert.ok(line.endsWith("\u001b[39m\u001b[49m"), JSON.stringify(line));
+      assert.equal(line.match(/\u001b\[/g)?.length, 4, "no nested syntax colors or resets");
+    }
+  }
+  const context = lines.find((line) => plain(line).includes("keep"))!;
+  assert.ok(!/\u001b\[4[12]m/.test(context));
+});
+
 test("large previews are bounded and explicitly marked", () => {
   const diff = plain(renderFileChange("a.ts", "", "const x = 1;\n".repeat(100)));
   assert.ok(diff.split("\n").length <= 61);

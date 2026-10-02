@@ -2,10 +2,10 @@ import { Box, Static, Text, useAnimation, useApp, useInput } from "ink";
 import os from "node:os";
 import { useEffect, useRef, useState } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
-import { loadAuth, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
+import { loadAuth, loadSettings, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
 import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
 import type { Approve } from "../tools.ts";
-import type { ToolCall } from "../types.ts";
+import { EFFORTS, type Effort, type ToolCall } from "../types.ts";
 import { mcp } from "../mcp.ts";
 import { mainRoot, openWorktree, removeWorktree, type Worktree } from "../worktree.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
@@ -34,6 +34,7 @@ type Dialog =
   | { type: "login"; provider?: string; welcome?: boolean }
   | { type: "logout" }
   | { type: "config" }
+  | { type: "effort" }
   | { type: "worktree" }
   | { type: "mcp" }
   | { type: "exit-worktree" };
@@ -42,6 +43,7 @@ type ApprovalRequest = Parameters<Approve>[0] & { resolve: (ok: boolean) => void
 
 const COMMANDS: Command[] = [
   { name: "/model", description: "Switch model (or /model provider:model)" },
+  { name: "/effort", description: "Change model effort (default, low, medium, high)" },
   { name: "/login", description: "Connect a provider (API key or local server)" },
   { name: "/logout", description: "Remove saved credentials" },
   { name: "/config", description: "View and change settings" },
@@ -259,6 +261,10 @@ export function App({
         setItems([{ kind: "banner" }]);
         setEpoch((e) => e + 1);
         return;
+      case "/effort":
+        if (!arg) return setDialog({ type: "effort" });
+        if (!EFFORTS.includes(arg as Effort)) return notice(`Unknown effort "${arg}". Available: ${EFFORTS.join(", ")}`, "warn");
+        return selectEffort(arg as Effort);
       case "/model":
         if (!arg) return setDialog({ type: "model" });
         return selectModel(arg);
@@ -285,6 +291,12 @@ export function App({
       default:
         notice(`Unknown command ${cmd}. Type / to see commands.`, "warn");
     }
+  }
+
+  function selectEffort(effort: Effort) {
+    setDialog(null);
+    updateSettings({ effort });
+    notice(`Model effort set to ${effort}. Applies to the next turn; support depends on the model.`);
   }
 
   function selectModel(spec: string) {
@@ -490,6 +502,19 @@ export function App({
           onDone={loggedIn}
           onCancel={() => setDialog(null)}
         />
+      )}
+
+      {dialog?.type === "effort" && (
+        <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
+          <Text bold>Model effort · {loadSettings().effort ?? "default"}</Text>
+          <Select
+            options={EFFORTS.map((effort) => ({ label: effort, value: effort }))}
+            initialIndex={Math.max(0, EFFORTS.indexOf(loadSettings().effort ?? "default"))}
+            onSelect={selectEffort}
+            onCancel={() => setDialog(null)}
+          />
+          <Text dimColor>Saved for future turns · model support varies · esc cancel</Text>
+        </Box>
       )}
 
       {dialog?.type === "config" && (

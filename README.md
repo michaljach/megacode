@@ -59,7 +59,7 @@ Successful `edit_file` and `write_file` calls show persistent, syntax-highlighte
 | `ctrl+s`                   | send queued messages now (interrupts the running turn)        |
 | `\` + `enter`, `option+enter` | newline                                                    |
 | `↑` / `↓`                  | prompt history (saved in `~/.megacode/history.json`)          |
-| `/`                        | commands: `/model`, `/config`, `/mcp`, `/worktree`, `/login`, `/logout`, `/clear`, `/usage`, `/help`, `/exit` |
+| `/`                        | commands: `/model`, `/effort`, `/config`, `/mcp`, `/worktree`, `/login`, `/logout`, `/clear`, `/usage`, `/help`, `/exit` |
 | `?`                        | shortcut help                                                 |
 | `esc`                      | interrupt the running turn, or clear the input                |
 | `shift+tab`                | cycle permission mode: ask → accept edits → bypass (default)  |
@@ -68,7 +68,9 @@ Successful `edit_file` and `write_file` calls show persistent, syntax-highlighte
 
 ## Settings
 
-`/config` opens a menu with every setting; changes apply immediately and are saved to `~/.megacode/settings.json`.
+`/effort` opens an effort picker, or use `/effort low`, `/effort medium`, `/effort high`, or `/effort default` directly. The selection is saved to `~/.megacode/settings.json` and applies starting with the next turn (including future sessions). `default` preserves provider defaults (medium for ChatGPT). Explicit levels use OpenAI's reasoning effort, Anthropic's output effort, or Gemini's thinking level (Gemini 3) / token budget (1,024 / 8,192 / 24,576 for older models). Not every model or compatible server supports these controls or every level; use `default` if the provider rejects the setting.
+
+`/config` opens a settings menu; changes apply immediately and are saved to `~/.megacode/settings.json`.
 
 | Setting                    | Default   | Options                                       |
 | -------------------------- | --------- | --------------------------------------------- |

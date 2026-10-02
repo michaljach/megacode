@@ -53,9 +53,14 @@ export function renderFileChange(file: string, before: string, after: string): s
       const newNumber = sign === "-" || sign === "\\" ? "" : String(newLine++);
       const gutter = `${oldNumber.padStart(4)} ${newNumber.padStart(4)} ${sign}`;
       const text = stripVTControlCharacters(line.slice(1)).replace(/\t/g, "  ");
-      const code = highlightCode(text.slice(0, 240), language) + (text.length > 240 ? "…" : "");
-      const color = sign === "+" ? "green" : sign === "-" ? "red" : "dim";
-      out.push(`${styleText(color, gutter)} ${code}`);
+      const source = text.slice(0, 240) + (text.length > 240 ? "…" : "");
+      if (sign === "+" || sign === "-") {
+        // Style the entire row, not just the marker. Avoid token colors overriding
+        // the foreground and making code unreadable against the diff background.
+        out.push(styleText([sign === "+" ? "bgGreen" : "bgRed", "white"], `${gutter} ${source}`));
+      } else {
+        out.push(`${styleText("dim", gutter)} ${highlightCode(source, language)}`);
+      }
       shown++;
     }
   }

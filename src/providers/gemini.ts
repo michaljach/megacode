@@ -1,4 +1,4 @@
-import { GoogleGenAI, FinishReason, type Content, type Part } from "@google/genai";
+import { GoogleGenAI, FinishReason, ThinkingLevel, type Content, type Part } from "@google/genai";
 import type { Message, Provider, StopReason, ToolCall, TurnRequest, TurnResult } from "../types.ts";
 
 export class GeminiProvider implements Provider {
@@ -24,6 +24,11 @@ export class GeminiProvider implements Provider {
       contents: toGemini(req.messages),
       config: {
         abortSignal: req.signal,
+        ...(req.effort && req.effort !== "default" ? {
+          thinkingConfig: req.model.startsWith("gemini-3")
+            ? { thinkingLevel: { low: ThinkingLevel.LOW, medium: ThinkingLevel.MEDIUM, high: ThinkingLevel.HIGH }[req.effort] }
+            : { thinkingBudget: { low: 1024, medium: 8192, high: 24576 }[req.effort] },
+        } : {}),
         systemInstruction: req.system,
         tools: [
           {

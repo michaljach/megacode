@@ -19,6 +19,7 @@ export class AnthropicProvider implements Provider {
     const stream = this.client.messages.stream(
       {
         model: req.model,
+        ...(req.effort && req.effort !== "default" ? { output_config: { effort: req.effort } } : {}),
         max_tokens: 64000,
         system: req.system,
         cache_control: { type: "ephemeral" },
