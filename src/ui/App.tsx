@@ -1,6 +1,6 @@
 import { Box, Static, Text, useAnimation, useApp, useInput } from "ink";
 import os from "node:os";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
 import { loadAuth, loadSettings, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
 import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
@@ -463,10 +463,9 @@ export function App({
 
       {streaming.trim() && (
         <Box marginTop={firstChunk.current ? 1 : 0}>
-          <Box width={2} flexShrink={0}><Text>{firstChunk.current ? "⏺ " : "  "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <TranscriptRow prefix={<Text>{firstChunk.current ? "⏺ " : "  "}</Text>} width={2}>
             <Text>{renderMarkdown(streaming.trimEnd())}</Text>
-          </Box>
+          </TranscriptRow>
         </Box>
       )}
 
@@ -625,7 +624,7 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
       return (
         <Box marginTop={1}>
           <Box width={2} flexShrink={0}><Text dimColor>{"> "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <Box flexDirection="column" flexGrow={1} flexShrink={1} flexBasis={0} minWidth={0}>
             <Text wrap="wrap">{previewPrompt(item.text)}</Text>
           </Box>
         </Box>
@@ -633,39 +632,64 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
     case "assistant":
       return (
         <Box marginTop={item.first ? 1 : 0}>
-          <Box width={2} flexShrink={0}><Text>{item.first ? "⏺ " : "  "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <TranscriptRow prefix={<Text>{item.first ? "⏺ " : "  "}</Text>} width={2}>
             <Text>{renderMarkdown(item.text)}</Text>
-          </Box>
+          </TranscriptRow>
         </Box>
       );
     case "tool":
       return (
         <Box flexDirection="column" marginTop={1}>
-          <Text>
-            <Text color={item.isError ? "red" : "green"}>⏺</Text> <Text bold>{formatCall(item.call)}</Text>
-          </Text>
-          <Box>
-            <Text dimColor>{"  ⎿  "}</Text>
+          <TranscriptRow prefix={<Text color={item.isError ? "red" : "green"}>⏺ </Text>} width={2}>
+            <Text bold>{formatCall(item.call)}</Text>
+          </TranscriptRow>
+          <TranscriptRow prefix={<Text dimColor>{"  ⎿  "}</Text>} width={5}>
             <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
               {previewOutput(item.output) || "(no output)"}
             </Text>
-          </Box>
+          </TranscriptRow>
           {!item.isError && item.changePreview && (
-            <Box marginLeft={5}><Text>{item.changePreview}</Text></Box>
+            <Box marginLeft={5} flexDirection="column"><DiffPreview text={item.changePreview} /></Box>
           )}
         </Box>
       );
     case "notice":
       return (
         <Box marginTop={1}>
-          <Text color={item.level === "error" ? "red" : item.level === "warn" ? "yellow" : undefined} dimColor={item.level === "info"}>
-            {"  ⎿  "}
-            {item.text}
-          </Text>
+          <TranscriptRow prefix={<Text dimColor>{"  ⎿  "}</Text>} width={5}>
+            <Text color={item.level === "error" ? "red" : item.level === "warn" ? "yellow" : undefined} dimColor={item.level === "info"}>
+              {item.text}
+            </Text>
+          </TranscriptRow>
         </Box>
       );
   }
+}
+
+/** Keep prefixes out of the text's wrapping width, including on continuation lines. */
+function TranscriptRow({ prefix, width, children }: { prefix: ReactNode; width: number; children: ReactNode }) {
+  return (
+    <Box>
+      <Box width={width} flexShrink={0}>{prefix}</Box>
+      <Box flexDirection="column" flexGrow={1} flexShrink={1} flexBasis={0} minWidth={0}>
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+function DiffPreview({ text }: { text: string }) {
+  return text.split("\n").map((line, i) => {
+    // renderFileChange emits two padded line numbers and a sign, with an optional
+    // ANSI style around the gutter. Keep its styling separate from highlighted code.
+    const row = line.match(/^((?:\u001b\[[\d;]*m)*[ \d]{4,} [ \d]{4,} [ +\\-](?:\u001b\[[\d;]*m)* )([\s\S]*)$/);
+    if (!row) return <Text key={i}>{line}</Text>;
+    return (
+      <TranscriptRow key={i} prefix={<Text>{row[1]}</Text>} width={row[1]!.replace(/\u001b\[[\d;]*m/g, "").length}>
+        <Text>{row[2]}</Text>
+      </TranscriptRow>
+    );
+  });
 }
 
 const FRAMES = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
