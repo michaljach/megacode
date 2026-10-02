@@ -553,7 +553,7 @@ export function App({
             isActive
             history={history}
             commands={COMMANDS}
-            placeholder={running ? "Queue a message for when megacode finishes (enter to queue · ctrl+s to send now)" : 'Try "explain this codebase" or "fix the failing test"'}
+            placeholder={running ? "Queue a message for when megacode finishes (enter to queue · ctrl+s to send now)" : 'tiny moon vibes'}
           />
           <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
           {showHelp && <Help />}
