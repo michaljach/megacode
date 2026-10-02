@@ -567,7 +567,7 @@ export function App({
   );
 }
 
-function ItemView({ item, model }: { item: Item; model: string }) {
+export function ItemView({ item, model }: { item: Item; model: string }) {
   switch (item.kind) {
     case "banner":
       return (
@@ -585,8 +585,10 @@ function ItemView({ item, model }: { item: Item; model: string }) {
     case "user":
       return (
         <Box marginTop={1}>
-          <Text dimColor>{"> "}</Text>
-          <Text>{item.text}</Text>
+          <Box width={2} flexShrink={0}><Text dimColor>{"> "}</Text></Box>
+          <Box flexGrow={1} flexShrink={1} minWidth={0}>
+            <Text wrap="wrap">{item.text}</Text>
+          </Box>
         </Box>
       );
     case "assistant":

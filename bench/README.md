@@ -47,16 +47,50 @@ For a fair comparison:
 
 Run date: 2026-10-02. Both harnesses used the ChatGPT subscription / Responses API backend, model `gpt-6-astra`, and medium reasoning. Codex CLI version: `0.153.0`. The megacode results are the existing run; Codex was run afterward on the same fixtures and prompts with the same independent grader.
 
-| Harness | Task | Checks passed | Input tokens | Output tokens | Model steps | Tool calls | Time |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| megacode | range-parser | 5/5 | 7,400 | 1,084 | 7 | 6 | 57.8s |
-| Codex | range-parser | 5/5 | 60,997 | 1,253 | — | — | 60.6s |
-| megacode | inventory-transaction | 6/6 | 9,502 | 1,891 | 7 | 6 | 66.9s |
-| Codex | inventory-transaction | 6/6 | 74,837 | 2,206 | — | — | 100.6s |
-| megacode | log-recovery | 4/4 | 27,656 | 1,148 | 8 | 7 | 63.8s |
-| Codex | log-recovery | 4/4 | 86,611 | 1,273 | — | — | 69.1s |
-| **megacode** | **Total** | **15/15** | **44,558** | **4,123** | **22** | **19** | **188.4s** |
-| **Codex** | **Total** | **15/15** | **222,445** | **4,732** | **—** | **—** | **230.3s** |
+### At a glance
+
+> **Single-run smoke comparison, not a leaderboard.** Both harnesses solved all three tasks. Cache warmth was not controlled, and input tokens include cached context—not dollar cost.
+
+| Harness | Tasks passed ↑ | Checks passed ↑ | Total time ↓ | Input tokens¹ | Output tokens | Runs per task |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **megacode** | **3/3 (100%)** | **15/15** | 188.4s | 44,558 | 4,123 | 1 |
+| **Codex** | **3/3 (100%)** | **15/15** | 230.3s | 222,445 | 4,732 | 1 |
+
+↑ Higher is better · ↓ Lower is better · **—** Not reported (not zero). Totals use unrounded timings.
+
+In these runs, megacode used **18.2% less elapsed time** and reported **80.0% fewer input tokens** than Codex, with the same check pass count. These are observations from this sample, not expected speed or cost savings.
+
+### Task-by-task comparison
+
+Each task groups the same metrics side by side; add a harness column for future comparisons.
+
+| Task | Metric | megacode | Codex |
+| :--- | :--- | ---: | ---: |
+| **range-parser** | Checks passed ↑ | **5/5** | **5/5** |
+| | Time ↓ | 57.8s | 60.6s |
+| | Input tokens¹ | 7,400 | 60,997 |
+| | Output tokens | 1,084 | 1,253 |
+| **inventory-transaction** | Checks passed ↑ | **6/6** | **6/6** |
+| | Time ↓ | 66.9s | 100.6s |
+| | Input tokens¹ | 9,502 | 74,837 |
+| | Output tokens | 1,891 | 2,206 |
+| **log-recovery** | Checks passed ↑ | **4/4** | **4/4** |
+| | Time ↓ | 63.8s | 69.1s |
+| | Input tokens¹ | 27,656 | 86,611 |
+| | Output tokens | 1,148 | 1,273 |
+
+### Harness-specific diagnostics
+
+These counters are not standardized across harnesses; missing values are deliberately left blank of any inferred count.
+
+| Harness | Model steps | Tool calls | Cached input tokens¹ | Timeouts |
+| :--- | ---: | ---: | ---: | ---: |
+| megacode | 22 | 19 | — | 0 |
+| Codex | — | — | 195,840 | 0 |
+
+¹ Input includes repeated context and any reported cached input. Codex's cached input is included in its total; megacode did not record cache usage separately. Token totals do not establish relative cost.
+
+For future harnesses, add a row to the summary and diagnostics and a column to the task comparison. Record the version, backend, model, reasoning settings, and repeat count alongside each comparison; use **—** for unavailable metrics rather than estimating them.
 
 Both task pass rates: **3/3**. All agent processes exited successfully, with no timeouts. Codex reported no error/failed events. Unmodified baseline: **0/3 tasks**, 1/15 checks (only catalog preservation already passed). Totals use unrounded timings.
 
