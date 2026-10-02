@@ -19,6 +19,12 @@ export function formatCall(c: ToolCall): string {
   return `${label}(${arg.length > 80 ? arg.slice(0, 80) + "…" : arg})`;
 }
 
+/** Display-only prompt preview; queued/sent prompts and history retain the full text. */
+export function previewPrompt(text: string): string {
+  const chars = Array.from(text.replace(/\r\n|[\r\n]/g, " ⏎ ").replace(/\t/g, " "));
+  return chars.length > 200 ? chars.slice(0, 199).join("") + "…" : chars.join("");
+}
+
 /** First few lines of tool output for the transcript. */
 export function previewOutput(output: string, lines = 3): string {
   const all = output.trimEnd().split("\n");

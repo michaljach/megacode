@@ -79,6 +79,13 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
     return i;
   };
 
+  const wordEnd = () => {
+    let i = cursor;
+    while (i < value.length && /\s/.test(value[i]!)) i++;
+    while (i < value.length && !/\s/.test(value[i]!)) i++;
+    return i;
+  };
+
   const submit = (text: string) => {
     historyPos.current = -1;
     onSubmit(text);
@@ -109,7 +116,10 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
         if (menu.length) return setMenuIndex((i) => (i + 1) % menu.length);
         return onLastLine ? browseHistory(1) : moveVertical(1);
       }
-      if (key.leftArrow || (key.ctrl && input === "b")) return setCursor(key.meta ? wordStart() : Math.max(0, cursor - 1));
+      // Some terminals send Option+arrows as readline's Escape+b / Escape+f.
+      if (key.meta && (key.leftArrow || input === "b")) return setCursor(wordStart());
+      if (key.meta && (key.rightArrow || input === "f")) return setCursor(wordEnd());
+      if (key.leftArrow || (key.ctrl && input === "b")) return setCursor(Math.max(0, cursor - 1));
       if (key.rightArrow || (key.ctrl && input === "f")) return setCursor(Math.min(value.length, cursor + 1));
       if (key.home || (key.ctrl && input === "a")) return setCursor(lineStart);
       if (key.end || (key.ctrl && input === "e")) return setCursor(lineEnd);

@@ -9,7 +9,7 @@ import type { ToolCall } from "../types.ts";
 import { mcp } from "../mcp.ts";
 import { mainRoot, openWorktree, removeWorktree, type Worktree } from "../worktree.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
-import { formatCall, lastSafeBreak, previewOutput, renderMarkdown } from "./format.ts";
+import { formatCall, lastSafeBreak, previewOutput, previewPrompt, renderMarkdown } from "./format.ts";
 import { loadHistory, saveHistory } from "./history.ts";
 import { LoginDialog } from "./LoginDialog.tsx";
 import { McpMenu } from "./McpMenu.tsx";
@@ -63,6 +63,7 @@ const SHORTCUTS: [string, string][] = [
   ["ctrl+s", "send queued messages now (interrupts the running turn)"],
   ["\\ + enter, option+enter", "newline"],
   ["↑ / ↓", "prompt history"],
+  ["alt+← / alt+→", "move cursor by word"],
   ["/", "commands"],
   ["esc", "interrupt · clear input"],
   ["shift+tab", "cycle permission mode"],
@@ -537,7 +538,7 @@ export function App({
           {queued.map((q, i) => (
             <Text key={i} dimColor wrap="wrap">
               {"⏳ "}
-              {q.replace(/\n/g, " ⏎ ")}
+              {previewPrompt(q)}
               {" (ctrl+s to send now)"}
             </Text>
           ))}
@@ -586,7 +587,7 @@ function ItemView({ item, model }: { item: Item; model: string }) {
       return (
         <Box marginTop={1}>
           <Text dimColor>{"> "}</Text>
-          <Text>{item.text}</Text>
+          <Text>{previewPrompt(item.text)}</Text>
         </Box>
       );
     case "assistant":
