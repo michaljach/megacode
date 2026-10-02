@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
 import { loadAuth, loadSettings, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
 import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
+import { providerUsage } from "../providers/usage.ts";
 import type { Approve } from "../tools.ts";
 import type { ToolCall } from "../types.ts";
 import { mcp } from "../mcp.ts";
@@ -50,7 +51,7 @@ const COMMANDS: Command[] = [
   { name: "/mcp", description: "Manage MCP servers (add, remove, reconnect, see tools)" },
   { name: "/worktree", description: "Create or switch git worktrees (or /worktree name)" },
   { name: "/clear", description: "Clear conversation history and screen" },
-  { name: "/usage", description: "Show token usage for this session" },
+  { name: "/usage", description: "Fetch current provider's account usage and limits" },
   { name: "/help", description: "Show commands and keyboard shortcuts" },
   { name: "/exit", description: "Exit megacode" },
 ];
@@ -281,8 +282,15 @@ export function App({
         return quit();
       case "/help":
         return setShowHelp(true);
-      case "/usage":
-        return notice(`Tokens this session: ${agent.usage.input.toLocaleString()} in · ${agent.usage.output.toLocaleString()} out`);
+      case "/usage": {
+        const provider = providerOf(model);
+        notice(`Fetching ${providerInfo(provider).label} usage…`);
+        void providerUsage(provider).then(
+          (text) => notice(text),
+          (error: unknown) => notice(`${providerInfo(provider).label}: ${error instanceof Error ? error.message : "Unable to fetch usage."}`, "error"),
+        );
+        return;
+      }
       case "/clear":
         if (running) return notice("Can't clear while a turn is running (esc to interrupt).", "warn");
         agent.clear();
