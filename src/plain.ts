@@ -2,22 +2,21 @@ import { createInterface } from "node:readline/promises";
 import { styleText } from "node:util";
 import type { Agent } from "./agent.ts";
 import type { PermissionMode } from "./config.ts";
-import { isConfigured, PROVIDERS, providerInfo } from "./providers/index.ts";
-import type { Approve } from "./tools.ts";
+import { needsLogin, providerInfo, providerOf } from "./providers/index.ts";
+import { autoApproved, type Approve } from "./tools/index.ts";
 import { formatCall, previewOutput } from "./ui/format.ts";
 
 /** Non-interactive mode for one-shot prompts and pipes: prints the transcript as plain text. */
 export async function runPlain(agent: Agent, prompt: string, mode: PermissionMode): Promise<number> {
-  const provider = agent.model.split(":")[0]!;
-  if (PROVIDERS.includes(provider) && !isConfigured(provider)) {
-    const info = providerInfo(provider);
+  if (needsLogin(agent.model)) {
+    const info = providerInfo(providerOf(agent.model));
     const env = info.env[0] ? ` or set $${info.env[0]}` : "";
     console.error(`Not logged in to ${info.label}. Run megacode and use /login${env}.`);
     return 1;
   }
   const rl = process.stdin.isTTY ? createInterface({ input: process.stdin, output: process.stdout }) : null;
   const approve: Approve = async ({ tool, title, body }) => {
-    if (mode === "yolo" || (mode === "accept-edits" && (tool === "write_file" || tool === "edit_file"))) return true;
+    if (autoApproved(mode, tool)) return true;
     if (!rl) return false;
     console.log(styleText("yellow", `${title}\n${body}`));
     return (await rl.question(styleText("yellow", "Allow? [y/N] "))).trim().toLowerCase() === "y";

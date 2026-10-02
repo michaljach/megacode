@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { callbackServer } from '../src/oauth.ts';
+import { callbackServer } from '../src/auth/oauth.ts';
 
 test('OAuth error pages escape attacker-controlled HTML', async (t) => {
   const server = await callbackServer({ port: 0, path: '/callback', state: 'expected', signal: new AbortController().signal });

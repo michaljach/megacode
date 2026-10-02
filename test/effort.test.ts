@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { AnthropicProvider } from "./providers/anthropic.ts";
-import { GeminiProvider } from "./providers/gemini.ts";
-import { OpenAIProvider } from "./providers/openai.ts";
-import { EFFORTS, type TurnRequest } from "./types.ts";
+import { AnthropicProvider } from "../src/providers/anthropic.ts";
+import { GeminiProvider } from "../src/providers/gemini.ts";
+import { OpenAIProvider } from "../src/providers/openai.ts";
+import { EFFORTS, type TurnRequest } from "../src/types.ts";
 
 const request: TurnRequest = {
   model: "test", system: "test", messages: [], tools: [],

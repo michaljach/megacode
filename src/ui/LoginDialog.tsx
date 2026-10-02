@@ -1,7 +1,7 @@
-import { Box, Text, useAnimation, useInput } from "ink";
+import { Box, Text, useInput } from "ink";
 import { useRef, useState } from "react";
 import { loadAuth, saveAuth } from "../config.ts";
-import { loginAnthropicCLI, loginChatGPT, loginOpenRouter } from "../login.ts";
+import { loginAnthropicCLI, loginChatGPT, loginOpenRouter } from "../auth/login.ts";
 import {
   authStatus,
   createProvider,
@@ -12,6 +12,7 @@ import {
   resetProvider,
 } from "../providers/index.ts";
 import { Select } from "./Select.tsx";
+import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
 
 type Step = "pick" | "method" | "url" | "key" | "browser" | "verifying";
@@ -262,21 +263,28 @@ export function LoginDialog({
   );
 }
 
+/** /logout: pick which saved credentials to remove. */
+export function LogoutDialog({ onSelect, onCancel }: { onSelect: (provider: string) => void; onCancel: () => void }) {
+  return (
+    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
+      <Text bold>Remove saved credentials</Text>
+      <Box marginTop={1}>
+        <Select
+          options={Object.keys(loadAuth()).map((n) => ({ label: providerInfo(n).label, value: n, hint: authStatus(n) }))}
+          onSelect={onSelect}
+          onCancel={onCancel}
+        />
+      </Box>
+    </Box>
+  );
+}
+
 const stepFor = (name: string): Step => {
   const methods = providerInfo(name).methods;
   return methods.length > 1 ? "method" : methods[0] === "url" ? "url" : "key";
 };
 
 const defaultURL = (name: string) => loadAuth()[name]?.baseURL ?? providerInfo(name).baseURL ?? "";
-
-function Waiting({ text }: { text: string }) {
-  const { frame } = useAnimation({ interval: 100 });
-  return (
-    <Text>
-      <Text color="cyan">{"⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[frame % 10]}</Text> {text}
-    </Text>
-  );
-}
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timed out")), ms))]);

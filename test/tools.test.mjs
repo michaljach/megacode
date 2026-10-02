@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { executeTool } from '../src/tools.ts';
+import { executeTool } from '../src/tools/index.ts';
 import { loadSettings } from '../src/config.ts';
 
 const allow = async () => true;

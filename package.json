@@ -33,7 +33,7 @@
     "start": "tsx src/cli.tsx",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc",
-    "test": "node --import tsx --test src/*.test.ts test/*.test.mjs",
+    "test": "node --import tsx --test test/*.test.ts test/*.test.mjs",
     "bench": "tsx bench/run.ts",
     "prepublishOnly": "npm test && npm run typecheck && npm run build"
   },

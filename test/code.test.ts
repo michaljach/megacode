@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { execFileSync } from "node:child_process";
 import { stripVTControlCharacters as plain } from "node:util";
-import { fileLanguage, highlightCode, renderFileChange } from "./code.ts";
-import { lastSafeBreak, renderMarkdown } from "./ui/format.ts";
+import { fileLanguage, highlightCode, renderFileChange } from "../src/code.ts";
+import { lastSafeBreak, renderMarkdown } from "../src/ui/format.ts";
 
 test("language lookup and plain fallback preserve source", () => {
   assert.equal(fileLanguage("src/App.tsx"), "typescript");

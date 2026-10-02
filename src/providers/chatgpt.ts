@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import OpenAI from "openai";
 import { loadAuth, saveAuth, type ChatGPTTokens } from "../config.ts";
-import { callbackServer, jwtClaims, openBrowser, pkce } from "../oauth.ts";
+import { callbackServer, jwtClaims, openBrowser, pkce } from "../auth/oauth.ts";
 import type { Message, Provider, StopReason, ToolCall, TurnRequest, TurnResult } from "../types.ts";
 
 // "Sign in with ChatGPT": the OAuth client and backend used by OpenAI's Codex CLI
@@ -85,6 +85,23 @@ async function currentTokens(force = false): Promise<ChatGPTTokens> {
   auth.openai = { ...auth.openai, chatgpt: refreshed };
   saveAuth(auth);
   return refreshed;
+}
+
+/** Live subscription limits from the same backend used by Codex. */
+export async function chatGPTUsage(): Promise<unknown> {
+  const signal = AbortSignal.timeout(15_000);
+  const url = `${BASE_URL.replace(/\/codex\/?$/, "")}/wham/usage`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const t = await currentTokens(attempt > 0);
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${t.access}`, "ChatGPT-Account-ID": t.accountId, originator: ORIGINATOR },
+      signal,
+    });
+    if (res.status === 401 && attempt === 0) continue;
+    if (!res.ok) throw new Error(`Usage request failed (HTTP ${res.status}).${res.status === 401 || res.status === 403 ? " Run /login to update credentials." : ""}`);
+    return res.json();
+  }
+  throw new Error("Unable to fetch ChatGPT usage.");
 }
 
 /** OpenAI models through a ChatGPT subscription, via the Responses API. */

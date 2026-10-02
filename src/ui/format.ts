@@ -1,3 +1,4 @@
+import os from "node:os";
 import { styleText } from "node:util";
 import { highlightCode } from "../code.ts";
 import type { ToolCall } from "../types.ts";
@@ -19,6 +20,9 @@ export function formatCall(c: ToolCall): string {
   const label = mcp ? `${mcp[1]} · ${mcp[2]} (MCP)` : (TOOL_LABELS[c.name] ?? c.name);
   return `${label}(${arg.length > 80 ? arg.slice(0, 80) + "…" : arg})`;
 }
+
+/** Shortens paths under the home directory to ~/… for display. */
+export const tildify = (p: string) => p.replace(os.homedir(), "~");
 
 /** Display-only prompt preview; queued/sent prompts and history retain the full text. */
 export function previewPrompt(text: string): string {

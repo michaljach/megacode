@@ -1,33 +1,34 @@
-import { Box, Static, Text, useAnimation, useApp, useInput } from "ink";
-import os from "node:os";
+import { Box, Static, Text, useApp, useInput } from "ink";
 import { useEffect, useRef, useState } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
 import { loadAuth, loadSettings, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
-import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
-import type { Approve } from "../tools.ts";
-import { EFFORTS, type Effort, type ToolCall } from "../types.ts";
 import { mcp } from "../mcp.ts";
+import { isConfigured, needsLogin, PROVIDER_INFO, PROVIDERS, providerInfo, providerOf, resetProvider } from "../providers/index.ts";
+import { providerUsage } from "../providers/usage.ts";
+import { autoApproved, EDIT_TOOLS, type Approve } from "../tools/index.ts";
+import type { Answer, Question } from "../tools/questions.ts";
+import { EFFORTS, type Effort, type ToolCall } from "../types.ts";
 import { mainRoot, openWorktree, removeWorktree, type Worktree } from "../worktree.ts";
+import { ApprovalDialog, type ApprovalChoice, type ApprovalRequest } from "./ApprovalDialog.tsx";
+import { COMMANDS, isCommand } from "./commands.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
-import { formatCall, lastSafeBreak, previewOutput, previewPrompt, renderMarkdown } from "./format.ts";
+import { previewPrompt } from "./format.ts";
+import { Help } from "./Help.tsx";
 import { loadHistory, saveHistory } from "./history.ts";
-import { LoginDialog } from "./LoginDialog.tsx";
+import { usePromptSuggestion, useStreamedText } from "./hooks.ts";
+import { LoginDialog, LogoutDialog } from "./LoginDialog.tsx";
 import { McpMenu } from "./McpMenu.tsx";
 import { ModelPicker } from "./ModelPicker.tsx";
-import { PromptInput, type Command } from "./PromptInput.tsx";
+import { PromptInput } from "./PromptInput.tsx";
+import { Questionnaire } from "./Questionnaire.tsx";
 import { Select } from "./Select.tsx";
+import { Spinner } from "./Spinner.tsx";
+import { StatusLine } from "./StatusLine.tsx";
+import { AssistantText, ItemView, RunningTool, type Item, type NoticeLevel } from "./Transcript.tsx";
 import { ExitWorktreeDialog, WorktreeMenu } from "./WorktreeMenu.tsx";
-
-type Item =
-  | { kind: "banner" }
-  | { kind: "user"; text: string }
-  | { kind: "assistant"; text: string; first: boolean }
-  | { kind: "tool"; call: ToolCall; output: string; isError: boolean; changePreview?: string }
-  | { kind: "notice"; text: string; level: "info" | "warn" | "error" };
 
 type Mode = PermissionMode;
 const MODES: Mode[] = ["ask", "accept-edits", "yolo"];
-const EDIT_TOOLS = new Set(["write_file", "edit_file"]);
 
 type Dialog =
   | { type: "model"; query?: string }
@@ -38,41 +39,6 @@ type Dialog =
   | { type: "worktree" }
   | { type: "mcp" }
   | { type: "exit-worktree" };
-
-type ApprovalRequest = Parameters<Approve>[0] & { resolve: (ok: boolean) => void };
-
-const COMMANDS: Command[] = [
-  { name: "/model", description: "Switch model (or /model provider:model)" },
-  { name: "/effort", description: "Change model effort (default, low, medium, high)" },
-  { name: "/login", description: "Connect a provider (API key or local server)" },
-  { name: "/logout", description: "Remove saved credentials" },
-  { name: "/config", description: "View and change settings" },
-  { name: "/mcp", description: "Manage MCP servers (add, remove, reconnect, see tools)" },
-  { name: "/worktree", description: "Create or switch git worktrees (or /worktree name)" },
-  { name: "/clear", description: "Clear conversation history and screen" },
-  { name: "/usage", description: "Show token usage for this session" },
-  { name: "/help", description: "Show commands and keyboard shortcuts" },
-  { name: "/exit", description: "Exit megacode" },
-];
-
-function isCommand(text: string): boolean {
-  const name = text.split(/\s+/, 1)[0];
-  return name === "/quit" || name === "/settings" || COMMANDS.some((command) => command.name === name);
-}
-
-const SHORTCUTS: [string, string][] = [
-  ["enter", "send message (queued while running)"],
-  ["ctrl+s", "send queued messages now (interrupts the running turn)"],
-  ["\\ + enter, option+enter", "newline"],
-  ["↑ / ↓", "prompt history"],
-  ["alt+← / alt+→", "move cursor by word"],
-  ["/", "commands"],
-  ["esc", "interrupt · clear input"],
-  ["shift+tab", "cycle permission mode"],
-  ["ctrl+a / ctrl+e", "start / end of line"],
-  ["ctrl+u / ctrl+k / ctrl+w", "delete to start / end / word"],
-  ["ctrl+c", "interrupt · clear · exit (twice)"],
-];
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
 
@@ -96,10 +62,10 @@ export function App({
   const [worktree, setWorktree] = useState<Worktree | null>(initialWorktree);
   const [items, setItems] = useState<Item[]>([{ kind: "banner" }]);
   const [epoch, setEpoch] = useState(0); // bump to remount <Static> after /clear
-  const [streaming, setStreaming] = useState("");
   const [running, setRunning] = useState(false);
   const [activeTool, setActiveTool] = useState<ToolCall | null>(null);
   const [approval, setApproval] = useState<ApprovalRequest | null>(null);
+  const [questionnaire, setQuestionnaire] = useState<{ questions: Question[]; resolve: (answers: Answer[] | null) => void } | null>(null);
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
     PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name)) ? null : { type: "login", welcome: true },
@@ -114,51 +80,42 @@ export function App({
   const [exitArmed, setExitArmed] = useState(false);
   const [model, setModel] = useState(agent.model);
   const [history, setHistory] = useState(loadHistory);
+  const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
+  const [completedTurn, setCompletedTurn] = useState(0);
+  const suggestion = usePromptSuggestion(agent, { enabled: autocomplete, running, completedTurn, epoch, model });
 
   const controller = useRef<AbortController | null>(null);
   const denied = useRef(false);
   const sendNow = useRef(false); // interrupted with ctrl+s: run the queue instead of handing it back
-  const buffer = useRef(""); // streamed text not yet moved into <Static>
-  const firstChunk = useRef(true);
-  const flushTimer = useRef<NodeJS.Timeout | null>(null);
   const modeRef = useRef(mode);
   modeRef.current = mode;
   const alwaysAllow = useRef(new Set<string>());
   const verb = useRef(VERBS[0]!);
 
   const push = (...add: Item[]) => setItems((prev) => [...prev, ...add]);
-  const notice = (text: string, level: "info" | "warn" | "error" = "info") => push({ kind: "notice", text, level });
-
-  // Move finished paragraphs of streamed text into <Static> so the live area stays short.
-  const flush = (all: boolean) => {
-    flushTimer.current = null;
-    const text = buffer.current;
-    const cut = all ? text.length : lastSafeBreak(text);
-    if (cut > 0 && text.slice(0, cut).trim()) {
-      push({ kind: "assistant", text: text.slice(0, cut).trim(), first: firstChunk.current });
-      firstChunk.current = false;
-    }
-    buffer.current = cut > 0 ? text.slice(cut) : text;
-    setStreaming(buffer.current);
-  };
+  const notice = (text: string, level: NoticeLevel = "info") => push({ kind: "notice", text, level });
+  const stream = useStreamedText((text, first) => push({ kind: "assistant", text, first }));
 
   const approve: Approve = (req) => {
-    if (modeRef.current === "yolo" || alwaysAllow.current.has(req.tool)) return Promise.resolve(true);
-    if (modeRef.current === "accept-edits" && EDIT_TOOLS.has(req.tool)) return Promise.resolve(true);
+    if (autoApproved(modeRef.current, req.tool) || alwaysAllow.current.has(req.tool)) return Promise.resolve(true);
     return new Promise((resolve) => setApproval({ ...req, resolve }));
   };
 
   const events: AgentEvents = {
     approve,
-    onText(delta) {
-      buffer.current += delta;
-      flushTimer.current ??= setTimeout(() => flush(false), 40);
-    },
-    onStepEnd() {
-      if (flushTimer.current) clearTimeout(flushTimer.current);
-      flush(true);
-      firstChunk.current = true;
-    },
+    askQuestions: (questions, signal) => new Promise((resolve) => {
+      if (signal?.aborted) return resolve(null);
+      const finish = (answers: Answer[] | null) => {
+        signal?.removeEventListener("abort", abort);
+        setQuestionnaire(null);
+        resolve(answers);
+      };
+      const abort = () => finish(null);
+      signal?.addEventListener("abort", abort, { once: true });
+      setQuestionnaire({ questions, resolve: finish });
+    }),
+    onText: stream.append,
+    onStepEnd: stream.end,
     onToolStart: (call) => setActiveTool(call),
     onToolEnd(call, r) {
       setActiveTool(null);
@@ -167,11 +124,9 @@ export function App({
     onNotice: notice,
   };
 
-  const providerOf = (spec: string) => spec.split(":")[0]!;
-
   async function run(text: string) {
     const provider = providerOf(agent.model);
-    if (PROVIDERS.includes(provider) && !isConfigured(provider)) {
+    if (needsLogin(agent.model)) {
       setValue(text);
       notice(`Not logged in to ${providerInfo(provider).label}.`, "warn");
       return setDialog({ type: "login", provider });
@@ -185,9 +140,9 @@ export function App({
     let interrupted = false;
     try {
       await agent.send(text, ctrl.signal, events);
+      if (!ctrl.signal.aborted) setCompletedTurn((n) => n + 1);
     } catch (e) {
-      if (flushTimer.current) clearTimeout(flushTimer.current);
-      flush(true);
+      stream.end();
       interrupted = ctrl.signal.aborted;
       if (denied.current) notice("Denied. Tell megacode what to do instead.", "warn");
       else if (interrupted && sendNow.current) notice("Interrupted to send queued messages.");
@@ -196,7 +151,6 @@ export function App({
         notice(`${providerInfo(provider).label} rejected the credentials. Run /login to update them.`, "error");
       else notice((e as Error).message, "error");
     } finally {
-      firstChunk.current = true;
       controller.current = null;
       setActiveTool(null);
       setRunning(false);
@@ -229,7 +183,7 @@ export function App({
     interrupt();
   }
 
-  function answerApproval(choice: "yes" | "always" | "no") {
+  function answerApproval(choice: ApprovalChoice) {
     if (!approval) return;
     if (choice === "always") {
       if (EDIT_TOOLS.has(approval.tool)) setMode("accept-edits");
@@ -252,8 +206,15 @@ export function App({
         return quit();
       case "/help":
         return setShowHelp(true);
-      case "/usage":
-        return notice(`Tokens this session: ${agent.usage.input.toLocaleString()} in · ${agent.usage.output.toLocaleString()} out`);
+      case "/usage": {
+        const provider = providerOf(model);
+        notice(`Fetching ${providerInfo(provider).label} usage…`);
+        void providerUsage(provider).then(
+          (text) => push({ kind: "notice", text, level: "info", bright: true }),
+          (error: unknown) => notice(`${providerInfo(provider).label}: ${error instanceof Error ? error.message : "Unable to fetch usage."}`, "error"),
+        );
+        return;
+      }
       case "/clear":
         if (running) return notice("Can't clear while a turn is running (esc to interrupt).", "warn");
         agent.clear();
@@ -379,6 +340,7 @@ export function App({
 
   function changeSettings(patch: Partial<Settings>) {
     updateSettings(patch);
+    if (patch.promptAutocomplete !== undefined) setAutocomplete(patch.promptAutocomplete);
     if (patch.permissionMode) setMode(patch.permissionMode);
     if (patch.projectInstructions !== undefined) agent.reloadSystemPrompt();
   }
@@ -425,7 +387,7 @@ export function App({
       return;
     }
     if (key.ctrl && input === "d" && !value && !running) return quit();
-    if (approval || picker) return; // those dialogs handle their own keys
+    if (approval || questionnaire || picker) return; // those dialogs handle their own keys
     if (key.ctrl && input === "s") return sendQueuedNow();
     if (key.escape) {
       if (running) return interrupt();
@@ -437,53 +399,19 @@ export function App({
 
   return (
     <Box flexDirection="column">
-      <Static key={epoch} items={items}>
+      <Static key={epoch} items={items} style={{ width: "100%" }}>
         {(item, i) => <ItemView key={i} item={item} model={model} />}
       </Static>
 
-      {streaming.trim() && (
-        <Box marginTop={firstChunk.current ? 1 : 0}>
-          <Box width={2} flexShrink={0}><Text>{firstChunk.current ? "⏺ " : "  "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
-            <Text>{renderMarkdown(streaming.trimEnd())}</Text>
-          </Box>
-        </Box>
+      {stream.streaming.trim() && <AssistantText text={stream.streaming.trimEnd()} first={stream.first} />}
+
+      {activeTool && !approval && !questionnaire && <RunningTool call={activeTool} />}
+
+      {questionnaire && (
+        <Questionnaire questions={questionnaire.questions} onSubmit={questionnaire.resolve} onCancel={interrupt} />
       )}
 
-      {activeTool && !approval && (
-        <Box flexDirection="column" marginTop={1}>
-          <Text>
-            <Blink /> <Text bold>{formatCall(activeTool)}</Text>
-          </Text>
-          <Text dimColor>{"  ⎿  Running…"}</Text>
-        </Box>
-      )}
-
-      {approval && (
-        <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1} marginTop={1}>
-          <Text bold color="yellow">
-            {approval.title}
-          </Text>
-          <Box paddingLeft={2} marginY={1}>
-            <Text>{approval.body}</Text>
-          </Box>
-          <Text>Do you want to proceed?</Text>
-          <Select
-            options={[
-              { label: "Yes", value: "yes" as const },
-              {
-                label: EDIT_TOOLS.has(approval.tool)
-                  ? "Yes, allow all edits this session"
-                  : `Yes, and don't ask again for ${approval.tool} this session`,
-                value: "always" as const,
-              },
-              { label: "No, and tell megacode what to do differently", value: "no" as const, hint: "(esc)" },
-            ]}
-            onSelect={answerApproval}
-            onCancel={() => answerApproval("no")}
-          />
-        </Box>
-      )}
+      {approval && <ApprovalDialog request={approval} onAnswer={answerApproval} />}
 
       {dialog?.type === "model" && (
         <ModelPicker
@@ -516,6 +444,7 @@ export function App({
           <Text dimColor>Saved for future turns · model support varies · esc cancel</Text>
         </Box>
       )}
+      {dialog?.type === "logout" && <LogoutDialog onSelect={logout} onCancel={() => setDialog(null)} />}
 
       {dialog?.type === "config" && (
         <ConfigMenu
@@ -543,20 +472,7 @@ export function App({
         <ExitWorktreeDialog worktree={worktree} onSelect={exitWorktree} onCancel={() => setDialog(null)} />
       )}
 
-      {dialog?.type === "logout" && (
-        <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-          <Text bold>Remove saved credentials</Text>
-          <Box marginTop={1}>
-            <Select
-              options={Object.keys(loadAuth()).map((n) => ({ label: providerInfo(n).label, value: n, hint: authStatus(n) }))}
-              onSelect={logout}
-              onCancel={() => setDialog(null)}
-            />
-          </Box>
-        </Box>
-      )}
-
-      {running && !approval && <Spinner verb={verb.current} />}
+      {running && !approval && !questionnaire && <Spinner verb={verb.current} />}
 
       {queued.length > 0 && (
         <Box flexDirection="column" marginTop={1} paddingX={2}>
@@ -570,7 +486,7 @@ export function App({
         </Box>
       )}
 
-      {!picker && !approval && (
+      {!picker && !approval && !questionnaire && (
         <Box marginTop={1} flexDirection="column">
           <PromptInput
             value={value}
@@ -582,162 +498,15 @@ export function App({
             onHelp={() => setShowHelp((s) => !s)}
             isActive
             history={history}
+            autocomplete={autocomplete && !running}
+            suggestion={suggestion}
             commands={COMMANDS}
-            placeholder={running ? "queue another message..." : 'tiny moon vibes'}
+            placeholder={running ? "queue another message..." : "tiny moon vibes"}
           />
-          <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
+          <StatusLine mode={mode} model={model} loggedIn={!needsLogin(model)} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
           {showHelp && <Help />}
         </Box>
       )}
-    </Box>
-  );
-}
-
-export function ItemView({ item, model }: { item: Item; model: string }) {
-  switch (item.kind) {
-    case "banner":
-      return (
-        <Box borderStyle="round" borderColor="cyan" paddingX={1} flexDirection="column" alignSelf="flex-start">
-          <Text>
-            <Text color="cyan">✻</Text> Welcome to <Text bold>megacode</Text>
-          </Text>
-          <Text dimColor>/help for commands · ? for shortcuts</Text>
-          <Text dimColor>
-            model: {model}
-            {"\n"}cwd: {process.cwd()}
-          </Text>
-        </Box>
-      );
-    case "user":
-      return (
-        <Box marginTop={1}>
-          <Box width={2} flexShrink={0}><Text dimColor>{"> "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
-            <Text wrap="wrap">{previewPrompt(item.text)}</Text>
-          </Box>
-        </Box>
-      );
-    case "assistant":
-      return (
-        <Box marginTop={item.first ? 1 : 0}>
-          <Box width={2} flexShrink={0}><Text>{item.first ? "⏺ " : "  "}</Text></Box>
-          <Box flexGrow={1} flexShrink={1} minWidth={0}>
-            <Text>{renderMarkdown(item.text)}</Text>
-          </Box>
-        </Box>
-      );
-    case "tool":
-      return (
-        <Box flexDirection="column" marginTop={1}>
-          <Text>
-            <Text color={item.isError ? "red" : "green"}>⏺</Text> <Text bold>{formatCall(item.call)}</Text>
-          </Text>
-          <Box>
-            <Text dimColor>{"  ⎿  "}</Text>
-            <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
-              {previewOutput(item.output) || "(no output)"}
-            </Text>
-          </Box>
-          {!item.isError && item.changePreview && (
-            <Box marginLeft={5}><Text>{item.changePreview}</Text></Box>
-          )}
-        </Box>
-      );
-    case "notice":
-      return (
-        <Box marginTop={1}>
-          <Text color={item.level === "error" ? "red" : item.level === "warn" ? "yellow" : undefined} dimColor={item.level === "info"}>
-            {"  ⎿  "}
-            {item.text}
-          </Text>
-        </Box>
-      );
-  }
-}
-
-const FRAMES = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
-
-function Spinner({ verb }: { verb: string }) {
-  const { frame, time } = useAnimation({ interval: 120 });
-  return (
-    <Box marginTop={1}>
-      <Text color="cyan">
-        {FRAMES[frame % FRAMES.length]} {verb}…{" "}
-      </Text>
-      <Text dimColor>({Math.floor(time / 1000)}s · esc to interrupt)</Text>
-    </Box>
-  );
-}
-
-function Blink() {
-  const { frame } = useAnimation({ interval: 500 });
-  return <Text color="cyan">{frame % 2 ? " " : "⏺"}</Text>;
-}
-
-function StatusLine({
-  mode,
-  model,
-  loggedIn,
-  exitArmed,
-  usage,
-  worktree,
-}: {
-  mode: Mode;
-  model: string;
-  loggedIn: boolean;
-  exitArmed: boolean;
-  usage: { input: number; output: number };
-  worktree?: string;
-}) {
-  // Bypass is the default, so only the other modes get a label.
-  const modeLabel = mode === "accept-edits" ? <Text color="magenta">⏵⏵ accept edits </Text> : mode === "ask" ? <Text color="cyan">ask mode </Text> : null;
-  const cwd = process.cwd().replace(os.homedir(), "~");
-  const tokens = usage.input + usage.output;
-  // Give exit confirmation the whole row instead of competing with model/worktree metadata.
-  if (exitArmed) {
-    return (
-      <Box paddingX={2}>
-        <Text color="yellow">Press Ctrl-C again to exit</Text>
-      </Box>
-    );
-  }
-  return (
-    <Box paddingX={2} justifyContent="space-between" gap={2}>
-      <Box flexShrink={1}>
-        {modeLabel}
-        <Text dimColor wrap="truncate-start">
-          {cwd}
-        </Text>
-      </Box>
-      <Box flexShrink={0}>
-        <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"}>
-          {model}
-          {loggedIn ? "" : " · not logged in (/login)"}
-          {worktree ? ` · ⎇ ${worktree}` : ""}
-          {tokens ? ` · ${tokens < 1000 ? tokens : `${(tokens / 1000).toFixed(1)}k`} tokens` : ""}
-        </Text>
-      </Box>
-    </Box>
-  );
-}
-
-function Help() {
-  return (
-    <Box flexDirection="column" paddingX={2} marginTop={1}>
-      {SHORTCUTS.map(([k, d]) => (
-        <Text key={k}>
-          <Text color="cyan">{k.padEnd(26)}</Text>
-          <Text dimColor>{d}</Text>
-        </Text>
-      ))}
-      <Box marginTop={1} flexDirection="column">
-        {COMMANDS.map((c) => (
-          <Text key={c.name}>
-            <Text color="cyan">{c.name.padEnd(26)}</Text>
-            <Text dimColor>{c.description}</Text>
-          </Text>
-        ))}
-      </Box>
     </Box>
   );
 }
