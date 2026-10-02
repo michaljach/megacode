@@ -6,6 +6,21 @@ import { renderToString } from 'ink';
 import { ItemView } from '../src/ui/App.tsx';
 import { previewPrompt } from '../src/ui/format.ts';
 
+import { Questionnaire } from '../src/ui/Questionnaire.tsx';
+
+test('questionnaire renders choices, custom answers, and progress', () => {
+  const view = (questions) => stripVTControlCharacters(renderToString(createElement(Questionnaire, {
+    questions, onSubmit() {}, onCancel() {},
+  }), { columns: 80 }));
+  const choices = view([{ question: 'Which framework?', options: ['React', 'Vue'] }, { question: 'Constraints?' }]);
+  assert.match(choices, /Question 1 of 2/);
+  assert.match(choices, /Which framework\?/);
+  assert.match(choices, /React/);
+  assert.match(choices, /Other — type an answer/);
+  assert.match(choices, /Esc to cancel/);
+  assert.match(view([{ question: 'Constraints?' }]), /Type your answer/);
+});
+
 const prompt = 'make benchamrk table better to visualise codex vs megacode and possibly other in future';
 
 for (const columns of [20, 40, 80]) {

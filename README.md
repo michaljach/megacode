@@ -49,6 +49,8 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 
 ## Interactive UI
 
+When the model needs clarification, it can call `ask_questions` to open an interactive questionnaire (up to eight questions). Choose a suggested answer with arrow keys and Enter, or choose **Other** to type your own; questions without options accept text directly. Review all answers before submitting, or start over. **Esc** or **Ctrl+C** cancels and interrupts the turn without submitting partial answers. Questions always require your input, even in bypass mode. In one-shot/plain mode, the tool tells the model to ask in text instead of waiting for an interactive form.
+
 Code blocks in replies use language-aware syntax highlighting when the fence specifies a language (for example, `typescript` or `python`). Unknown or unspecified languages stay plain.
 
 Successful `edit_file` and `write_file` calls show persistent, syntax-highlighted diffs in the conversation in every permission mode, including automatically accepted edits. Previews include old/new line numbers, nearby context, and red `-` / green `+` markers. Ask-mode approvals use the same preview; overwriting a file shows both removals and additions. Long previews are explicitly truncated to 60 diff lines and 240 characters per source line; very large or expensive diffs show an omission notice. These are interactive previews of built-in file tools, not a live Git diff viewer (shell/MCP edits aren't tracked).

@@ -6,8 +6,11 @@ import { resolve } from "./providers/index.ts";
 import { executeTool, toolSpecs, type Approve, type ExecutionResult } from "./tools.ts";
 import type { Message, ToolCall, ToolResult } from "./types.ts";
 
+import type { AskQuestions } from "./questionnaire.ts";
+
 export type AgentEvents = {
   approve: Approve;
+  askQuestions?: AskQuestions;
   onText(delta: string): void;
   /** One model response finished (it may be followed by tool calls). */
   onStepEnd(): void;
@@ -82,7 +85,7 @@ export class Agent {
         for (const call of res.message.toolCalls) {
           if (signal.aborted) break;
           ev.onToolStart(call);
-          const r: ExecutionResult = mcp.has(call.name) ? await mcp.execute(call, ev.approve, signal) : await executeTool(call, ev.approve, signal);
+          const r: ExecutionResult = mcp.has(call.name) ? await mcp.execute(call, ev.approve, signal) : await executeTool(call, ev.approve, signal, ev.askQuestions);
           ev.onToolEnd(call, r);
           // Display-only diffs must not inflate model context or carry ANSI into it.
           results.push({ id: call.id, name: call.name, output: r.output, isError: r.isError, images: r.images });

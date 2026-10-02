@@ -16,6 +16,8 @@ import { McpMenu } from "./McpMenu.tsx";
 import { ModelPicker } from "./ModelPicker.tsx";
 import { PromptInput, type Command } from "./PromptInput.tsx";
 import { Select } from "./Select.tsx";
+import { Questionnaire } from "./Questionnaire.tsx";
+import type { Answer, Question } from "../questionnaire.ts";
 import { ExitWorktreeDialog, WorktreeMenu } from "./WorktreeMenu.tsx";
 
 type Item =
@@ -98,6 +100,7 @@ export function App({
   const [running, setRunning] = useState(false);
   const [activeTool, setActiveTool] = useState<ToolCall | null>(null);
   const [approval, setApproval] = useState<ApprovalRequest | null>(null);
+  const [questionnaire, setQuestionnaire] = useState<{ questions: Question[]; resolve: (answers: Answer[] | null) => void } | null>(null);
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
     PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name)) ? null : { type: "login", welcome: true },
@@ -148,6 +151,17 @@ export function App({
 
   const events: AgentEvents = {
     approve,
+    askQuestions: (questions, signal) => new Promise((resolve) => {
+      if (signal?.aborted) return resolve(null);
+      const finish = (answers: Answer[] | null) => {
+        signal?.removeEventListener("abort", abort);
+        setQuestionnaire(null);
+        resolve(answers);
+      };
+      const abort = () => finish(null);
+      signal?.addEventListener("abort", abort, { once: true });
+      setQuestionnaire({ questions, resolve: finish });
+    }),
     onText(delta) {
       buffer.current += delta;
       flushTimer.current ??= setTimeout(() => flush(false), 40);
@@ -413,7 +427,7 @@ export function App({
       return;
     }
     if (key.ctrl && input === "d" && !value && !running) return quit();
-    if (approval || picker) return; // those dialogs handle their own keys
+    if (approval || questionnaire || picker) return; // those dialogs handle their own keys
     if (key.ctrl && input === "s") return sendQueuedNow();
     if (key.escape) {
       if (running) return interrupt();
@@ -438,13 +452,17 @@ export function App({
         </Box>
       )}
 
-      {activeTool && !approval && (
+      {activeTool && !approval && !questionnaire && (
         <Box flexDirection="column" marginTop={1}>
           <Text>
             <Blink /> <Text bold>{formatCall(activeTool)}</Text>
           </Text>
           <Text dimColor>{"  ⎿  Running…"}</Text>
         </Box>
+      )}
+
+      {questionnaire && (
+        <Questionnaire questions={questionnaire.questions} onSubmit={questionnaire.resolve} onCancel={interrupt} />
       )}
 
       {approval && (
@@ -531,7 +549,7 @@ export function App({
         </Box>
       )}
 
-      {running && !approval && <Spinner verb={verb.current} />}
+      {running && !approval && !questionnaire && <Spinner verb={verb.current} />}
 
       {queued.length > 0 && (
         <Box flexDirection="column" marginTop={1} paddingX={2}>
@@ -545,7 +563,7 @@ export function App({
         </Box>
       )}
 
-      {!picker && !approval && (
+      {!picker && !approval && !questionnaire && (
         <Box marginTop={1} flexDirection="column">
           <PromptInput
             value={value}
