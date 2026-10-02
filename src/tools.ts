@@ -3,7 +3,7 @@ import { glob, mkdir, mkdtemp, open, readFile, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { filePage, previewOutput } from "./output.ts";
 import path from "node:path";
-import { styleText } from "node:util";
+import { renderFileChange } from "./code.ts";
 import { loadSettings } from "./config.ts";
 import type { ImageContent, ToolCall, ToolSpec } from "./types.ts";
 
@@ -14,7 +14,7 @@ type Ctx = { approve: Approve; signal?: AbortSignal };
 const IGNORE = ["**/node_modules/**", "**/.git/**"];
 const MAX_CAPTURE = 10_000_000; // bound memory for runaway commands; the model sees a compacted view anyway
 
-type ExecutionResult = { output: string; isError: boolean; images?: ImageContent[] };
+export type ExecutionResult = { output: string; isError: boolean; images?: ImageContent[]; changePreview?: string };
 type Tool = ToolSpec & { run: (input: any, ctx: Ctx) => Promise<string | ExecutionResult> };
 
 const resolvePath = (p: string) => path.resolve(process.cwd(), p);
@@ -34,12 +34,6 @@ export async function compactOutput(text: string, budget = loadSettings().maxToo
     // Do not silently discard evidence if the temporary directory is unavailable.
     return text;
   }
-}
-
-function diff(oldStr: string, newStr: string): string {
-  const minus = oldStr.split("\n").map((l) => styleText("red", `- ${l}`));
-  const plus = newStr.split("\n").map((l) => styleText("green", `+ ${l}`));
-  return [...minus, ...plus].join("\n");
 }
 
 function run(cmd: string, args: string[], opts: { shell?: boolean; timeout?: number; signal?: AbortSignal; successCodes?: number[] } = {}): Promise<ExecutionResult> {
@@ -139,12 +133,19 @@ const tools: Tool[] = [
     },
     async run({ path: p, content }, { approve }) {
       const abs = resolvePath(p);
-      const preview = content.split("\n").slice(0, 20).map((l: string) => styleText("green", `+ ${l}`)).join("\n");
-      if (!(await approve({ tool: "write_file", title: `Write ${path.relative(process.cwd(), abs)}`, body: preview })))
+      const readExisting = () => readFile(abs, "utf8").catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      });
+      const before = await readExisting();
+      const changePreview = renderFileChange(abs, before ?? "", content);
+      if (!(await approve({ tool: "write_file", title: `Write ${path.relative(process.cwd(), abs)}`, body: changePreview })))
         return "User denied the write.";
+      if (await readExisting() !== before)
+        throw new Error("File changed while awaiting approval. Read it again before retrying the write.");
       await mkdir(path.dirname(abs), { recursive: true });
       await writeFile(abs, content);
-      return `Wrote ${abs}`;
+      return { output: `Wrote ${abs}`, isError: false, changePreview };
     },
   },
   {
@@ -168,12 +169,14 @@ const tools: Tool[] = [
       if (count === 0) throw new Error("old_string not found in file");
       if (count > 1 && !replace_all)
         throw new Error(`old_string matches ${count} times; add context to make it unique or set replace_all`);
-      if (!(await approve({ tool: "edit_file", title: `Edit ${path.relative(process.cwd(), abs)}`, body: diff(old_string, new_string) })))
+      const updated = replace_all ? text.replaceAll(old_string, () => new_string) : text.replace(old_string, () => new_string);
+      const changePreview = renderFileChange(abs, text, updated);
+      if (!(await approve({ tool: "edit_file", title: `Edit ${path.relative(process.cwd(), abs)}`, body: changePreview })))
         return "User denied the edit.";
       if (await readFile(abs, "utf8") !== text)
         throw new Error("File changed while awaiting approval. Read it again before retrying the edit.");
-      await writeFile(abs, replace_all ? text.replaceAll(old_string, () => new_string) : text.replace(old_string, () => new_string));
-      return `Edited ${abs} (${replace_all ? count : 1} replacement${count > 1 && replace_all ? "s" : ""})`;
+      await writeFile(abs, updated);
+      return { output: `Edited ${abs} (${replace_all ? count : 1} replacement${count > 1 && replace_all ? "s" : ""})`, isError: false, changePreview };
     },
   },
   {

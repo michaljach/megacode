@@ -81,6 +81,34 @@ test('denying an edit leaves the file unchanged', async (t) => {
   assert.equal(await readFile(file, 'utf8'), 'original\n');
 });
 
+test('successful edits and writes expose persistent previews separately from model output', async (t) => {
+  const file = await fixture(t);
+  const edited = await execute('edit_file', { path: file, old_string: 'original', new_string: 'updated' });
+  assert.match(edited.changePreview, /original/);
+  assert.match(edited.changePreview, /updated/);
+  assert.ok(!edited.output.includes('@@'));
+  const overwritten = await execute('write_file', { path: file, content: 'replacement\n' });
+  assert.match(overwritten.changePreview, /updated/);
+  assert.match(overwritten.changePreview, /replacement/);
+  const created = await execute('write_file', { path: file + '.ts', content: 'const x = 1;\n' });
+  assert.match(created.changePreview, /const/);
+  const denied = await execute('write_file', { path: file, content: 'denied' }, async () => false);
+  assert.equal(denied.changePreview, undefined);
+  const failed = await execute('edit_file', { path: file, old_string: 'missing', new_string: 'no' });
+  assert.equal(failed.changePreview, undefined);
+});
+
+test('write previews cannot overwrite a file changed during approval', async (t) => {
+  const file = await fixture(t);
+  const result = await execute('write_file', { path: file, content: 'agent' }, async () => {
+    await writeFile(file, 'user');
+    return true;
+  });
+  assert.equal(result.isError, true);
+  assert.equal(result.changePreview, undefined);
+  assert.equal(await readFile(file, 'utf8'), 'user');
+});
+
 test('shell exit status is reflected in tool results', async () => {
   assert.deepEqual(await execute('bash', { command: 'exit 7' }), { output: '[exit code 7]', isError: true });
   assert.deepEqual(await execute('bash', { command: 'exit 0' }), { output: '(no output)', isError: false });

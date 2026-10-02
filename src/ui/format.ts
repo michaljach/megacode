@@ -1,4 +1,5 @@
 import { styleText } from "node:util";
+import { highlightCode } from "../code.ts";
 import type { ToolCall } from "../types.ts";
 
 const TOOL_LABELS: Record<string, string> = {
@@ -32,14 +33,23 @@ export function previewOutput(output: string, lines = 3): string {
  */
 export function renderMarkdown(md: string): string {
   const out: string[] = [];
-  let inFence = false;
+  let fence: { marker: string; language: string } | undefined;
+  let code: string[] = [];
+  const flushCode = () => {
+    if (code.length) out.push(highlightCode(code.join("\n"), fence?.language).split("\n").map((line) => `  ${line}`).join("\n"));
+    code = [];
+  };
   for (const line of md.split("\n")) {
-    if (/^\s*```/.test(line)) {
-      inFence = !inFence;
+    const marker = line.match(/^\s*(`{3,}|~{3,})(.*)$/);
+    if (fence) {
+      if (marker && marker[1]![0] === fence.marker[0] && marker[1]!.length >= fence.marker.length && !marker[2]!.trim()) {
+        flushCode();
+        fence = undefined;
+      } else code.push(line);
       continue;
     }
-    if (inFence) {
-      out.push(styleText("cyan", `  ${line}`));
+    if (marker) {
+      fence = { marker: marker[1]!, language: marker[2]!.trim().split(/\s+/)[0]! };
       continue;
     }
     let m: RegExpMatchArray | null;
@@ -49,6 +59,7 @@ export function renderMarkdown(md: string): string {
     else if (/^\s*([-*_])\1{2,}\s*$/.test(line)) out.push(styleText("dim", "─".repeat(40)));
     else out.push(inline(line));
   }
+  flushCode(); // Also render an unfinished fence while a reply is streaming.
   return out.join("\n");
 }
 
@@ -61,11 +72,18 @@ function inline(s: string): string {
 
 /** Index just past the last paragraph break outside a code fence, or -1. Used to flush streamed text. */
 export function lastSafeBreak(text: string): number {
-  let fence = false;
+  let fence: string | undefined;
   let last = -1;
-  for (let i = 0; i < text.length; i++) {
-    if (text.startsWith("```", i) && (i === 0 || text[i - 1] === "\n")) fence = !fence;
-    else if (!fence && text[i] === "\n" && text[i + 1] === "\n") last = i + 2;
+  let offset = 0;
+  for (const line of text.split("\n")) {
+    const marker = line.match(/^\s*(`{3,}|~{3,})(.*)$/);
+    if (marker) {
+      if (!fence) fence = marker[1]!;
+      else if (marker[1]![0] === fence[0] && marker[1]!.length >= fence.length && !marker[2]!.trim()) fence = undefined;
+    }
+    const end = offset + line.length;
+    if (!fence && text[end] === "\n" && text[end + 1] === "\n") last = end + 2;
+    offset = end + 1;
   }
   return last;
 }

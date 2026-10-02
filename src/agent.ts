@@ -3,7 +3,7 @@ import os from "node:os";
 import { loadSettings } from "./config.ts";
 import { mcp } from "./mcp.ts";
 import { resolve } from "./providers/index.ts";
-import { executeTool, toolSpecs, type Approve } from "./tools.ts";
+import { executeTool, toolSpecs, type Approve, type ExecutionResult } from "./tools.ts";
 import type { Message, ToolCall, ToolResult } from "./types.ts";
 
 export type AgentEvents = {
@@ -12,7 +12,7 @@ export type AgentEvents = {
   /** One model response finished (it may be followed by tool calls). */
   onStepEnd(): void;
   onToolStart(call: ToolCall): void;
-  onToolEnd(call: ToolCall, result: { output: string; isError: boolean }): void;
+  onToolEnd(call: ToolCall, result: { output: string; isError: boolean; changePreview?: string }): void;
   onNotice(text: string, level: "info" | "warn" | "error"): void;
 };
 
@@ -82,9 +82,10 @@ export class Agent {
         for (const call of res.message.toolCalls) {
           if (signal.aborted) break;
           ev.onToolStart(call);
-          const r = mcp.has(call.name) ? await mcp.execute(call, ev.approve, signal) : await executeTool(call, ev.approve, signal);
+          const r: ExecutionResult = mcp.has(call.name) ? await mcp.execute(call, ev.approve, signal) : await executeTool(call, ev.approve, signal);
           ev.onToolEnd(call, r);
-          results.push({ id: call.id, name: call.name, ...r });
+          // Display-only diffs must not inflate model context or carry ANSI into it.
+          results.push({ id: call.id, name: call.name, output: r.output, isError: r.isError, images: r.images });
         }
         this.messages.push({ role: "tool", results });
         if (signal.aborted) throw signal.reason;

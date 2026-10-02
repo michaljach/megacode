@@ -49,6 +49,10 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 
 ## Interactive UI
 
+Code blocks in replies use language-aware syntax highlighting when the fence specifies a language (for example, `typescript` or `python`). Unknown or unspecified languages stay plain.
+
+Successful `edit_file` and `write_file` calls show persistent, syntax-highlighted diffs in the conversation in every permission mode, including automatically accepted edits. Previews include old/new line numbers, nearby context, and red `-` / green `+` markers. Ask-mode approvals use the same preview; overwriting a file shows both removals and additions. Long previews are explicitly truncated to 60 diff lines and 240 characters per source line; very large or expensive diffs show an omission notice. These are interactive previews of built-in file tools, not a live Git diff viewer (shell/MCP edits aren't tracked).
+
 | Key                        | Action                                                        |
 | -------------------------- | ------------------------------------------------------------- |
 | `enter`                    | send (while a turn runs, the message is queued)               |

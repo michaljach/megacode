@@ -22,7 +22,7 @@ type Item =
   | { kind: "banner" }
   | { kind: "user"; text: string }
   | { kind: "assistant"; text: string; first: boolean }
-  | { kind: "tool"; call: ToolCall; output: string; isError: boolean }
+  | { kind: "tool"; call: ToolCall; output: string; isError: boolean; changePreview?: string }
   | { kind: "notice"; text: string; level: "info" | "warn" | "error" };
 
 type Mode = PermissionMode;
@@ -610,6 +610,9 @@ function ItemView({ item, model }: { item: Item; model: string }) {
               {previewOutput(item.output) || "(no output)"}
             </Text>
           </Box>
+          {!item.isError && item.changePreview && (
+            <Box marginLeft={5}><Text>{item.changePreview}</Text></Box>
+          )}
         </Box>
       );
     case "notice":
