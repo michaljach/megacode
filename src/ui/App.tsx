@@ -9,7 +9,7 @@ import type { ToolCall } from "../types.ts";
 import { mcp } from "../mcp.ts";
 import { mainRoot, openWorktree, removeWorktree, type Worktree } from "../worktree.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
-import { formatCall, lastSafeBreak, previewOutput, renderMarkdown } from "./format.ts";
+import { formatCall, lastSafeBreak, previewOutput, previewPrompt, renderMarkdown } from "./format.ts";
 import { loadHistory, saveHistory } from "./history.ts";
 import { LoginDialog } from "./LoginDialog.tsx";
 import { McpMenu } from "./McpMenu.tsx";
@@ -63,6 +63,7 @@ const SHORTCUTS: [string, string][] = [
   ["ctrl+s", "send queued messages now (interrupts the running turn)"],
   ["\\ + enter, option+enter", "newline"],
   ["↑ / ↓", "prompt history"],
+  ["alt+← / alt+→", "move cursor by word"],
   ["/", "commands"],
   ["esc", "interrupt · clear input"],
   ["shift+tab", "cycle permission mode"],
@@ -537,7 +538,7 @@ export function App({
           {queued.map((q, i) => (
             <Text key={i} dimColor wrap="wrap">
               {"⏳ "}
-              {q.replace(/\n/g, " ⏎ ")}
+              {previewPrompt(q)}
               {" (ctrl+s to send now)"}
             </Text>
           ))}
@@ -557,7 +558,7 @@ export function App({
             isActive
             history={history}
             commands={COMMANDS}
-            placeholder={running ? "Queue another message..." : 'tiny moon vibes'}
+            placeholder={running ? "queue another message..." : 'tiny moon vibes'}
           />
           <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
           {showHelp && <Help />}
@@ -587,7 +588,7 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
         <Box marginTop={1}>
           <Box width={2} flexShrink={0}><Text dimColor>{"> "}</Text></Box>
           <Box flexGrow={1} flexShrink={1} minWidth={0}>
-            <Text wrap="wrap">{item.text}</Text>
+            <Text wrap="wrap">{previewPrompt(item.text)}</Text>
           </Box>
         </Box>
       );
@@ -664,19 +665,21 @@ function StatusLine({
   const modeLabel = mode === "accept-edits" ? <Text color="magenta">⏵⏵ accept edits </Text> : mode === "ask" ? <Text color="cyan">ask mode </Text> : null;
   const cwd = process.cwd().replace(os.homedir(), "~");
   const tokens = usage.input + usage.output;
+  // Give exit confirmation the whole row instead of competing with model/worktree metadata.
+  if (exitArmed) {
+    return (
+      <Box paddingX={2}>
+        <Text color="yellow">Press Ctrl-C again to exit</Text>
+      </Box>
+    );
+  }
   return (
     <Box paddingX={2} justifyContent="space-between" gap={2}>
       <Box flexShrink={1}>
-        {exitArmed ? (
-          <Text color="yellow">Press Ctrl-C again to exit</Text>
-        ) : (
-          <>
-            {modeLabel}
-            <Text dimColor wrap="truncate-start">
-              {cwd}
-            </Text>
-          </>
-        )}
+        {modeLabel}
+        <Text dimColor wrap="truncate-start">
+          {cwd}
+        </Text>
       </Box>
       <Box flexShrink={0}>
         <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"}>
