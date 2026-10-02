@@ -43,17 +43,35 @@ For a fair comparison:
 
 **Security:** this is not a sandbox. Tools run with your user's permissions and inherited credentials, just like the CLI in bypass mode. Use a container or disposable account for untrusted models/harnesses. Full transcripts and temporary output logs can contain sensitive data. `.bench/` is gitignored. The grader is separated to avoid accidental discovery, not secured against an agent deliberately searching outside its workspace.
 
-## Local result (single run)
+## Local comparison (one run per harness)
 
-Backend: ChatGPT subscription / Responses API. Model: `openai:gpt-6-astra`. Reasoning: medium. No harness comparison performed.
+Run date: 2026-10-02. Both harnesses used the ChatGPT subscription / Responses API backend, model `gpt-6-astra`, and medium reasoning. Codex CLI version: `0.153.0`. The megacode results are the existing run; Codex was run afterward on the same fixtures and prompts with the same independent grader.
 
-| Task | Checks passed | Input tokens | Output tokens | Model steps | Tool calls | Time |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| range-parser | 5/5 | 7,400 | 1,084 | 7 | 6 | 57.8s |
-| inventory-transaction | 6/6 | 9,502 | 1,891 | 7 | 6 | 66.9s |
-| log-recovery | 4/4 | 27,656 | 1,148 | 8 | 7 | 63.8s |
-| **Total** | **15/15** | **44,558** | **4,123** | **22** | **19** | **188.4s** |
+| Harness | Task | Checks passed | Input tokens | Output tokens | Model steps | Tool calls | Time |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| megacode | range-parser | 5/5 | 7,400 | 1,084 | 7 | 6 | 57.8s |
+| Codex | range-parser | 5/5 | 60,997 | 1,253 | — | — | 60.6s |
+| megacode | inventory-transaction | 6/6 | 9,502 | 1,891 | 7 | 6 | 66.9s |
+| Codex | inventory-transaction | 6/6 | 74,837 | 2,206 | — | — | 100.6s |
+| megacode | log-recovery | 4/4 | 27,656 | 1,148 | 8 | 7 | 63.8s |
+| Codex | log-recovery | 4/4 | 86,611 | 1,273 | — | — | 69.1s |
+| **megacode** | **Total** | **15/15** | **44,558** | **4,123** | **22** | **19** | **188.4s** |
+| **Codex** | **Total** | **15/15** | **222,445** | **4,732** | **—** | **—** | **230.3s** |
 
-Task pass rate: **3/3**. All agent processes exited successfully; no timeout or warning notices. Unmodified baseline: **0/3 tasks**, 1/15 checks (only catalog preservation already passed).
+Both task pass rates: **3/3**. All agent processes exited successfully, with no timeouts. Codex reported no error/failed events. Unmodified baseline: **0/3 tasks**, 1/15 checks (only catalog preservation already passed). Totals use unrounded timings.
 
-Local raw artifacts: `.bench/2026-10-02T19-19-49.728Z-megacode/results.json`. This measures the current harness, not the token savings versus the pre-optimization version.
+Codex tokens come from the native JSONL `turn.completed.usage` events in each `transcript.txt`; external `results.json` metrics remain `null`. Input includes cached tokens: Codex reported 52,608 / 65,408 / 77,824 cached input tokens respectively (**195,840 total**, included in 222,445). Megacode did not separately record cache usage. Model steps and tool calls are left unreported for Codex rather than equating its CLI turn/item events with megacode's counters.
+
+Reproduce the Codex invocation (substitute your executable path):
+
+```sh
+npm run bench -- --model openai:gpt-6-astra --label codex \
+  --command '["/Users/jach/.local/bin/codex","exec","--ignore-user-config","--ignore-rules","--ephemeral","--skip-git-repo-check","--dangerously-bypass-approvals-and-sandbox","--model","gpt-6-astra","-c","model_reasoning_effort=\"medium\"","-c","project_doc_max_bytes=0","--json"]'
+```
+
+Codex ignored user configuration and execpolicy rules, disabled project instruction loading, and used a fresh ephemeral session per task. Both harnesses ran with automatic approvals and without a sandbox. Both had a 300s process deadline; megacode additionally has a 240s internal abort. Neither limit was reached. Other Codex built-in defaults were retained. Cache warmth was not controlled; these were sequential single runs, not five alternating repeats. **This is a smoke comparison, not evidence of a general speed, cost, or quality advantage.** Token totals are not dollar costs, and this does not measure savings versus the pre-optimization megacode version.
+
+Local raw artifacts (gitignored):
+
+- megacode: `.bench/2026-10-02T19-19-49.728Z-megacode/results.json`
+- Codex: `.bench/2026-10-02T19-42-20.817Z-codex/results.json` (with per-task `transcript.txt` and `grade.txt` alongside the workspaces)
