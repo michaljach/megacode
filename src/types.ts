@@ -1,7 +1,8 @@
 // Provider-neutral conversation types. Each provider adapter converts to/from these.
 
 export type ToolCall = { id: string; name: string; input: Record<string, unknown> };
-export type ToolResult = { id: string; name: string; output: string; isError?: boolean };
+export type ImageContent = { mediaType: "image/png" | "image/jpeg" | "image/gif" | "image/webp"; data: string };
+export type ToolResult = { id: string; name: string; output: string; isError?: boolean; images?: ImageContent[] };
 
 export type UserMessage = { role: "user"; text: string };
 export type AssistantMessage = {

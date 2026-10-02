@@ -86,8 +86,17 @@ function mapStop(r: string | null, hasTools: boolean): StopReason {
 function toOpenAI(messages: Message[]): OpenAI.ChatCompletionMessageParam[] {
   return messages.flatMap((m): OpenAI.ChatCompletionMessageParam[] => {
     if (m.role === "user") return [{ role: "user", content: m.text }];
-    if (m.role === "tool")
-      return m.results.map((r) => ({ role: "tool", tool_call_id: r.id, content: r.output }));
+    if (m.role === "tool") {
+      const results: OpenAI.ChatCompletionMessageParam[] = m.results.map((r) => ({ role: "tool", tool_call_id: r.id, content: r.output }));
+      // Chat Completions only accepts images in user messages, after all tool replies.
+      for (const r of m.results) {
+        if (r.images?.length) results.push({ role: "user", content: [
+          { type: "text", text: r.output },
+          ...r.images.map((image) => ({ type: "image_url" as const, image_url: { url: `data:${image.mediaType};base64,${image.data}` } })),
+        ] });
+      }
+      return results;
+    }
     return [
       {
         role: "assistant",

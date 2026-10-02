@@ -141,16 +141,23 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
   const rendered = lines.map((line, i) => {
     const start = offset;
     offset += line.length + 1;
-    const prefix = i === 0 ? "> " : "  ";
-    if (!isActive || cursor < start || cursor > start + line.length)
-      return <Text key={i}>{prefix + line}</Text>;
     const col = cursor - start;
+    const showCursor = isActive && col >= 0 && col <= line.length;
     return (
-      <Text key={i}>
-        {prefix + line.slice(0, col)}
-        <Text inverse>{line[col] ?? " "}</Text>
-        {line.slice(col + 1)}
-      </Text>
+      <Box key={i}>
+        <Box flexShrink={0}><Text>{i === 0 ? "> " : "  "}</Text></Box>
+        <Box flexGrow={1} flexShrink={1} minWidth={0}>
+          <Text wrap="wrap">
+            {showCursor ? (
+              <>
+                {line.slice(0, col)}
+                <Text inverse>{line[col] ?? " "}</Text>
+                {line.slice(col + 1)}
+              </>
+            ) : line || " "}
+          </Text>
+        </Box>
+      </Box>
     );
   });
 
@@ -158,11 +165,15 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
     <Box flexDirection="column">
       <Box borderStyle="round" borderColor="gray" paddingX={1} flexDirection="column">
         {value === "" ? (
-          <Text>
-            {"> "}
-            {isActive ? <Text inverse>{placeholder[0]}</Text> : null}
-            <Text dimColor>{isActive ? placeholder.slice(1) : placeholder}</Text>
-          </Text>
+          <Box>
+            <Box flexShrink={0}><Text>{"> "}</Text></Box>
+            <Box flexGrow={1} flexShrink={1} minWidth={0}>
+              <Text wrap="wrap">
+                {isActive ? <Text inverse>{placeholder[0]}</Text> : null}
+                <Text dimColor>{isActive ? placeholder.slice(1) : placeholder}</Text>
+              </Text>
+            </Box>
+          </Box>
         ) : (
           rendered
         )}

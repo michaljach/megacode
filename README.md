@@ -107,7 +107,7 @@ Like Claude Code, megacode can work in a separate git worktree so the agent's ch
 
 ## Tools
 
-`read_file`, `write_file`, `edit_file`, `bash`, `list_files`, `grep`. Tools run without asking by default (bypass mode; change it in `/config`). `-a/--ask` starts in ask mode, where writes, edits and shell commands open an approval dialog: yes, always for this session, or no (esc), which stops the turn so you can redirect. In one-shot mode with `-a` and no terminal, approvals are refused. If `AGENTS.md` or `CLAUDE.md` exists in the working directory, it is added to the system prompt (unless turned off in `/config`).
+`read_file`, `view_image`, `write_file`, `edit_file`, `bash`, `list_files`, `grep`. `view_image` sends local PNG, JPEG, GIF, or WebP files (up to 5 MiB) to a vision-capable model, so you can provide a screenshot path without attaching it manually. Tools run without asking by default (bypass mode; change it in `/config`). `-a/--ask` starts in ask mode, where writes, edits and shell commands open an approval dialog: yes, always for this session, or no (esc), which stops the turn so you can redirect. In one-shot mode with `-a` and no terminal, approvals are refused. If `AGENTS.md` or `CLAUDE.md` exists in the working directory, it is added to the system prompt (unless turned off in `/config`).
 
 ### Token-efficient context
 

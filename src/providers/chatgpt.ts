@@ -177,7 +177,16 @@ export class ChatGPTProvider implements Provider {
 function toResponses(messages: Message[]): OpenAI.Responses.ResponseInputItem[] {
   return messages.flatMap((m): OpenAI.Responses.ResponseInputItem[] => {
     if (m.role === "user") return [{ role: "user", content: m.text }];
-    if (m.role === "tool") return m.results.map((r) => ({ type: "function_call_output", call_id: r.id, output: r.output }));
+    if (m.role === "tool") {
+      const results: OpenAI.Responses.ResponseInputItem[] = m.results.map((r) => ({ type: "function_call_output", call_id: r.id, output: r.output }));
+      for (const r of m.results) {
+        if (r.images?.length) results.push({ role: "user", content: [
+          { type: "input_text", text: r.output },
+          ...r.images.map((image) => ({ type: "input_image" as const, image_url: `data:${image.mediaType};base64,${image.data}`, detail: "auto" as const })),
+        ] });
+      }
+      return results;
+    }
     if (m.raw?.provider === "openai-responses")
       // With store: false the server keeps nothing, so item ids can't be referenced; resend items without them.
       return (m.raw.content as Record<string, unknown>[]).map(({ id: _id, ...item }) => item as unknown as OpenAI.Responses.ResponseInputItem);

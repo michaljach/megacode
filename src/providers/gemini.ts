@@ -96,9 +96,10 @@ function toGemini(messages: Message[]): Content[] {
     else if (m.role === "tool")
       push(
         "user",
-        m.results.map((r) => ({
-          functionResponse: { id: r.id, name: r.name, response: r.isError ? { error: r.output } : { output: r.output } },
-        })),
+        m.results.flatMap((r): Part[] => [
+          { functionResponse: { id: r.id, name: r.name, response: r.isError ? { error: r.output } : { output: r.output } } },
+          ...(r.images ?? []).map((image) => ({ inlineData: { mimeType: image.mediaType, data: image.data } })),
+        ]),
       );
     else if (m.raw?.provider === "gemini") push("model", m.raw.content as Part[]);
     else

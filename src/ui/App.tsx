@@ -53,6 +53,11 @@ const COMMANDS: Command[] = [
   { name: "/exit", description: "Exit megacode" },
 ];
 
+function isCommand(text: string): boolean {
+  const name = text.split(/\s+/, 1)[0];
+  return name === "/quit" || name === "/settings" || COMMANDS.some((command) => command.name === name);
+}
+
 const SHORTCUTS: [string, string][] = [
   ["enter", "send message (queued while running)"],
   ["ctrl+s", "send queued messages now (interrupts the running turn)"],
@@ -212,7 +217,7 @@ export function App({
   function sendQueuedNow() {
     const text = value.trim();
     if (!running) return text ? submit(text) : undefined;
-    if (text && !text.startsWith("/")) {
+    if (text && !isCommand(text)) {
       setValue("");
       setQueued([...queue.current, text]);
     }
@@ -390,7 +395,7 @@ export function App({
     const nextHistory = [...history.filter((h) => h !== trimmed), trimmed];
     setHistory(nextHistory);
     saveHistory(nextHistory);
-    if (trimmed.startsWith("/")) return command(trimmed);
+    if (isCommand(trimmed)) return command(trimmed);
     if (running) return setQueued([...queue.current, trimmed]);
     run(trimmed);
   }
@@ -529,14 +534,11 @@ export function App({
 
       {queued.length > 0 && (
         <Box flexDirection="column" marginTop={1} paddingX={2}>
-          <Text>
-            <Text color="yellow">⏳ {queued.length} queued</Text>
-            <Text dimColor> · sent when megacode finishes · ctrl+s send now · esc move back to input</Text>
-          </Text>
           {queued.map((q, i) => (
-            <Text key={i} dimColor wrap="truncate-end">
-              {"  › "}
+            <Text key={i} dimColor wrap="wrap">
+              {"⏳ "}
               {q.replace(/\n/g, " ⏎ ")}
+              {" (ctrl+s to send now)"}
             </Text>
           ))}
         </Box>
@@ -555,7 +557,7 @@ export function App({
             isActive
             history={history}
             commands={COMMANDS}
-            placeholder={running ? "Queue a message for when megacode finishes (enter to queue · ctrl+s to send now)" : 'tiny moon vibes'}
+            placeholder={running ? "Queue another message..." : 'tiny moon vibes'}
           />
           <StatusLine mode={mode} model={model} loggedIn={!PROVIDERS.includes(providerOf(model)) || isConfigured(providerOf(model))} exitArmed={exitArmed} usage={agent.usage} worktree={worktree?.name} />
           {showHelp && <Help />}

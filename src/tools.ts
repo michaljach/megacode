@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
-import { glob, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { glob, mkdir, mkdtemp, open, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { filePage, previewOutput } from "./output.ts";
 import path from "node:path";
 import { styleText } from "node:util";
 import { loadSettings } from "./config.ts";
-import type { ToolCall, ToolSpec } from "./types.ts";
+import type { ImageContent, ToolCall, ToolSpec } from "./types.ts";
 
 /** Ask the user before a side effect. `body` may contain ANSI colors (e.g. a diff). */
 export type Approve = (req: { tool: string; title: string; body: string }) => Promise<boolean>;
@@ -14,7 +14,7 @@ type Ctx = { approve: Approve; signal?: AbortSignal };
 const IGNORE = ["**/node_modules/**", "**/.git/**"];
 const MAX_CAPTURE = 10_000_000; // bound memory for runaway commands; the model sees a compacted view anyway
 
-type ExecutionResult = { output: string; isError: boolean };
+type ExecutionResult = { output: string; isError: boolean; images?: ImageContent[] };
 type Tool = ToolSpec & { run: (input: any, ctx: Ctx) => Promise<string | ExecutionResult> };
 
 const resolvePath = (p: string) => path.resolve(process.cwd(), p);
@@ -77,6 +77,42 @@ function run(cmd: string, args: string[], opts: { shell?: boolean; timeout?: num
 }
 
 const tools: Tool[] = [
+  {
+    name: "view_image",
+    description: "View a local PNG, JPEG, GIF, or WebP image (up to 5 MiB). Use for screenshots and other visual files; requires a vision-capable model.",
+    parameters: {
+      type: "object",
+      properties: { path: { type: "string", description: "Relative or absolute image path" } },
+      required: ["path"],
+    },
+    async run({ path: p }) {
+      const file = await open(resolvePath(p), "r");
+      try {
+        const max = 5 * 1024 * 1024;
+        const info = await file.stat();
+        if (!info.isFile()) throw new Error("Image path must be a regular file.");
+        if (info.size > max) throw new Error("Image exceeds 5 MiB; resize it before viewing.");
+        const buffer = Buffer.alloc(max + 1);
+        let size = 0;
+        while (size < buffer.length) {
+          const { bytesRead } = await file.read(buffer, size, buffer.length - size, null);
+          if (!bytesRead) break;
+          size += bytesRead;
+        }
+        if (size > max) throw new Error("Image exceeds 5 MiB; resize it before viewing.");
+        const data = buffer.subarray(0, size);
+        let mediaType: ImageContent["mediaType"];
+        if (data.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) mediaType = "image/png";
+        else if (data[0] === 255 && data[1] === 216 && data[2] === 255) mediaType = "image/jpeg";
+        else if (["GIF87a", "GIF89a"].includes(data.toString("ascii", 0, 6))) mediaType = "image/gif";
+        else if (data.toString("ascii", 0, 4) === "RIFF" && data.toString("ascii", 8, 12) === "WEBP") mediaType = "image/webp";
+        else throw new Error("Unsupported image format. Use PNG, JPEG, GIF, or WebP.");
+        return { output: `Image: ${resolvePath(p)} (${mediaType}, ${size} bytes)`, isError: false, images: [{ mediaType, data: data.toString("base64") }] };
+      } finally {
+        await file.close();
+      }
+    },
+  },
   {
     name: "read_file",
     description: "Read numbered text lines. Large results include a continuation offset.",
@@ -199,7 +235,7 @@ export async function executeTool(
   call: ToolCall,
   approve: Approve,
   signal?: AbortSignal,
-): Promise<{ output: string; isError: boolean }> {
+): Promise<ExecutionResult> {
   const tool = tools.find((t) => t.name === call.name);
   if (!tool) return { output: `Unknown tool: ${call.name}`, isError: true };
   try {

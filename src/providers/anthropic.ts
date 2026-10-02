@@ -69,7 +69,9 @@ function toAnthropic(messages: Message[]): Anthropic.MessageParam[] {
     else if (m.role === "tool")
       push(
         "user",
-        m.results.map((r) => ({ type: "tool_result", tool_use_id: r.id, content: r.output, is_error: r.isError })),
+        m.results.map((r) => ({ type: "tool_result", tool_use_id: r.id, content: r.images?.length
+          ? [{ type: "text", text: r.output }, ...r.images.map((image) => ({ type: "image" as const, source: { type: "base64" as const, media_type: image.mediaType, data: image.data } }))]
+          : r.output, is_error: r.isError })),
       );
     else if (m.raw?.provider === "anthropic") push("assistant", m.raw.content as Anthropic.ContentBlockParam[]);
     else {

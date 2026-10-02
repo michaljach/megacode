@@ -32,6 +32,28 @@ test('rejects malformed arguments without throwing or requesting approval', asyn
   assert.equal((await execute('unknown', {})).isError, true);
 });
 
+test('view_image returns image bytes separately from display text', async (t) => {
+  const file = await fixture(t);
+  const data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=';
+  await writeFile(file, Buffer.from(data, 'base64'));
+  const result = await execute('view_image', { path: file });
+  assert.equal(result.isError, false);
+  assert.deepEqual(result.images, [{ mediaType: 'image/png', data }]);
+  assert.ok(!result.output.includes(data));
+});
+
+test('view_image rejects unsupported, missing, and oversized files', async (t) => {
+  const file = await fixture(t);
+  assert.equal((await execute('view_image', { path: file })).isError, true);
+  assert.equal((await execute('view_image', { path: file + '.missing' })).isError, true);
+  assert.equal((await execute('view_image', { path: path.dirname(file) })).isError, true);
+  await writeFile(file, Buffer.alloc(5 * 1024 * 1024 + 1));
+  const result = await execute('view_image', { path: file });
+  assert.equal(result.isError, true);
+  assert.match(result.output, /5 MiB/);
+  assert.equal(result.images, undefined);
+});
+
 test('does not overwrite changes made during approval', async (t) => {
   const file = await fixture(t);
   const result = await execute('edit_file', { path: file, old_string: 'original', new_string: 'agent' }, async () => {
