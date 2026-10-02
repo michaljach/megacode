@@ -1,19 +1,21 @@
 import { Box, Text } from "ink";
-import { EDIT_TOOLS, type Approve } from "../tools/index.ts";
+import { EDIT_TOOLS } from "../core/settings.ts";
+import type { ApprovalRequest } from "../core/tools.ts";
+import { approvalBody } from "./format.ts";
 import { Select } from "./Select.tsx";
 
-export type ApprovalRequest = Parameters<Approve>[0] & { resolve: (ok: boolean) => void };
+export type PendingApproval = ApprovalRequest & { resolve: (ok: boolean) => void };
 export type ApprovalChoice = "yes" | "always" | "no";
 
 /** "Do you want to proceed?" for a tool call the permission mode doesn't allow on its own. */
-export function ApprovalDialog({ request, onAnswer }: { request: ApprovalRequest; onAnswer: (choice: ApprovalChoice) => void }) {
+export function ApprovalDialog({ request, onAnswer }: { request: PendingApproval; onAnswer: (choice: ApprovalChoice) => void }) {
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1} marginTop={1}>
       <Text bold color="yellow">
         {request.title}
       </Text>
       <Box paddingLeft={2} marginY={1}>
-        <Text>{request.body}</Text>
+        <Text>{approvalBody(request)}</Text>
       </Box>
       <Text>Do you want to proceed?</Text>
       <Select

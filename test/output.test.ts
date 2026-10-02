@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
-import { filePage, elideMiddle, OUTPUT_CHARS } from "../src/tools/output.ts";
-import { executeTool } from "../src/tools/index.ts";
+import { builtinTools } from "../src/adapters/tools/index.ts";
+import { elideMiddle, filePage, OUTPUT_CHARS } from "../src/adapters/tools/output.ts";
 
 test("small outputs remain intact; long outputs retain both ends", () => {
   assert.equal(elideMiddle("hello"), "hello");
@@ -37,7 +37,7 @@ test("character budget never silently splits a line", () => {
 
 test("long command output is recoverable and keeps exit status", async () => {
   const command = `${JSON.stringify(process.execPath)} -e 'console.log("x".repeat(30000)); console.log("FINAL FAILURE"); process.exit(2)'`;
-  const result = await executeTool({ id: "1", name: "bash", input: { command } }, async () => true);
+  const result = await builtinTools.execute({ id: "1", name: "bash", input: { command } }, { approve: async () => true });
   assert.equal(result.isError, true);
   assert.ok(result.output.includes("FINAL FAILURE"));
   assert.ok(result.output.endsWith("[exit code 2]"));
@@ -51,6 +51,6 @@ test("long command output is recoverable and keeps exit status", async () => {
 });
 
 test("permission denial still prevents execution", async () => {
-  const result = await executeTool({ id: "1", name: "bash", input: { command: "echo should-not-run" } }, async () => false);
+  const result = await builtinTools.execute({ id: "1", name: "bash", input: { command: "echo should-not-run" } }, { approve: async () => false });
   assert.equal(result.output, "User denied the command.");
 });

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { execFileSync } from "node:child_process";
 import { stripVTControlCharacters as plain } from "node:util";
-import { fileLanguage, highlightCode, renderFileChange } from "../src/code.ts";
+import { fileLanguage, highlightCode, renderFileChange } from "../src/ui/code.ts";
 import { lastSafeBreak, renderMarkdown } from "../src/ui/format.ts";
 
 test("language lookup and plain fallback preserve source", () => {
@@ -16,7 +16,7 @@ test("language lookup and plain fallback preserve source", () => {
 
 test("code highlighting emits multiple token colors in a color terminal", () => {
   const output = execFileSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e",
-    `import { highlightCode } from './src/code.ts'; console.log(highlightCode('const x = "hello";', 'typescript'));`],
+    `import { highlightCode } from './src/ui/code.ts'; console.log(highlightCode('const x = "hello";', 'typescript'));`],
   { env: { ...process.env, FORCE_COLOR: "1", NO_COLOR: undefined }, encoding: "utf8" });
   assert.ok(new Set(output.match(/\u001b\[\d+m/g)).size >= 3);
 });
@@ -43,7 +43,7 @@ test("diffs include real line numbers, context, and both sides of replacements",
 
 test("diff backgrounds cover the gutter and source without token color overrides", () => {
   const output = execFileSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e",
-    `import { renderFileChange } from './src/code.ts'; console.log(renderFileChange('a.ts', 'const x = 1;\\n\\nkeep\\n', 'const x = 2;\\nadded\\nkeep\\n'));`],
+    `import { renderFileChange } from './src/ui/code.ts'; console.log(renderFileChange('a.ts', 'const x = 1;\\n\\nkeep\\n', 'const x = 2;\\nadded\\nkeep\\n'));`],
   { env: { ...process.env, FORCE_COLOR: "1", NO_COLOR: undefined }, encoding: "utf8" });
   const lines = output.trimEnd().split("\n");
   for (const [marker, background] of [["-", 41], ["+", 42]] as const) {

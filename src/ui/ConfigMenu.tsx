@@ -1,6 +1,8 @@
 import { Box, Text, useInput } from "ink";
 import { useState } from "react";
-import { CONFIG_DIR, DEFAULT_SETTINGS, loadSettings, type PermissionMode, type Settings } from "../config.ts";
+import { loadSettings } from "../adapters/settings.ts";
+import { CONFIG_DIR } from "../adapters/storage.ts";
+import { DEFAULT_SETTINGS, type PermissionMode, type Settings } from "../core/settings.ts";
 import { tildify } from "./format.ts";
 
 type Key = Exclude<keyof Settings, "model">;

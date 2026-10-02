@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { executeTool } from '../src/tools/index.ts';
-import { loadSettings } from '../src/config.ts';
+import { builtinTools } from '../src/adapters/tools/index.ts';
+import { loadSettings } from '../src/adapters/settings.ts';
 
 const allow = async () => true;
-const execute = (name, input, approve = allow, signal) => executeTool({ id: 'test', name, input }, approve, signal);
+const execute = (name, input, approve = allow, signal) => builtinTools.execute({ id: 'test', name, input }, { approve, signal });
 const shellQuote = (s) => `'${s.replaceAll("'", "'\\''")}'`;
 const nodeCommand = (script) => `${shellQuote(process.execPath)} -e ${shellQuote(script)}`;
 
@@ -81,21 +81,19 @@ test('denying an edit leaves the file unchanged', async (t) => {
   assert.equal(await readFile(file, 'utf8'), 'original\n');
 });
 
-test('successful edits and writes expose persistent previews separately from model output', async (t) => {
+test('successful edits and writes report the change separately from model output', async (t) => {
   const file = await fixture(t);
   const edited = await execute('edit_file', { path: file, old_string: 'original', new_string: 'updated' });
-  assert.match(edited.changePreview, /original/);
-  assert.match(edited.changePreview, /updated/);
+  assert.deepEqual(edited.change, { file, before: 'original\n', after: 'updated\n' });
   assert.ok(!edited.output.includes('@@'));
   const overwritten = await execute('write_file', { path: file, content: 'replacement\n' });
-  assert.match(overwritten.changePreview, /updated/);
-  assert.match(overwritten.changePreview, /replacement/);
+  assert.deepEqual(overwritten.change, { file, before: 'updated\n', after: 'replacement\n' });
   const created = await execute('write_file', { path: file + '.ts', content: 'const x = 1;\n' });
-  assert.match(created.changePreview, /const/);
+  assert.deepEqual(created.change, { file: file + '.ts', before: '', after: 'const x = 1;\n' });
   const denied = await execute('write_file', { path: file, content: 'denied' }, async () => false);
-  assert.equal(denied.changePreview, undefined);
+  assert.equal(denied.change, undefined);
   const failed = await execute('edit_file', { path: file, old_string: 'missing', new_string: 'no' });
-  assert.equal(failed.changePreview, undefined);
+  assert.equal(failed.change, undefined);
 });
 
 test('write previews cannot overwrite a file changed during approval', async (t) => {
@@ -105,7 +103,7 @@ test('write previews cannot overwrite a file changed during approval', async (t)
     return true;
   });
   assert.equal(result.isError, true);
-  assert.equal(result.changePreview, undefined);
+  assert.equal(result.change, undefined);
   assert.equal(await readFile(file, 'utf8'), 'user');
 });
 

@@ -6,11 +6,12 @@ import path from 'node:path';
 
 // Keep ~/.megacode/mcp.json untouched: config paths are computed from HOME at import time.
 process.env.HOME = mkdtempSync(path.join(os.tmpdir(), 'megacode-mcp-home-'));
-const { mcp, splitCommand } = await import('../src/mcp.ts');
+const { mcp } = await import('../src/adapters/mcp/manager.ts');
+const { splitCommand } = await import('../src/adapters/mcp/config.ts');
 
 const server = { command: process.execPath, args: [path.join(import.meta.dirname, 'fixtures', 'mcp-echo-server.mjs')] };
 const allow = async () => true;
-const call = (name, input, approve = allow) => mcp.execute({ id: 't', name, input }, approve);
+const call = (name, input, approve = allow) => mcp.execute({ id: 't', name, input }, { approve });
 const saved = () => JSON.parse(readFileSync(path.join(process.env.HOME, '.megacode', 'mcp.json'), 'utf8')).mcpServers;
 
 test.after(() => mcp.closeAll());
@@ -19,8 +20,8 @@ test('connects a stdio server and exposes its tools with provider-safe names', a
   const status = await mcp.add('echo', { ...server, env: { SECRET: 'shh' } });
   assert.equal(status.state, 'connected', status.error);
   assert.deepEqual(saved().echo, { ...server, env: { SECRET: 'shh' } });
-  assert.deepEqual(mcp.toolSpecs().map((t) => t.name).sort(), ['mcp__echo__echo', 'mcp__echo__env_read', 'mcp__echo__fail']);
-  assert.equal(mcp.toolSpecs().find((t) => t.name === 'mcp__echo__echo').parameters.type, 'object');
+  assert.deepEqual(mcp.specs().map((t) => t.name).sort(), ['mcp__echo__echo', 'mcp__echo__env_read', 'mcp__echo__fail']);
+  assert.equal(mcp.specs().find((t) => t.name === 'mcp__echo__echo').parameters.type, 'object');
   assert.match(mcp.instructions(), /Use echo to repeat text/);
 });
 

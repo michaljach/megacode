@@ -1,6 +1,8 @@
 import { Box, Text, useInput, usePaste } from "ink";
 import { useEffect, useMemo, useState } from "react";
-import { isConfigured, listModels, PROVIDER_INFO } from "../providers/index.ts";
+import { PROVIDER_INFO } from "../adapters/providers/catalog.ts";
+import { isConfigured } from "../adapters/providers/credentials.ts";
+import { listModels } from "../adapters/providers/registry.ts";
 
 type ListState = { status: "loading" } | { status: "ok"; models: string[] } | { status: "error"; error: string };
 
@@ -51,7 +53,7 @@ export function ModelPicker({
     for (const p of PROVIDER_INFO) {
       const state = lists[p.name];
       if (!isConfigured(p.name)) {
-        if (!p.local && p.name !== "compat" && matches(`${p.name} ${p.label} login`))
+        if (!p.local && !p.keyOptional && matches(`${p.name} ${p.label} login`))
           out.push({ provider: p.name, label: "Log in to see models…", action: { type: "login", provider: p.name }, dim: true });
         continue;
       }

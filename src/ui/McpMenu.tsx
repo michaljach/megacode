@@ -1,13 +1,24 @@
 import { Box, Text } from "ink";
 import { useEffect, useReducer, useState } from "react";
-import { CONFIG_DIR } from "../config.ts";
-import { describeServer, mcp, MCP_FILE, SERVER_NAME, splitCommand, transportOf, type McpServerConfig, type McpStatus } from "../mcp.ts";
+import {
+  describeServer,
+  draftToConfig,
+  isHttpUrl,
+  MCP_FILE,
+  parseExtra,
+  SERVER_NAME,
+  splitCommand,
+  transportOf,
+  type McpTransport,
+  type ServerDraft,
+} from "../adapters/mcp/config.ts";
+import { mcp, type McpStatus } from "../adapters/mcp/manager.ts";
+import { CONFIG_DIR } from "../adapters/storage.ts";
 import { tildify } from "./format.ts";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 
-type Transport = "stdio" | "http" | "sse";
-type Draft = { name: string; type: Transport; target: string; extras: Record<string, string> };
+type Draft = ServerDraft & { name: string };
 type Screen =
   | { type: "list" }
   | { type: "server"; name: string }
@@ -172,9 +183,9 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
           <Text>How does megacode reach {draft.name}?</Text>
           <Select
             options={[
-              { label: "stdio", value: "stdio" as Transport, hint: "run a local command (npx, uvx, docker, a binary…)" },
-              { label: "http", value: "http" as Transport, hint: "remote server, streamable HTTP" },
-              { label: "sse", value: "sse" as Transport, hint: "remote server, legacy SSE" },
+              { label: "stdio", value: "stdio" as McpTransport, hint: "run a local command (npx, uvx, docker, a binary…)" },
+              { label: "http", value: "http" as McpTransport, hint: "remote server, streamable HTTP" },
+              { label: "sse", value: "sse" as McpTransport, hint: "remote server, legacy SSE" },
             ]}
             onSelect={(type) => go({ type: "add", step: "target", draft: { ...draft, type, extras: {} } })}
             onCancel={back}
@@ -184,11 +195,7 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
     else if (step === "target")
       body = isUrl
         ? field("Server URL:", "https://example.com/mcp", (v) => {
-            try {
-              if (!/^https?:$/.test(new URL(v).protocol)) throw new Error();
-            } catch {
-              return setError("Enter an http:// or https:// URL.");
-            }
+            if (!isHttpUrl(v)) return setError("Enter an http:// or https:// URL.");
             go({ type: "add", step: "extras", draft: { ...draft, target: v } });
           })
         : field("Command to start the server:", "npx -y @modelcontextprotocol/server-filesystem ~/projects", (v) => {
@@ -209,18 +216,13 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
             isUrl ? "Authorization: Bearer …" : "GITHUB_TOKEN=…",
             (v) => {
               if (!v) {
-                const config: McpServerConfig = isUrl
-                  ? { type: draft.type as "http" | "sse", url: draft.target, ...(Object.keys(draft.extras).length ? { headers: draft.extras } : {}) }
-                  : (() => {
-                      const [command, ...args] = splitCommand(draft.target);
-                      return { command: command!, args, ...(Object.keys(draft.extras).length ? { env: draft.extras } : {}) };
-                    })();
-                mcp.add(draft.name, config);
+                mcp.add(draft.name, draftToConfig(draft));
                 return go({ type: "server", name: draft.name });
               }
-              const m = isUrl ? v.match(/^([^:\s]+):\s*(.+)$/) : v.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/s);
-              if (!m) return setError(isUrl ? "Use the form Name: value" : "Use the form KEY=value");
-              go({ type: "add", step: "extras", draft: { ...draft, extras: { ...draft.extras, [m[1]!]: m[2]! } } });
+              const extra = parseExtra(draft.type, v);
+              if (!extra) return setError(isUrl ? "Use the form Name: value" : "Use the form KEY=value");
+              const [key, value] = extra;
+              go({ type: "add", step: "extras", draft: { ...draft, extras: { ...draft.extras, [key]: value } } });
             },
           )}
         </>

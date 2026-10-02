@@ -1,10 +1,9 @@
 import { Box, Text } from "ink";
 import type { ReactNode } from "react";
-import type { ToolCall } from "../types.ts";
+import type { NoticeLevel } from "../core/agent.ts";
+import type { ToolCall } from "../core/conversation.ts";
 import { formatCall, previewOutput, previewPrompt, renderMarkdown } from "./format.ts";
 import { Blink } from "./Spinner.tsx";
-
-export type NoticeLevel = "info" | "warn" | "error";
 
 /** One finished entry of the transcript, rendered once into <Static>. */
 export type Item =

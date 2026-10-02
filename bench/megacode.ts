@@ -1,8 +1,8 @@
 // Runs in the task workspace; deliberately uses the real Agent and tools.
 import { writeFile } from "node:fs/promises";
-import { Agent } from "../src/agent.ts";
+import { createAgent } from "../src/composition.ts";
 
-const agent = new Agent(process.argv[2]!);
+const agent = createAgent(process.argv[2]!);
 let steps = 0;
 let calls = 0;
 const notices: string[] = [];

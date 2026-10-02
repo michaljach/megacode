@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import type { PermissionMode } from "../config.ts";
+import type { PermissionMode } from "../core/settings.ts";
 import { tildify } from "./format.ts";
 
 /** Row under the prompt: permission mode and cwd on the left; model, worktree and tokens on the right. */

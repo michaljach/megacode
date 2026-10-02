@@ -130,54 +130,88 @@ Conversation history, project instructions, and provider-native reasoning/signat
 
 ## Layout
 
+The code follows a ports-and-adapters layout with one dependency rule: `core/` imports nothing outside itself, `adapters/` implement core's ports, and `ui/` sits on top. `composition.ts` is the only place that wires adapters into the core.
+
 ```
 src/
   cli.tsx             entry: flags, TUI or plain mode
-  plain.ts            one-shot / piped output
-  agent.ts            agent loop: model turn → run tools → repeat (emits events)
-  types.ts            provider-neutral message format
-  config.ts           ~/.megacode: auth.json, settings.json, history.json
-  code.ts             syntax highlighting, diff previews
-  mcp.ts              MCP client: ~/.megacode/mcp.json, connections, tools
-  worktree.ts         git worktree create / list / status / remove
-  tools/
-    index.ts          tool registry, argument validation, permission rules
-    files.ts          read / write / edit / list files, view images
-    shell.ts          bash, grep
-    questions.ts      ask_questions tool and input validation
-    output.ts         output budgets, temp-file spill, paged file reads
-  providers/
-    index.ts          "provider:model" resolution, OpenAI-compatible presets
-    anthropic.ts      Messages API (streaming)
-    openai.ts         Chat Completions (streaming), also used for compatible APIs
-    chatgpt.ts        Sign in with ChatGPT + Responses API adapter
-    gemini.ts         @google/genai (streaming)
-    usage.ts          /usage: account limits and balances
-  auth/
-    oauth.ts          PKCE, local callback server, browser launch
-    login.ts          OpenRouter OAuth, Anthropic CLI login
-  ui/                 Ink (React) TUI
-    App.tsx           session state, turns, queue, slash commands, dialogs
+  args.ts             command-line parsing
+  composition.ts      composition root: builds the Agent from adapters
+  core/               domain and use cases; no SDKs, I/O or UI
+    agent.ts          agent loop: model turn → run tools → repeat (emits events)
+    conversation.ts   provider-neutral message format
+    provider.ts       Provider port, turn request/result, effort, "provider:model" specs
+    tools.ts          Tool and ToolSource ports, approvals, questionnaires
+    settings.ts       settings, defaults, permission modes
+    prompts.ts        system prompt composition
+    suggestion.ts     next-prompt suggestions
+  adapters/
+    storage.ts        ~/.megacode JSON files
+    settings.ts       settings.json
+    project.ts        working directory and AGENTS.md / CLAUDE.md for the system prompt
+    accounts.ts       /login and /logout use cases: verify, save, remove credentials
+    providers/
+      catalog.ts      known providers and OpenAI-compatible presets
+      credentials.ts  credential precedence (env, saved, ChatGPT, local, ant profile)
+      registry.ts     provider factory and cache, model lists, model resolution
+      anthropic.ts    Messages API (streaming)
+      openai.ts       Chat Completions (streaming), also used for compatible APIs
+      chatgpt.ts      Responses API adapter for ChatGPT sign-in
+      gemini.ts       @google/genai (streaming)
+      shared.ts       tool-argument parsing, fallback call ids, data URLs
+      usage.ts        /usage: account limits and balances
+    auth/
+      store.ts        auth.json
+      oauth.ts        PKCE, local callback server, browser launch
+      chatgpt.ts      Sign in with ChatGPT, token refresh, usage API
+      openrouter.ts   OpenRouter OAuth
+      anthropic.ts    Anthropic CLI login and profile detection
+    tools/
+      index.ts        built-in ToolSource: lookup, validation, error handling
+      validation.ts   argument checks from each tool's JSON schema
+      files.ts        read / write / edit / list files
+      image.ts        view_image: bounded read, format detection
+      shell.ts        bash, grep
+      questions.ts    ask_questions tool and input validation
+      output.ts       output budgets, temp-file spill, paged file reads
+    mcp/
+      manager.ts      MCP connections, offered to the agent as a ToolSource
+      config.ts       mcp.json, server drafts, command-line splitting
+      transport.ts    stdio / HTTP / SSE transports
+      results.ts      tool results as text
+    git/worktree.ts   git worktree create / list / status / remove
+  lib/async.ts        withTimeout
+  ui/                 Ink (React) TUI and plain output
+    App.tsx           layout, dialogs, keyboard shortcuts, command context
+    commands.ts       slash command registry (name, description, handler)
+    hooks/
+      useAgentSession.ts   turns, queue, interrupts, approvals, questionnaires
+      useWorktree.ts       entering and leaving worktrees
+      useStreamedText.ts   streamed-text buffering
+      usePromptSuggestion.ts
+    plain.ts          one-shot / piped output
     Transcript.tsx    transcript items, streamed text, diff previews
-    hooks.ts          streamed-text buffering, prompt suggestions
-    commands.ts       slash command list
     PromptInput.tsx   multi-line editor, history, slash menu
     StatusLine.tsx    mode, cwd, model, tokens
     ApprovalDialog.tsx  tool permission prompt
     ModelPicker.tsx   searchable live model list
     LoginDialog.tsx   provider login / logout
     ConfigMenu.tsx    /config settings menu
+    EffortPicker.tsx  /effort menu
     WorktreeMenu.tsx  /worktree menu, exit prompt
     McpMenu.tsx       /mcp server list, add wizard, details
     Questionnaire.tsx ask_questions form
     Select.tsx, TextField.tsx, Spinner.tsx, Help.tsx   small building blocks
+    code.ts           syntax highlighting, diff rendering
     format.ts         Markdown rendering, tool labels, previews
 test/                 node:test suites (npm test)
 ```
 
-Conversation history is stored in a neutral format (`types.ts`). Each assistant turn also keeps the provider's native content. That content is sent back verbatim to the same provider, so Anthropic thinking blocks and Gemini thought signatures are preserved. When you switch providers, the next one gets the neutral text and tool calls instead.
+Conversation history is stored in a neutral format (`core/conversation.ts`). Each assistant turn also keeps the provider's native content. That content is sent back verbatim to the same provider, so Anthropic thinking blocks and Gemini thought signatures are preserved. When you switch providers, the next one gets the neutral text and tool calls instead.
 
-To add a provider, implement `Provider.turn()` in `src/providers/` and register it in `providers/index.ts`.
+Tools return structured results; a file edit reports the change (`file`, `before`, `after`), and only the UI turns it into a colored diff, so nothing display-only reaches the model.
+
+To add a provider, implement the `Provider` port (`core/provider.ts`) in `src/adapters/providers/`, add it to `catalog.ts`, and construct it in `registry.ts`. To add a tool source, implement `ToolSource` (`core/tools.ts`) and combine it in `composition.ts`.
 
 ## Harness benchmark
 

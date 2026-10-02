@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { Box, Static, Text, renderToString } from 'ink';
 import { ItemView } from '../src/ui/Transcript.tsx';
 import { previewPrompt } from '../src/ui/format.ts';
-import { renderFileChange } from '../src/code.ts';
+import { renderFileChange } from '../src/ui/code.ts';
 import { PromptInput } from '../src/ui/PromptInput.tsx';
 import { Questionnaire } from '../src/ui/Questionnaire.tsx';
 

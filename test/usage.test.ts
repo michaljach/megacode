@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatChatGPTUsage, providerUsage } from "../src/providers/usage.ts";
+import { formatChatGPTUsage, providerUsage } from "../src/adapters/providers/usage.ts";
 
 test("ChatGPT reports actual windows, plan and credits without inventing missing usage", () => {
   const lines = formatChatGPTUsage({

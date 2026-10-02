@@ -5,7 +5,7 @@ import { existsSync, realpathSync, writeFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { listWorktrees, openWorktree, removeWorktree, worktreeChanges } from '../src/worktree.ts';
+import { listWorktrees, openWorktree, removeWorktree, worktreeChanges } from '../src/adapters/git/worktree.ts';
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 

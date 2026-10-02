@@ -1,7 +1,8 @@
 import os from "node:os";
 import { styleText } from "node:util";
-import { highlightCode } from "../code.ts";
-import type { ToolCall } from "../types.ts";
+import type { ToolCall } from "../core/conversation.ts";
+import type { ApprovalRequest, FileChange } from "../core/tools.ts";
+import { highlightCode, renderFileChange } from "./code.ts";
 
 const TOOL_LABELS: Record<string, string> = {
   read_file: "Read",
@@ -20,6 +21,11 @@ export function formatCall(c: ToolCall): string {
   const label = mcp ? `${mcp[1]} · ${mcp[2]} (MCP)` : (TOOL_LABELS[c.name] ?? c.name);
   return `${label}(${arg.length > 80 ? arg.slice(0, 80) + "…" : arg})`;
 }
+
+export const renderChange = (c: FileChange) => renderFileChange(c.file, c.before, c.after);
+
+/** The text shown for an approval request: a diff for file changes, else the tool's own description. */
+export const approvalBody = (req: ApprovalRequest) => (req.change ? renderChange(req.change) : (req.body ?? ""));
 
 /** Shortens paths under the home directory to ~/… for display. */
 export const tildify = (p: string) => p.replace(os.homedir(), "~");

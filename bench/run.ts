@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { tasks } from "./tasks.ts";
-import { defaultModel } from "../src/providers/index.ts";
+import { defaultModel } from "../src/adapters/providers/registry.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const { values } = parseArgs({ options: {

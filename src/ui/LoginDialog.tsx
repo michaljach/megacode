@@ -1,16 +1,12 @@
 import { Box, Text, useInput } from "ink";
 import { useRef, useState } from "react";
-import { loadAuth, saveAuth } from "../config.ts";
-import { loginAnthropicCLI, loginChatGPT, loginOpenRouter } from "../auth/login.ts";
-import {
-  authStatus,
-  createProvider,
-  isConfigured,
-  type LoginMethod,
-  PROVIDER_INFO,
-  providerInfo,
-  resetProvider,
-} from "../providers/index.ts";
+import { countModels, saveChatGPTLogin, verifyAndSaveKey } from "../adapters/accounts.ts";
+import { loginAnthropicCLI } from "../adapters/auth/anthropic.ts";
+import { loginChatGPT } from "../adapters/auth/chatgpt.ts";
+import { loginOpenRouter } from "../adapters/auth/openrouter.ts";
+import { savedCredentials, savedProviders } from "../adapters/auth/store.ts";
+import { envKeyName, PROVIDER_INFO, providerInfo, type LoginMethod } from "../adapters/providers/catalog.ts";
+import { authStatus, isConfigured } from "../adapters/providers/credentials.ts";
 import { Select } from "./Select.tsx";
 import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
@@ -64,7 +60,7 @@ export function LoginDialog({
     if (step === "browser") abort.current?.abort();
     const multi = info!.methods.length > 1;
     if (step === "pick") return onCancel();
-    if (step === "key" && info!.name === "compat") return setStep("url");
+    if (step === "key" && info!.keyOptional) return setStep("url");
     if (step === "browser" || (step === "key" && multi)) return setStep("method");
     if (initialProvider) return onCancel();
     setStep("pick");
@@ -86,10 +82,7 @@ export function LoginDialog({
     setStep("browser");
     try {
       if (m === "chatgpt") {
-        const tokens = await loginChatGPT(setBrowserUrl, ctrl.signal);
-        const auth = loadAuth();
-        auth.openai = { chatgpt: tokens }; // replaces a saved API key
-        saveAuth(auth);
+        saveChatGPTLogin(await loginChatGPT(setBrowserUrl, ctrl.signal));
         return await finish(name);
       }
       if (m === "openrouter-oauth") return await verify(await loginOpenRouter(setBrowserUrl, ctrl.signal));
@@ -99,12 +92,7 @@ export function LoginDialog({
       }
     } catch (e) {
       if (ctrl.signal.aborted) return;
-      const msg = (e as Error).message;
-      setError(
-        msg === "ANT_NOT_INSTALLED"
-          ? "The Anthropic CLI isn't installed. Install it with `brew install anthropics/tap/ant`, or paste an API key."
-          : msg,
-      );
+      setError((e as Error).message);
       setStep("method");
     }
   }
@@ -115,30 +103,20 @@ export function LoginDialog({
     const p = providerInfo(name);
     setStep("verifying");
     setError("");
-    const creds = { apiKey: key || undefined, baseURL: baseURL || undefined };
     try {
-      await withTimeout(createProvider(name, { ...creds, source: "saved" }).listModels(), 20_000);
-      const auth = loadAuth();
-      auth[name] = {
-        ...(creds.apiKey && { apiKey: creds.apiKey }),
-        ...(creds.baseURL && creds.baseURL !== p.baseURL && { baseURL: creds.baseURL }),
-      };
-      if (!auth[name].apiKey && !auth[name].baseURL) delete auth[name];
-      saveAuth(auth);
-      await finish(name);
+      await verifyAndSaveKey(name, { apiKey: key, baseURL });
     } catch (e) {
       setError(friendlyError(e as Error, p.local ? `Is ${p.label.replace(" (local)", "")} running at ${baseURL}?` : undefined));
-      setStep(p.local || (name === "compat" && !key) ? "url" : method && method !== "key" ? "method" : "key");
+      return setStep(p.local || (p.keyOptional && !key) ? "url" : method && method !== "key" ? "method" : "key");
     }
+    await finish(name);
   }
 
   /** Credentials are in place: count the models and hand back to the app. */
   async function finish(name: string) {
     setStep("verifying");
-    resetProvider(name);
     try {
-      const models = await withTimeout(createProvider(name).listModels(), 20_000);
-      onDone(name, models.length);
+      onDone(name, await countModels(name));
     } catch (e) {
       setError(friendlyError(e as Error));
       setStep(providerInfo(name).methods.length > 1 ? "method" : "key");
@@ -147,7 +125,7 @@ export function LoginDialog({
 
   useInput((_, key) => key.escape && back(), { isActive: step === "browser" });
 
-  const envKey = info?.env.find((k) => process.env[k]);
+  const envKey = info && envKeyName(info);
 
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
@@ -240,7 +218,7 @@ export function LoginDialog({
         <>
           <Text bold>{info.label}: API key</Text>
           {info.keyUrl && <Text dimColor>Create one at {info.keyUrl}</Text>}
-          {info.name === "compat" && <Text dimColor>Leave empty if the endpoint doesn't need a key.</Text>}
+          {info.keyOptional && <Text dimColor>Leave empty if the endpoint doesn't need a key.</Text>}
           {envKey && <Text color="yellow">Note: ${envKey} is set and takes precedence over a saved key.</Text>}
           {error && <Text color="red">{error}</Text>}
           <Box marginTop={1}>
@@ -249,7 +227,7 @@ export function LoginDialog({
               onChange={setApiKey}
               mask
               placeholder="paste your key and press enter"
-              onSubmit={(v) => (v || info.name === "compat" ? verify(v) : setError("Paste a key, or esc to go back."))}
+              onSubmit={(v) => (v || info.keyOptional ? verify(v) : setError("Paste a key, or esc to go back."))}
               onCancel={back}
             />
           </Box>
@@ -270,7 +248,7 @@ export function LogoutDialog({ onSelect, onCancel }: { onSelect: (provider: stri
       <Text bold>Remove saved credentials</Text>
       <Box marginTop={1}>
         <Select
-          options={Object.keys(loadAuth()).map((n) => ({ label: providerInfo(n).label, value: n, hint: authStatus(n) }))}
+          options={savedProviders().map((n) => ({ label: providerInfo(n).label, value: n, hint: authStatus(n) }))}
           onSelect={onSelect}
           onCancel={onCancel}
         />
@@ -284,11 +262,7 @@ const stepFor = (name: string): Step => {
   return methods.length > 1 ? "method" : methods[0] === "url" ? "url" : "key";
 };
 
-const defaultURL = (name: string) => loadAuth()[name]?.baseURL ?? providerInfo(name).baseURL ?? "";
-
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Timed out")), ms))]);
-}
+const defaultURL = (name: string) => savedCredentials(name)?.baseURL ?? providerInfo(name).baseURL ?? "";
 
 function friendlyError(e: Error & { status?: number }, localHint?: string): string {
   if (e.status === 401 || e.status === 403 || /api key|unauthori[sz]ed|invalid.*key/i.test(e.message))

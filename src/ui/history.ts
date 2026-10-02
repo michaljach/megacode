@@ -1,4 +1,5 @@
-import { loadSettings, readJson, writeJson } from "../config.ts";
+import { loadSettings } from "../adapters/settings.ts";
+import { readJson, writeJson } from "../adapters/storage.ts";
 
 // Prompt history shared across sessions, newest last.
 const MAX = 200;

@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import { useState } from "react";
-import { baseRef, describeChanges, listWorktrees, WORKTREE_NAME, worktreeChanges, type Worktree } from "../worktree.ts";
+import { baseRef, describeChanges, listWorktrees, WORKTREE_NAME, worktreeChanges, type Worktree } from "../adapters/git/worktree.ts";
 import { Select, type Option } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 
