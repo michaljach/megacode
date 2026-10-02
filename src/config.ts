@@ -32,6 +32,36 @@ export type SavedAuth = Record<string, { apiKey?: string; baseURL?: string; chat
 export const loadAuth = () => readJson<SavedAuth>("auth.json", {});
 export const saveAuth = (auth: SavedAuth) => writeJson("auth.json", auth, { secret: true });
 
-export type Settings = { model?: string };
-export const loadSettings = () => readJson<Settings>("settings.json", {});
-export const saveSettings = (s: Settings) => writeJson("settings.json", s);
+export type PermissionMode = "ask" | "accept-edits" | "yolo";
+
+/** User preferences, edited with /config. */
+export type Settings = {
+  model?: string;
+  permissionMode: PermissionMode;
+  maxSteps: number;
+  bashTimeoutMs: number;
+  maxToolOutput: number;
+  projectInstructions: boolean;
+  saveHistory: boolean;
+  /** What new worktrees branch from: the remote's default branch, or the current commit. */
+  worktreeBase: "fresh" | "head";
+};
+
+export const DEFAULT_SETTINGS: Settings = {
+  permissionMode: "yolo",
+  maxSteps: 50,
+  bashTimeoutMs: 120_000,
+  maxToolOutput: 30_000,
+  projectInstructions: true,
+  saveHistory: true,
+  worktreeBase: "fresh",
+};
+
+// Only values the user changed are written, so later changes to defaults still apply.
+let saved: Partial<Settings> | undefined;
+const savedSettings = () => (saved ??= readJson<Partial<Settings>>("settings.json", {}));
+export const loadSettings = (): Settings => ({ ...DEFAULT_SETTINGS, ...savedSettings() });
+export function updateSettings(patch: Partial<Settings>) {
+  saved = { ...savedSettings(), ...patch };
+  writeJson("settings.json", saved);
+}

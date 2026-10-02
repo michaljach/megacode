@@ -12,8 +12,10 @@ const TOOL_LABELS: Record<string, string> = {
 
 /** "Bash(npm test)", "Read(src/cli.ts)" */
 export function formatCall(c: ToolCall): string {
-  const arg = String(c.input.command ?? c.input.path ?? c.input.pattern ?? "").split("\n")[0]!;
-  const label = TOOL_LABELS[c.name] ?? c.name;
+  const mcp = c.name.match(/^mcp__(.+?)__(.+)$/);
+  const firstString = Object.values(c.input ?? {}).find((v) => typeof v === "string");
+  const arg = String((mcp ? firstString : (c.input.command ?? c.input.path ?? c.input.pattern)) ?? "").split("\n")[0]!;
+  const label = mcp ? `${mcp[1]} · ${mcp[2]} (MCP)` : (TOOL_LABELS[c.name] ?? c.name);
   return `${label}(${arg.length > 80 ? arg.slice(0, 80) + "…" : arg})`;
 }
 
