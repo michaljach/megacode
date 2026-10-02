@@ -63,6 +63,14 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 
 `read_file`, `write_file`, `edit_file`, `bash`, `list_files`, `grep`. Writes, edits and shell commands open an approval dialog: yes, always for this session, or no (esc), which stops the turn so you can redirect. `-y/--yolo` starts in bypass mode. In one-shot mode without a terminal, approvals are refused unless `-y` is given. If `AGENTS.md` or `CLAUDE.md` exists in the working directory, it is added to the system prompt.
 
+### Token-efficient context
+
+File reads default to 200 lines and a 12,000-character budget, with an exact continuation offset. Lines are never silently cut (a single oversized line can exceed the budget). Scope searches and read only the ranges you need.
+
+Long shell, search, and listing results show the first and last 6,000 characters. Full output is saved in a private `megacode-output-*` directory under the OS temporary directory, with a path the agent can read/search. Exit status stays visible. These logs may contain sensitive command output; remove them when no longer needed (they are not automatically deleted by megacode). Listings capped at 1,000 entries explicitly request a narrower glob.
+
+Conversation history, project instructions, and provider-native reasoning/signatures are retained; there is no lossy automatic history summarization. Existing provider prompt caching remains enabled where supported.
+
 ## Layout
 
 ```
@@ -93,6 +101,14 @@ src/
 Conversation history is stored in a neutral format (`types.ts`). Each assistant turn also keeps the provider's native content. That content is sent back verbatim to the same provider, so Anthropic thinking blocks and Gemini thought signatures are preserved. When you switch providers, the next one gets the neutral text and tool calls instead.
 
 To add a provider, implement `Provider.turn()` in `src/providers/` and register it in `providers/index.ts`.
+
+## Harness benchmark
+
+See [bench/README.md](bench/README.md) for fixed coding tasks, independent grading, same-model comparisons with other CLI harnesses, and local megacode results.
+
+```sh
+npm run bench -- --model openai:gpt-6-astra --repeats 5
+```
 
 ## Development
 

@@ -33,6 +33,8 @@
     "start": "tsx src/cli.tsx",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc",
+    "test": "tsx --test src/*.test.ts",
+    "bench": "tsx bench/run.ts",
     "prepublishOnly": "npm run typecheck && npm run build"
   },
   "dependencies": {

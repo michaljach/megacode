@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
-import { glob, mkdir, readFile, writeFile } from "node:fs/promises";
+import { glob, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { filePage, OUTPUT_CHARS, previewOutput } from "./output.ts";
 import path from "node:path";
 import { styleText } from "node:util";
 import type { ToolCall, ToolSpec } from "./types.ts";
@@ -8,15 +10,24 @@ import type { ToolCall, ToolSpec } from "./types.ts";
 export type Approve = (req: { tool: string; title: string; body: string }) => Promise<boolean>;
 type Ctx = { approve: Approve; signal?: AbortSignal };
 
-const MAX_OUTPUT = 30_000;
 const IGNORE = ["**/node_modules/**", "**/.git/**"];
 
 type Tool = ToolSpec & { run: (input: any, ctx: Ctx) => Promise<string> };
 
 const resolvePath = (p: string) => path.resolve(process.cwd(), p);
 
-function truncate(s: string): string {
-  return s.length > MAX_OUTPUT ? `${s.slice(0, MAX_OUTPUT)}\n... [truncated ${s.length - MAX_OUTPUT} chars]` : s;
+async function compactOutput(text: string): Promise<string> {
+  if (text.length <= OUTPUT_CHARS) return text;
+  // Keep omitted output recoverable without putting it in every subsequent request.
+  try {
+    const dir = await mkdtemp(path.join(tmpdir(), "megacode-output-"));
+    const file = path.join(dir, "output.txt");
+    await writeFile(file, text, { mode: 0o600 });
+    return `${previewOutput(text)}\n[Full output: ${file}; read_file or search this file]`;
+  } catch {
+    // Do not silently discard evidence if the temporary directory is unavailable.
+    return text;
+  }
 }
 
 function diff(oldStr: string, newStr: string): string {
@@ -37,31 +48,32 @@ function run(cmd: string, args: string[], opts: { shell?: boolean; timeout?: num
     let out = "";
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (out += d));
-    const done = (...notes: string[]) => resolve([truncate(out).trimEnd(), ...notes].filter(Boolean).join("\n"));
-    child.on("error", (e) => (e.name === "AbortError" ? done("[interrupted]") : resolve(`Error: ${e.message}`)));
-    child.on("close", (code, signal) => done(code ? `[exit code ${code}]` : "", signal ? `[killed: ${signal}]` : ""));
+    let error = "";
+    child.on("error", (e) => { error = e.name === "AbortError" ? "[interrupted]" : `Error: ${e.message}`; });
+    child.on("close", async (code, signal) => {
+      resolve([
+        (await compactOutput(out)).trimEnd(), error,
+        code ? `[exit code ${code}]` : "", signal ? `[killed: ${signal}]` : "",
+      ].filter(Boolean).join("\n"));
+    });
   });
 }
 
 const tools: Tool[] = [
   {
     name: "read_file",
-    description: "Read a text file. Returns lines prefixed with line numbers. Use offset/limit for large files.",
+    description: "Read numbered text lines. Large results include a continuation offset.",
     parameters: {
       type: "object",
       properties: {
-        path: { type: "string", description: "File path, relative to the working directory or absolute" },
+        path: { type: "string", description: "Relative or absolute path" },
         offset: { type: "number", description: "1-based line to start from" },
-        limit: { type: "number", description: "Max lines to return (default 2000)" },
+        limit: { type: "number", description: "Max lines (default 200); also bounded by character budget" },
       },
       required: ["path"],
     },
-    async run({ path: p, offset = 1, limit = 2000 }) {
-      const lines = (await readFile(resolvePath(p), "utf8")).split("\n");
-      const slice = lines.slice(offset - 1, offset - 1 + limit);
-      const body = slice.map((l, i) => `${String(offset + i).padStart(6)}\t${l}`).join("\n");
-      const more = offset - 1 + limit < lines.length ? `\n... [${lines.length} lines total]` : "";
-      return truncate(body + more);
+    async run({ path: p, offset, limit }) {
+      return filePage(await readFile(resolvePath(p), "utf8"), offset, limit);
     },
   },
   {
@@ -134,11 +146,13 @@ const tools: Tool[] = [
     },
     async run({ pattern = "**/*" }) {
       const files: string[] = [];
+      let more = false;
       for await (const f of glob(pattern, { cwd: process.cwd(), exclude: IGNORE })) {
+        if (files.length >= 1000) { more = true; break; }
         files.push(f);
-        if (files.length >= 1000) break;
       }
-      return files.length ? truncate(files.sort().join("\n")) : "No files found.";
+      const output = files.length ? await compactOutput(files.sort().join("\n")) : "No files found.";
+      return output + (more ? "\n[Only 1000 entries listed; narrow the glob pattern]" : "");
     },
   },
   {

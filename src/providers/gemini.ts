@@ -89,7 +89,7 @@ function toGemini(messages: Message[]): Content[] {
   const push = (role: "user" | "model", parts: Part[]) => {
     const last = out.at(-1);
     if (last?.role === role) last.parts!.push(...parts);
-    else out.push({ role, parts });
+    else out.push({ role, parts: [...parts] });
   };
   for (const m of messages) {
     if (m.role === "user") push("user", [{ text: m.text }]);

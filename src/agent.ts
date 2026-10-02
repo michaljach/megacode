@@ -18,8 +18,7 @@ export type AgentEvents = {
 
 function systemPrompt(): string {
   const parts = [
-    "You are a coding agent running in the user's terminal. Use the tools to inspect and change the project.",
-    "Read files before editing them. Prefer edit_file for targeted changes. Keep answers concise; the terminal renders Markdown.",
+    "Terminal coding agent. Read before editing; prefer targeted edit_file changes. Use scoped searches and file ranges; follow truncation pointers when needed. Verify changes with relevant checks. Be concise; report results and unverified work in Markdown.",
     `Working directory: ${process.cwd()}\nPlatform: ${os.platform()} ${os.release()}`,
   ];
   for (const f of ["AGENTS.md", "CLAUDE.md"])

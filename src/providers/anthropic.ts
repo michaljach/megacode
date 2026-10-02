@@ -62,7 +62,7 @@ function toAnthropic(messages: Message[]): Anthropic.MessageParam[] {
     const last = out.at(-1);
     // Merge consecutive same-role turns (e.g. an interrupted tool result followed by new user text).
     if (last && last.role === role && Array.isArray(last.content)) last.content.push(...blocks);
-    else out.push({ role, content: blocks });
+    else out.push({ role, content: [...blocks] });
   };
   for (const m of messages) {
     if (m.role === "user") push("user", [{ type: "text", text: m.text }]);
