@@ -425,7 +425,7 @@ export function App({
 
   return (
     <Box flexDirection="column">
-      <Static key={epoch} items={items}>
+      <Static key={epoch} items={items} style={{ width: "100%" }}>
         {(item, i) => <ItemView key={i} item={item} model={model} />}
       </Static>
 
@@ -608,10 +608,12 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
             <Text color={item.isError ? "red" : "green"}>⏺</Text> <Text bold>{formatCall(item.call)}</Text>
           </Text>
           <Box>
-            <Text dimColor>{"  ⎿  "}</Text>
-            <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
-              {previewOutput(item.output) || "(no output)"}
-            </Text>
+            <Box width={5} flexShrink={0}><Text dimColor>{"  ⎿  "}</Text></Box>
+            <Box flexGrow={1} flexShrink={1} minWidth={0}>
+              <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
+                {previewOutput(item.output) || "(no output)"}
+              </Text>
+            </Box>
           </Box>
           {!item.isError && item.changePreview && (
             <Box marginLeft={5}><Text>{item.changePreview}</Text></Box>
