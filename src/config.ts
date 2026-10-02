@@ -43,6 +43,7 @@ export type Settings = {
   maxToolOutput: number;
   projectInstructions: boolean;
   saveHistory: boolean;
+  promptAutocomplete: boolean;
   /** What new worktrees branch from: the remote's default branch, or the current commit. */
   worktreeBase: "fresh" | "head";
 };
@@ -54,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   maxToolOutput: 12_000,
   projectInstructions: true,
   saveHistory: true,
+  promptAutocomplete: true,
   worktreeBase: "fresh",
 };
 

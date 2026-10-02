@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { renderToString } from 'ink';
 import { ItemView } from '../src/ui/App.tsx';
 import { previewPrompt } from '../src/ui/format.ts';
-
+import { PromptInput } from '../src/ui/PromptInput.tsx';
 import { Questionnaire } from '../src/ui/Questionnaire.tsx';
 
 test('questionnaire renders choices, custom answers, and progress', () => {
@@ -19,6 +19,19 @@ test('questionnaire renders choices, custom answers, and progress', () => {
   assert.match(choices, /Other — type an answer/);
   assert.match(choices, /Esc to cancel/);
   assert.match(view([{ question: 'Constraints?' }]), /Type your answer/);
+});
+
+test('prompt displays contextual ghost text only when enabled and matching', () => {
+  const props = {
+    value: '', suggestion: 'Run the tests', autocomplete: true, isActive: true,
+    onChange() {}, onSubmit() {}, onHelp() {}, history: [], commands: [], placeholder: 'Ask anything',
+  };
+  const view = (patch = {}) => stripVTControlCharacters(renderToString(createElement(PromptInput, { ...props, ...patch }), { columns: 80 }));
+  assert.match(view(), /Run the tests/);
+  assert.match(view(), /tab to accept/);
+  assert.doesNotMatch(view({ autocomplete: false }), /Run the tests|tab to accept/);
+  assert.doesNotMatch(view({ value: 'Fix the bug' }), /Run the tests|tab to accept/);
+  assert.doesNotMatch(view({ isActive: false }), /Run the tests|tab to accept/);
 });
 
 const prompt = 'make benchamrk table better to visualise codex vs megacode and possibly other in future';

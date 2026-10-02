@@ -2,7 +2,7 @@ import { Box, Static, Text, useAnimation, useApp, useInput } from "ink";
 import os from "node:os";
 import { useEffect, useRef, useState } from "react";
 import type { Agent, AgentEvents } from "../agent.ts";
-import { loadAuth, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
+import { loadAuth, loadSettings, saveAuth, updateSettings, type PermissionMode, type Settings } from "../config.ts";
 import { authStatus, isConfigured, PROVIDER_INFO, PROVIDERS, providerInfo, resetProvider } from "../providers/index.ts";
 import type { Approve } from "../tools.ts";
 import type { ToolCall } from "../types.ts";
@@ -65,6 +65,7 @@ const SHORTCUTS: [string, string][] = [
   ["ctrl+s", "send queued messages now (interrupts the running turn)"],
   ["\\ + enter, option+enter", "newline"],
   ["↑ / ↓", "prompt history"],
+  ["tab", "accept prompt suggestion / complete command"],
   ["alt+← / alt+→", "move cursor by word"],
   ["/", "commands"],
   ["esc", "interrupt · clear input"],
@@ -115,6 +116,21 @@ export function App({
   const [exitArmed, setExitArmed] = useState(false);
   const [model, setModel] = useState(agent.model);
   const [history, setHistory] = useState(loadHistory);
+  const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
+  const [suggestion, setSuggestion] = useState("");
+  const [completedTurn, setCompletedTurn] = useState(0);
+  useEffect(() => {
+    setSuggestion("");
+    if (!autocomplete || running || !completedTurn || !agent.messages.length) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      void agent.suggestPrompt(ctrl.signal).then((text) => {
+        if (!ctrl.signal.aborted) setSuggestion(text);
+      }).catch(() => {}); // Optional suggestions must never disrupt the main conversation.
+    }, 300);
+    const timeout = setTimeout(() => ctrl.abort(), 15_000);
+    return () => { clearTimeout(timer); clearTimeout(timeout); ctrl.abort(); };
+  }, [agent, autocomplete, running, completedTurn, epoch, model]);
 
   const controller = useRef<AbortController | null>(null);
   const denied = useRef(false);
@@ -197,6 +213,7 @@ export function App({
     let interrupted = false;
     try {
       await agent.send(text, ctrl.signal, events);
+      if (!ctrl.signal.aborted) setCompletedTurn((n) => n + 1);
     } catch (e) {
       if (flushTimer.current) clearTimeout(flushTimer.current);
       flush(true);
@@ -381,6 +398,7 @@ export function App({
 
   function changeSettings(patch: Partial<Settings>) {
     updateSettings(patch);
+    if (patch.promptAutocomplete !== undefined) setAutocomplete(patch.promptAutocomplete);
     if (patch.permissionMode) setMode(patch.permissionMode);
     if (patch.projectInstructions !== undefined) agent.reloadSystemPrompt();
   }
@@ -575,6 +593,8 @@ export function App({
             onHelp={() => setShowHelp((s) => !s)}
             isActive
             history={history}
+            autocomplete={autocomplete && !running}
+            suggestion={suggestion}
             commands={COMMANDS}
             placeholder={running ? "queue another message..." : 'tiny moon vibes'}
           />

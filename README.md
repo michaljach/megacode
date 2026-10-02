@@ -82,6 +82,9 @@ Successful `edit_file` and `write_file` calls show persistent, syntax-highlighte
 | Load AGENTS.md / CLAUDE.md | on        | on · off                                      |
 | Worktree base              | default branch | default branch (origin/HEAD) · current commit |
 | Save prompt history        | on        | on · off                                      |
+| Prompt autocomplete       | on        | on · off                                      |
+
+Prompt autocomplete suggests a next prompt based on the current conversation and recent tool results, displayed as dimmed inline text after a turn finishes. **Tab** accepts without sending; **Enter** sends only text you've entered or accepted. Typing a different prompt hides the suggestion. Suggestions use an additional, tool-free request to the selected model (normal provider costs apply, tokens count toward `/usage`); they never execute actions or change conversation history. Failures silently leave the prompt unchanged. Toggle **Prompt autocomplete** in `/config`, or set `"promptAutocomplete": false` in `~/.megacode/settings.json` to disable requests and suggestions. Slash-command completion remains available independently.
 
 ## MCP servers
 
