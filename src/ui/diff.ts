@@ -3,8 +3,9 @@ import chalk from "chalk";
 import { diffWordsWithSpace, structuredPatch } from "diff";
 import type { FileChange } from "../core/tools.ts";
 
-// A file change as Claude Code shows it: one line-number column, removed lines on red and added lines
-// on green (the changed words brighter), unchanged context around them. New files are listed whole.
+// A file change as Claude Code shows it: one line-number column, removed lines red on a red band and
+// added lines green on a green band (the changed words brighter), plain context around them.
+// New files are listed whole.
 
 export const DIFF_COLORS = {
   removedNumber: "#dc5a5a",
@@ -103,10 +104,10 @@ export function gutter(row: DiffRow, model: DiffModel): string {
   return ` ${String(row.number).padStart(model.numberWidth)} ${sign}`;
 }
 
-/** Background and line-number color for each kind of row. */
-export function rowStyle(row: LineRow) {
-  if (row.type === "add") return { background: DIFF_COLORS.added, word: DIFF_COLORS.addedWord, number: DIFF_COLORS.addedNumber };
-  if (row.type === "remove") return { background: DIFF_COLORS.removed, word: DIFF_COLORS.removedWord, number: DIFF_COLORS.removedNumber };
+/** Text color (line number, sign and code), band and changed-word background for each kind of row. */
+export function rowStyle(row: LineRow): { color?: string; background?: string; word?: string } {
+  if (row.type === "add") return { color: DIFF_COLORS.addedNumber, background: DIFF_COLORS.added, word: DIFF_COLORS.addedWord };
+  if (row.type === "remove") return { color: DIFF_COLORS.removedNumber, background: DIFF_COLORS.removed, word: DIFF_COLORS.removedWord };
   return {};
 }
 
@@ -129,10 +130,13 @@ export function diffToAnsi(model: DiffModel, width = process.stdout.columns || 8
     const head = gutter(row, model);
     if (row.type === "gap") return chalk.hex(DIFF_COLORS.muted)(head + "…");
     const style = rowStyle(row);
-    const bg = (color: string | undefined, text: string) => (color ? chalk.bgHex(color)(text) : text);
-    const body = pieces(row).map((p) => bg(p.changed ? style.word : style.background, p.text)).join("");
-    const padding = bg(style.background, " ".repeat(Math.max(0, width - head.length - row.text.length)));
-    return bg(style.background, style.number ? chalk.hex(style.number)(head) : head) + body + (style.background ? padding : "");
+    const paint = (background: string | undefined, text: string) => {
+      const colored = style.color ? chalk.hex(style.color)(text) : text;
+      return background ? chalk.bgHex(background)(colored) : colored;
+    };
+    const body = pieces(row).map((p) => paint(p.changed ? style.word : style.background, p.text)).join("");
+    const padding = style.background ? paint(style.background, " ".repeat(Math.max(0, width - head.length - row.text.length))) : "";
+    return paint(style.background, head) + body + padding;
   });
   if (model.hidden) lines.push(chalk.hex(DIFF_COLORS.muted)(`… +${model.hidden} lines`));
   return lines.join("\n");

@@ -16,12 +16,12 @@ export function DiffLines({ model }: { model: DiffModel }) {
         return (
           <Box key={i} backgroundColor={style.background}>
             <Box flexShrink={0}>
-              <Text color={style.number} backgroundColor={style.background}>
+              <Text color={style.color} backgroundColor={style.background}>
                 {gutter(row, model)}
               </Text>
             </Box>
             <Box flexGrow={1} flexShrink={1} minWidth={0}>
-              <Text wrap="wrap" backgroundColor={style.background}>
+              <Text wrap="wrap" color={style.color} backgroundColor={style.background}>
                 {pieces(row).map((p, j) => (
                   <Text key={j} backgroundColor={p.changed ? style.word : style.background}>
                     {p.text}
