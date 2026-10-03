@@ -25,14 +25,25 @@ export function Select<T>({
     else if (/^[1-9]$/.test(input) && Number(input) <= options.length) onSelect(options[Number(input) - 1]!.value);
   });
 
+  // "❯ 1. " stays in its own column so long labels wrap under the label, not under the number.
+  const marker = `❯ ${options.length}. `.length;
   return (
     <Box flexDirection="column">
       {options.map((o, i) => (
-        <Text key={i} color={i === index ? "cyan" : undefined}>
-          {i === index ? "❯ " : "  "}
-          {i + 1}. {o.label}
-          {o.hint ? <Text dimColor> {o.hint}</Text> : null}
-        </Text>
+        <Box key={i}>
+          <Box width={marker} flexShrink={0}>
+            <Text color={i === index ? "cyan" : undefined}>
+              {i === index ? "❯ " : "  "}
+              {i + 1}.
+            </Text>
+          </Box>
+          <Box flexShrink={1} minWidth={0}>
+            <Text color={i === index ? "cyan" : undefined}>
+              {o.label}
+              {o.hint ? <Text dimColor> {o.hint}</Text> : null}
+            </Text>
+          </Box>
+        </Box>
       ))}
     </Box>
   );

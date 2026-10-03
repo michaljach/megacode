@@ -37,6 +37,7 @@ export function filePage(text: string, offset = 1, limit = READ_LINES): string {
   if (!Number.isInteger(offset) || offset < 1 || !Number.isInteger(limit) || limit < 1)
     throw new Error("offset and limit must be positive integers");
   const lines = text.split("\n");
+  if (lines.length > 1 && lines.at(-1) === "") lines.pop(); // a final newline ends the last line; it isn't another one
   if (offset > lines.length) return `[EOF: ${lines.length} lines]`;
   const page: string[] = [];
   let size = 0;

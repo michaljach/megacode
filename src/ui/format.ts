@@ -2,9 +2,11 @@ import os from "node:os";
 import { styleText } from "node:util";
 import type { ToolCall } from "../core/conversation.ts";
 import type { ApprovalRequest, FileChange } from "../core/tools.ts";
-import { highlightCode, renderFileChange } from "./code.ts";
+import { changeStats, highlightCode, renderFileChange } from "./code.ts";
 
 const TOOL_LABELS: Record<string, string> = {
+  ask_questions: "Ask",
+  view_image: "View",
   read_file: "Read",
   write_file: "Write",
   edit_file: "Update",
@@ -36,11 +38,41 @@ export function previewPrompt(text: string): string {
   return chars.length > 200 ? chars.slice(0, 199).join("") + "…" : chars.join("");
 }
 
+export const plural = (n: number, word: string) => `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
+
 /** First few lines of tool output for the transcript. */
 export function previewOutput(output: string, lines = 3): string {
   const all = output.trimEnd().split("\n");
   const head = all.slice(0, lines).join("\n");
-  return all.length > lines ? `${head}\n${styleText("dim", `… +${all.length - lines} lines`)}` : head;
+  return all.length > lines ? `${head}\n${styleText("dim", `… +${plural(all.length - lines, "line")}`)}` : head;
+}
+
+/** "Added 2 lines, removed 1 line" for an applied edit. */
+export function describeChange(change: FileChange): string {
+  const stats = changeStats(change.before, change.after);
+  if (!stats) return "Changed (too large to count)";
+  const parts = [stats.added && `added ${plural(stats.added, "line")}`, stats.removed && `removed ${plural(stats.removed, "line")}`].filter(Boolean);
+  const text = parts.join(", ");
+  return text ? text[0]!.toUpperCase() + text.slice(1) : "No changes";
+}
+
+/** "Read 3 lines", or "Read 200 of 1,234 lines" for a partial read. */
+function describeRead(output: string): string {
+  if (output.startsWith("[EOF:")) return output;
+  const shown = output.match(/^\d+\t/gm)?.length ?? 0;
+  const total = output.match(/\[(\d+) lines total; continue/)?.[1];
+  return total ? `Read ${shown.toLocaleString("en-US")} of ${plural(Number(total), "line")}` : `Read ${plural(shown, "line")}`;
+}
+
+/**
+ * What the transcript shows for a finished tool call. The model gets the full output; people get
+ * a summary where the raw text would only repeat what the diff or the call already says.
+ */
+export function displayOutput(call: ToolCall, result: { output: string; isError: boolean; change?: FileChange }): string {
+  if (result.isError) return result.output;
+  if (result.change) return describeChange(result.change);
+  if (call.name === "read_file") return describeRead(result.output);
+  return result.output;
 }
 
 /**

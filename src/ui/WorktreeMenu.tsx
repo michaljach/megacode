@@ -1,6 +1,8 @@
 import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
 import { baseRef, describeChanges, listWorktrees, WORKTREE_NAME, worktreeChanges, type Worktree, type WorktreeChanges } from "../adapters/git/worktree.ts";
+import { Dialog } from "./Dialog.tsx";
+import { tildify } from "./format.ts";
 import { Select, type Option } from "./Select.tsx";
 import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
@@ -105,16 +107,9 @@ export function WorktreeMenu({
 
 function Frame({ current, help, children }: { current: Worktree | null; help?: string; children: React.ReactNode }) {
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      <Text>
-        <Text bold>Worktrees</Text>
-        <Text dimColor> · {current ? `in ${current.name} (${current.branch})` : "in the main checkout"}</Text>
-      </Text>
-      <Box flexDirection="column" marginTop={1}>
-        {children}
-      </Box>
-      {help && <Text dimColor>{help}</Text>}
-    </Box>
+    <Dialog title="Worktrees" subtitle={current ? `in ${current.name} (${current.branch})` : "in the main checkout"} footer={help}>
+      {children}
+    </Dialog>
   );
 }
 
@@ -130,15 +125,13 @@ export function ExitWorktreeDialog({
 }) {
   // undefined while git runs; null if git couldn't tell.
   const changes = useLoaded<WorktreeChanges | null>(() => worktreeChanges(worktree));
-  const summary = changes === undefined ? "checking for changes…" : describeChanges(changes);
+  const summary = changes === undefined ? "" : describeChanges(changes);
   const clean = changes?.files === 0 && changes.commits === 0;
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1} marginTop={1}>
-      <Text bold color="yellow">
-        Exiting worktree {worktree.name}
-      </Text>
+    <Dialog title={`Exiting worktree ${worktree.name}`} tone="warn" footer="esc to stay">
       <Text dimColor>
-        {worktree.path} · branch {worktree.branch} · {summary}
+        {tildify(worktree.path)} · branch {worktree.branch}
+        {summary && ` · ${summary}`}
       </Text>
       <Box marginTop={1}>
         {changes === undefined ? (
@@ -155,7 +148,6 @@ export function ExitWorktreeDialog({
           />
         )}
       </Box>
-      <Text dimColor>esc to stay</Text>
-    </Box>
+    </Dialog>
   );
 }

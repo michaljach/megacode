@@ -18,7 +18,7 @@ test('questionnaire renders choices, custom answers, and progress', () => {
   assert.match(choices, /Which framework\?/);
   assert.match(choices, /React/);
   assert.match(choices, /Other — type an answer/);
-  assert.match(choices, /Esc to cancel/);
+  assert.match(choices, /esc cancel/);
   assert.match(view([{ question: 'Constraints?' }]), /Type your answer/);
 });
 
@@ -148,3 +148,42 @@ for (const columns of [20, 40, 60, 80]) {
     assert.equal(codeLines.map(line => line.slice(17)).join('').replace(/\s/g, ''), code.replace(/\s/g, ''));
   });
 }
+
+const { StatusLine } = await import('../src/ui/StatusLine.tsx');
+const { Select } = await import('../src/ui/Select.tsx');
+const { Help } = await import('../src/ui/Help.tsx');
+const { Dialog } = await import('../src/ui/Dialog.tsx');
+const view = (element, columns) => stripVTControlCharacters(renderToString(element, { columns })).split('\n').filter((line) => line.trim());
+
+test('status line keeps the mode whole and gives up the path before the details', () => {
+  const props = { model: 'openai:gpt-6-astra', loggedIn: true, exitArmed: false, usage: { input: 12000, output: 3400 }, worktree: 'nimble-river-737' };
+  const wide = view(createElement(StatusLine, { ...props, mode: 'ask' }), 100);
+  assert.equal(wide.length, 1);
+  assert.match(wide[0], /^ {2}ask mode .*openai:gpt-6-astra · ⎇ nimble-river-737 · 15\.4k tokens$/);
+  for (const columns of [40, 50, 60]) {
+    const narrow = view(createElement(StatusLine, { ...props, mode: 'ask' }), columns);
+    assert.equal(narrow.length, 1, narrow.join('\n'));
+    assert.ok(narrow[0].length <= columns, narrow[0]);
+    assert.match(narrow[0], /^ {2}ask mode /, narrow[0]);
+  }
+});
+
+test('long options and help descriptions wrap under their own column', () => {
+  const options = view(createElement(Select, { options: [{ label: 'No, and tell megacode what to do differently', value: 1 }], onSelect() {} }), 30);
+  assert.ok(options.length > 1);
+  assert.ok(options.slice(1).every((line) => line.startsWith('     ')), options.join('\n'));
+
+  const help = view(createElement(Help), 50);
+  const wrapped = help.findIndex((line) => line.includes('ctrl+s'));
+  const column = help[wrapped].indexOf('send');
+  assert.ok(help[wrapped + 1].slice(0, column).trim() === '', help.slice(wrapped, wrapped + 2).join('\n'));
+});
+
+test('dialogs share one layout: title, blank line, body, blank line, key hints', () => {
+  const lines = stripVTControlCharacters(renderToString(
+    createElement(Dialog, { title: 'Title', subtitle: 'context', footer: 'esc close' }, createElement(Text, null, 'Body')),
+    { columns: 40 },
+  )).split('\n');
+  const inside = lines.slice(lines.findIndex((l) => l.startsWith('╭')) + 1, lines.findIndex((l) => l.startsWith('╰')));
+  assert.deepEqual(inside.map((line) => line.replace(/^│ ?|\s*│$/g, '')), ['Title · context', '', 'Body', '', 'esc close']);
+});

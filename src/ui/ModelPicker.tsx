@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PROVIDER_INFO } from "../adapters/providers/catalog.ts";
 import { isConfigured } from "../adapters/providers/credentials.ts";
 import { listModels } from "../adapters/providers/registry.ts";
+import { Dialog } from "./Dialog.tsx";
 
 type ListState = { status: "loading" } | { status: "ok"; models: string[] } | { status: "error"; error: string };
 
@@ -124,14 +125,11 @@ export function ModelPicker({
   const loading = Object.values(lists).some((l) => l.status === "loading");
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      <Text>
-        <Text bold>Select model</Text>
-        <Text dimColor>
-          {" "}
-          · {rows.filter((r) => r.action.type === "model").length} models{loading ? " · loading…" : ""}
-        </Text>
-      </Text>
+    <Dialog
+      title="Select model"
+      subtitle={`${rows.filter((r) => r.action.type === "model").length} models${loading ? " · loading…" : ""}`}
+      footer="↑↓ navigate · enter select · esc cancel · /login to add a provider"
+    >
       <Text>
         <Text color="cyan">⌕ </Text>
         {query || <Text dimColor>type to filter, or provider:model for anything unlisted</Text>}
@@ -154,7 +152,6 @@ export function ModelPicker({
         {rows.length === 0 && <Text dimColor>  No matches.</Text>}
         {start + WINDOW < rows.length && <Text dimColor>{`  ↓ ${rows.length - start - WINDOW} more`}</Text>}
       </Box>
-      <Text dimColor>↑↓ navigate · enter select · esc cancel · /login to add a provider</Text>
-    </Box>
+    </Dialog>
   );
 }

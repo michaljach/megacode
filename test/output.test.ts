@@ -23,6 +23,10 @@ test("file pages preserve source and give exact continuation offsets", () => {
   assert.ok(filePage(text, 201).startsWith("201\tline 201\n"));
   assert.equal(filePage(text, 450), "450\tline 450");
   assert.equal(filePage(text, 451), "[EOF: 450 lines]");
+  // A final newline ends the last line; it doesn't start another.
+  assert.equal(filePage("alpha\nbeta\n"), "1\talpha\n2\tbeta");
+  assert.equal(filePage("alpha\nbeta\n", 3), "[EOF: 2 lines]");
+  assert.equal(filePage(""), "1\t");
 });
 
 test("character budget never silently splits a line", () => {

@@ -13,6 +13,7 @@ import { mcp, type McpStatus } from "../adapters/mcp/manager.ts";
 import { configDir } from "../adapters/storage.ts";
 import { previousAddStep, serverNameError, targetError, type AddStep } from "./mcpWizard.ts";
 import { tildify } from "./format.ts";
+import { Dialog } from "./Dialog.tsx";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 
@@ -63,7 +64,11 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
     help = "↑↓ navigate · enter select · esc close";
     body = (
       <>
-        {servers.length === 0 && <Text dimColor>No MCP servers yet. Add one to give megacode more tools.</Text>}
+        {servers.length === 0 && (
+          <Box marginBottom={1}>
+            <Text dimColor>No MCP servers yet. Add one to give megacode more tools.</Text>
+          </Box>
+        )}
         <Select
           options={[
             ...servers.map((s) => ({ label: s.name, value: s.name, hint: statusText(s.status) })),
@@ -230,16 +235,9 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      <Text>
-        <Text bold>MCP servers</Text>
-        <Text dimColor> · {file}</Text>
-      </Text>
-      <Box flexDirection="column" marginTop={1}>
-        {body}
-        {error && <Text color="red">{error}</Text>}
-      </Box>
-      <Text dimColor>{help}</Text>
-    </Box>
+    <Dialog title="MCP servers" subtitle={file} footer={help}>
+      {body}
+      {error && <Text color="red">{error}</Text>}
+    </Dialog>
   );
 }

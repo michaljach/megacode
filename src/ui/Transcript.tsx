@@ -2,7 +2,7 @@ import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 import type { NoticeLevel } from "../core/agent.ts";
 import type { ToolCall } from "../core/conversation.ts";
-import { formatCall, previewOutput, previewPrompt, renderMarkdown } from "./format.ts";
+import { formatCall, previewOutput, previewPrompt, renderMarkdown, tildify } from "./format.ts";
 import { Blink } from "./Spinner.tsx";
 
 /** One finished entry of the transcript, rendered once into <Static>. */
@@ -24,7 +24,7 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
           <Text dimColor>/help for commands · ? for shortcuts</Text>
           <Text dimColor>
             model: {model}
-            {"\n"}cwd: {process.cwd()}
+            {"\n"}cwd: {tildify(process.cwd())}
           </Text>
         </Box>
       );

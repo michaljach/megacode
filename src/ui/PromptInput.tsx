@@ -2,6 +2,7 @@ import { Box, Text, useInput, usePaste } from "ink";
 import { useEffect, useRef, useState } from "react";
 import { promptCompletion } from "./autocomplete.ts";
 import type { Command } from "./commands.ts";
+import { KeyList } from "./KeyList.tsx";
 
 type Props = {
   value: string;
@@ -194,13 +195,8 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
       </Box>
       {completion && <Text dimColor>  tab to accept suggestion</Text>}
       {menu.length > 0 && (
-        <Box flexDirection="column" paddingX={2}>
-          {menu.map((c, i) => (
-            <Text key={c.name} color={i === menuIndex ? "cyan" : undefined}>
-              {c.name.padEnd(12)}
-              <Text dimColor={i !== menuIndex}>{c.description}</Text>
-            </Text>
-          ))}
+        <Box paddingX={2}>
+          <KeyList rows={menu.map((c) => [c.name, c.description])} selected={menuIndex} />
         </Box>
       )}
     </Box>

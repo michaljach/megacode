@@ -234,7 +234,8 @@ src/
     McpMenu.tsx       /mcp server list, add wizard, details
     mcpWizard.ts      /mcp add wizard steps and validation
     Questionnaire.tsx ask_questions form
-    Select.tsx, TextField.tsx, Spinner.tsx, Help.tsx   small building blocks
+    Dialog.tsx        the frame every dialog uses
+    Select.tsx, TextField.tsx, KeyList.tsx, Spinner.tsx, Help.tsx   small building blocks
     code.ts           syntax highlighting, diff rendering
     format.ts         Markdown rendering, tool labels, previews
 test/                 node:test suites (npm test); e2e.test.mjs runs the CLI against a fake model server

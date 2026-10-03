@@ -5,7 +5,7 @@ import type { ToolCall } from "../core/conversation.ts";
 import { autoApproved, EDIT_TOOLS, type PermissionMode } from "../core/settings.ts";
 import type { Answer, Approve, AskQuestions, Question } from "../core/tools.ts";
 import type { ApprovalChoice, PendingApproval } from "./ApprovalDialog.tsx";
-import { renderChange } from "./format.ts";
+import { displayOutput, renderChange } from "./format.ts";
 import type { Item } from "./Transcript.tsx";
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
@@ -193,7 +193,8 @@ export class AgentSession {
       onToolStart: (call) => this.#update({ activeTool: call }),
       onToolEnd: (call, r) => {
         this.#update({ activeTool: null });
-        host.push({ kind: "tool", call, output: r.output, isError: r.isError, changePreview: r.change && renderChange(r.change) });
+        const changePreview = r.change && !r.isError ? renderChange(r.change) : undefined;
+        host.push({ kind: "tool", call, output: displayOutput(call, r), isError: r.isError, changePreview });
       },
       onNotice: (text, level) => host.notice(text, level),
     };

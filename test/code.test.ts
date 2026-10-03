@@ -32,13 +32,16 @@ test("Markdown highlights whole fences, including unfinished and tilde fences", 
 
 test("diffs include real line numbers, context, and both sides of replacements", () => {
   const diff = plain(renderFileChange("a.ts", "unchanged\nconst x = 1;\ntail\n", "unchanged\nconst x = 2;\ntail\n"));
-  assert.match(diff, /@@ -1,3 \+1,3 @@/);
+  assert.doesNotMatch(diff, /@@|⋮/); // one hunk: the line numbers say where it is
   assert.match(diff, /1\s+1\s+ unchanged/);
   assert.match(diff, /2\s+- const x = 1;/);
   assert.match(diff, /2 \+ const x = 2;/);
   assert.equal(renderFileChange("a", "same", "same"), "No content changes.");
   assert.match(plain(renderFileChange("a", "", "new\n")), /1 \+ new/);
   assert.match(plain(renderFileChange("a", "old\n", "")), /1\s+- old/);
+  const lines = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`);
+  const twoHunks = plain(renderFileChange("a", lines.join("\n"), lines.map((l, i) => (i === 1 || i === 17 ? l + "!" : l)).join("\n")));
+  assert.match(twoHunks, /- line 2\n[\s\S]*\n {3}⋮ {4}⋮\n[\s\S]*- line 18\n/);
 });
 
 test("diff backgrounds cover the gutter and source without token color overrides", () => {

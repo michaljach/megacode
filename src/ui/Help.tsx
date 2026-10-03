@@ -1,5 +1,6 @@
-import { Box, Text } from "ink";
+import { Box } from "ink";
 import { COMMANDS } from "./commands.ts";
+import { KeyList } from "./KeyList.tsx";
 
 const SHORTCUTS: [string, string][] = [
   ["enter", "send message (queued while running)"],
@@ -18,21 +19,9 @@ const SHORTCUTS: [string, string][] = [
 
 export function Help() {
   return (
-    <Box flexDirection="column" paddingX={2} marginTop={1}>
-      {SHORTCUTS.map(([k, d]) => (
-        <Text key={k}>
-          <Text color="cyan">{k.padEnd(26)}</Text>
-          <Text dimColor>{d}</Text>
-        </Text>
-      ))}
-      <Box marginTop={1} flexDirection="column">
-        {COMMANDS.map((c) => (
-          <Text key={c.name}>
-            <Text color="cyan">{c.name.padEnd(26)}</Text>
-            <Text dimColor>{c.description}</Text>
-          </Text>
-        ))}
-      </Box>
+    <Box flexDirection="column" paddingX={2} marginTop={1} gap={1}>
+      <KeyList rows={SHORTCUTS} />
+      <KeyList rows={COMMANDS.map((c) => [c.name, c.description])} />
     </Box>
   );
 }

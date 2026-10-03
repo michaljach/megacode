@@ -303,7 +303,7 @@ export function App({
             autocomplete={autocomplete && !session.running}
             suggestion={suggestion}
             commands={COMMANDS}
-            placeholder={session.running ? "queue another message..." : "tiny moon vibes"}
+            placeholder={session.running ? "queue another message…" : "tiny moon vibes"}
           />
           <StatusLine
             mode={mode}

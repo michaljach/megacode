@@ -3,6 +3,7 @@ import { useState } from "react";
 import { loadSettings } from "../adapters/settings.ts";
 import { configDir } from "../adapters/storage.ts";
 import { DEFAULT_SETTINGS, type PermissionMode, type Settings } from "../core/settings.ts";
+import { Dialog } from "./Dialog.tsx";
 import { tildify } from "./format.ts";
 
 type Key = Exclude<keyof Settings, "model">;
@@ -117,12 +118,12 @@ export function ConfigMenu({
   const description = selected ? selected.description : "Model for new messages (opens the model picker)";
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      <Text>
-        <Text bold>Settings</Text>
-        <Text dimColor> · saved to {tildify(configDir())}/settings.json</Text>
-      </Text>
-      <Box flexDirection="column" marginTop={1}>
+    <Dialog
+      title="Settings"
+      subtitle={`saved to ${tildify(configDir())}/settings.json`}
+      footer="↑↓ navigate · enter/space/←→ change · esc close"
+    >
+      <Box flexDirection="column">
         <Row selected={index === 0} label="Model" value={model} />
         {ENTRIES.map((e, i) => (
           <Row
@@ -137,8 +138,7 @@ export function ConfigMenu({
       <Box marginTop={1}>
         <Text dimColor>{description}</Text>
       </Box>
-      <Text dimColor>↑↓ navigate · enter/space/←→ change · esc close</Text>
-    </Box>
+    </Dialog>
   );
 }
 

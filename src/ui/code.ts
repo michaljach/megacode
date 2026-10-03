@@ -29,6 +29,20 @@ export function highlightCode(code: string, language = ""): string {
   }
 }
 
+/** Lines added and removed, or null when the files are too large to compare quickly. */
+export function changeStats(before: string, after: string): { added: number; removed: number } | null {
+  if (before.length + after.length > 1_000_000) return null;
+  const patch = structuredPatch("", "", before, after, undefined, undefined, { context: 0, timeout: 200 });
+  if (!patch) return null;
+  let added = 0;
+  let removed = 0;
+  for (const line of patch.hunks.flatMap((h) => h.lines)) {
+    if (line[0] === "+") added++;
+    else if (line[0] === "-") removed++;
+  }
+  return { added, removed };
+}
+
 /** Bounded, display-only diff. Keep this out of provider conversation history. */
 export function renderFileChange(file: string, before: string, after: string): string {
   // Bound diff computation and highlighting for very large/generated files.
@@ -38,12 +52,15 @@ export function renderFileChange(file: string, before: string, after: string): s
   if (!patch.hunks.length) return "No content changes.";
   const language = fileLanguage(file);
   const out: string[] = [];
-  const total = patch.hunks.reduce((n, h) => n + h.lines.length + 1, 0);
+  const total = patch.hunks.reduce((n, h) => n + h.lines.length + 1, -1);
   let shown = 0;
-  for (const hunk of patch.hunks) {
+  for (const [i, hunk] of patch.hunks.entries()) {
     if (shown >= 60) break;
-    out.push(styleText("cyan", `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`));
-    shown++;
+    // The gutter already shows line numbers; between hunks a gap marker is all that's needed.
+    if (i > 0) {
+      out.push(styleText("dim", `${"⋮".padStart(4)} ${"⋮".padStart(4)}`));
+      shown++;
+    }
     let oldLine = hunk.oldStart;
     let newLine = hunk.newStart;
     for (const line of hunk.lines) {

@@ -8,6 +8,7 @@ import { savedCredentials, savedProviders } from "../adapters/auth/store.ts";
 import { configDir } from "../adapters/storage.ts";
 import { envKeyName, PROVIDER_INFO, providerInfo, type LoginMethod } from "../adapters/providers/catalog.ts";
 import { authStatus, isConfigured } from "../adapters/providers/credentials.ts";
+import { Dialog } from "./Dialog.tsx";
 import { tildify } from "./format.ts";
 import { firstStep, friendlyError, stepAfterFailure, stepBack, type LoginStep } from "./loginFlow.ts";
 import { Select } from "./Select.tsx";
@@ -130,134 +131,128 @@ export function LoginDialog({
   useInput((_, key) => key.escape && back(), { isActive: step === "browser" });
 
   const envKey = info && envKeyName(info);
+  const envNote = envKey && <Text color="yellow">${envKey} is set and takes precedence over anything saved here.</Text>;
+  const errorLine = error && <Text color="red">{error}</Text>;
+  const keys = "enter continue · esc back";
+
+  if (step === "pick" || !info)
+    return (
+      <Dialog
+        title={welcome ? "Welcome to megacode" : "Log in to a provider"}
+        footer={`Saved to ${tildify(configDir())}/auth.json, readable only by you · esc close`}
+      >
+        {welcome && (
+          <Box marginBottom={1}>
+            <Text>Connect a model provider to get started. You can add more later with /login.</Text>
+          </Box>
+        )}
+        <Select
+          options={PROVIDER_INFO.map((p) => ({
+            label: p.label,
+            value: p.name,
+            hint: p.local ? defaultURL(p.name) : isConfigured(p.name) ? `✔ ${authStatus(p.name)}` : undefined,
+          }))}
+          onSelect={pick}
+          onCancel={onCancel}
+        />
+      </Dialog>
+    );
+
+  if (step === "method")
+    return (
+      <Dialog title={`Log in to ${info.label}`} subtitle="how do you want to sign in?" footer="enter select · esc back">
+        {errorLine}
+        {envNote}
+        <Box marginTop={error || envNote ? 1 : 0}>
+          <Select
+            options={info.methods.map((m) => ({ label: METHOD_LABELS[m][0], value: m, hint: METHOD_LABELS[m][1] || undefined }))}
+            onSelect={chooseMethod}
+            onCancel={back}
+          />
+        </Box>
+      </Dialog>
+    );
+
+  if (step === "browser")
+    return (
+      <Dialog title={method ? METHOD_LABELS[method][0] : "Sign in"} footer="esc cancel">
+        <Text dimColor>
+          {method === "ant-cli" ? "Running `ant auth login`. Finish signing in in your browser." : "Finish signing in in your browser. If it didn't open, visit:"}
+        </Text>
+        {browserUrl && <Text color="cyan">{browserUrl}</Text>}
+        {output.map((line, i) => (
+          <Text key={i} dimColor>
+            {line}
+          </Text>
+        ))}
+        <Box marginTop={1}>
+          <Waiting text="Waiting for sign-in…" />
+        </Box>
+      </Dialog>
+    );
+
+  if (step === "url")
+    return (
+      <Dialog title={`Log in to ${info.label}`} subtitle="endpoint URL" footer={keys}>
+        <Text dimColor>
+          {info.local ? `Make sure the server is running. Default: ${info.baseURL}` : "Base URL of the OpenAI-compatible API, e.g. https://host/v1"}
+        </Text>
+        {errorLine}
+        <Box marginTop={1}>
+          <TextField
+            value={baseURL}
+            onChange={setBaseURL}
+            placeholder={info.baseURL ?? "https://…/v1"}
+            onSubmit={(v) => {
+              const url = v || info.baseURL || "";
+              if (!url) return setError("An endpoint URL is required.");
+              setBaseURL(url);
+              if (info.local) verify("", method, url);
+              else setStep("key");
+            }}
+            onCancel={back}
+          />
+        </Box>
+      </Dialog>
+    );
+
+  if (step === "key")
+    return (
+      <Dialog title={`Log in to ${info.label}`} subtitle="API key" footer={keys}>
+        {info.keyUrl && <Text dimColor>Create one at {info.keyUrl}</Text>}
+        {info.keyOptional && <Text dimColor>Leave empty if the endpoint doesn't need a key.</Text>}
+        {envNote}
+        {errorLine}
+        <Box marginTop={info.keyUrl || info.keyOptional || envNote || error ? 1 : 0}>
+          <TextField
+            value={apiKey}
+            onChange={setApiKey}
+            mask
+            placeholder="paste your key and press enter"
+            onSubmit={(v) => (v || info.keyOptional ? verify(v) : setError("Paste a key, or esc to go back."))}
+            onCancel={back}
+          />
+        </Box>
+      </Dialog>
+    );
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      {welcome && step === "pick" && (
-        <Box flexDirection="column" marginBottom={1}>
-          <Text bold>Welcome to megacode!</Text>
-          <Text dimColor>Connect a model provider to get started. You can add more later with /login.</Text>
-        </Box>
-      )}
-
-      {step === "pick" && (
-        <>
-          <Text bold>Log in to a provider</Text>
-          <Box marginTop={1}>
-            <Select
-              options={PROVIDER_INFO.map((p) => ({
-                label: p.label,
-                value: p.name,
-                hint: p.local ? defaultURL(p.name) : isConfigured(p.name) ? `✔ ${authStatus(p.name)}` : undefined,
-              }))}
-              onSelect={pick}
-              onCancel={onCancel}
-            />
-          </Box>
-          <Text dimColor>Credentials are saved to {tildify(configDir())}/auth.json (readable only by you).</Text>
-        </>
-      )}
-
-      {info && step === "method" && (
-        <>
-          <Text bold>{info.label}: how do you want to sign in?</Text>
-          {error && <Text color="red">{error}</Text>}
-          <Box marginTop={1}>
-            <Select
-              options={info.methods.map((m) => ({ label: METHOD_LABELS[m][0], value: m, hint: METHOD_LABELS[m][1] || undefined }))}
-              onSelect={chooseMethod}
-              onCancel={back}
-            />
-          </Box>
-          {envKey && <Text color="yellow">Note: ${envKey} is set and takes precedence over anything saved here.</Text>}
-        </>
-      )}
-
-      {info && step === "browser" && (
-        <>
-          <Text bold>{method ? METHOD_LABELS[method][0] : "Sign in"}</Text>
-          {method === "ant-cli" ? (
-            <Text dimColor>Running `ant auth login`. Finish signing in in your browser.</Text>
-          ) : (
-            <Text dimColor>Finish signing in in your browser. If it didn't open, visit:</Text>
-          )}
-          {browserUrl && <Text color="cyan">{browserUrl}</Text>}
-          {output.map((line, i) => (
-            <Text key={i} dimColor>
-              {line}
-            </Text>
-          ))}
-          <Box marginTop={1}>
-            <Waiting text="Waiting for sign-in… (esc to cancel)" />
-          </Box>
-        </>
-      )}
-
-      {info && step === "url" && (
-        <>
-          <Text bold>{info.label}: endpoint URL</Text>
-          <Text dimColor>
-            {info.local ? `Make sure the server is running. Default: ${info.baseURL}` : "Base URL of the OpenAI-compatible API, e.g. https://host/v1"}
-          </Text>
-          {error && <Text color="red">{error}</Text>}
-          <Box marginTop={1}>
-            <TextField
-              value={baseURL}
-              onChange={setBaseURL}
-              placeholder={info.baseURL ?? "https://…/v1"}
-              onSubmit={(v) => {
-                const url = v || info.baseURL || "";
-                if (!url) return setError("An endpoint URL is required.");
-                setBaseURL(url);
-                if (info.local) verify("", method, url);
-                else setStep("key");
-              }}
-              onCancel={back}
-            />
-          </Box>
-        </>
-      )}
-
-      {info && step === "key" && (
-        <>
-          <Text bold>{info.label}: API key</Text>
-          {info.keyUrl && <Text dimColor>Create one at {info.keyUrl}</Text>}
-          {info.keyOptional && <Text dimColor>Leave empty if the endpoint doesn't need a key.</Text>}
-          {envKey && <Text color="yellow">Note: ${envKey} is set and takes precedence over a saved key.</Text>}
-          {error && <Text color="red">{error}</Text>}
-          <Box marginTop={1}>
-            <TextField
-              value={apiKey}
-              onChange={setApiKey}
-              mask
-              placeholder="paste your key and press enter"
-              onSubmit={(v) => (v || info.keyOptional ? verify(v) : setError("Paste a key, or esc to go back."))}
-              onCancel={back}
-            />
-          </Box>
-        </>
-      )}
-
-      {info && step === "verifying" && <Waiting text={`Connecting to ${info.label}…`} />}
-
-      {(step === "url" || step === "key") && <Text dimColor>enter to continue · esc to go back</Text>}
-    </Box>
+    <Dialog title={`Log in to ${info.label}`}>
+      <Waiting text={`Connecting to ${info.label}…`} />
+    </Dialog>
   );
 }
 
 /** /logout: pick which saved credentials to remove. */
 export function LogoutDialog({ onSelect, onCancel }: { onSelect: (provider: string) => void; onCancel: () => void }) {
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      <Text bold>Remove saved credentials</Text>
-      <Box marginTop={1}>
-        <Select
-          options={savedProviders().map((n) => ({ label: providerInfo(n).label, value: n, hint: authStatus(n) }))}
-          onSelect={onSelect}
-          onCancel={onCancel}
-        />
-      </Box>
-    </Box>
+    <Dialog title="Remove saved credentials" footer="enter remove · esc cancel">
+      <Select
+        options={savedProviders().map((n) => ({ label: providerInfo(n).label, value: n, hint: authStatus(n) }))}
+        onSelect={onSelect}
+        onCancel={onCancel}
+      />
+    </Dialog>
   );
 }
 

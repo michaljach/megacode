@@ -1,6 +1,7 @@
 import { Box, Text } from "ink";
 import { useState } from "react";
 import type { Answer, Question } from "../core/tools.ts";
+import { Dialog } from "./Dialog.tsx";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 
@@ -20,32 +21,50 @@ export function Questionnaire({ questions, onSubmit, onCancel }: {
     setValue("");
     setCustom(false);
   }
+  const footer = "enter continue · esc cancel and interrupt";
+
+  if (!question)
+    return (
+      <Dialog title="Review answers" footer={footer}>
+        {questions.map((q, i) => (
+          <Text key={i}>
+            <Text dimColor>{q.question} →</Text> <Text color="cyan">{answers[i]}</Text>
+          </Text>
+        ))}
+        <Box marginTop={1}>
+          <Select
+            key="review"
+            options={[
+              { label: "Submit answers", value: "submit" },
+              { label: "Start over", value: "restart" },
+              { label: "Cancel", value: "cancel" },
+            ]}
+            onSelect={(choice) => {
+              if (choice === "submit") onSubmit(questions.map((q, i) => ({ question: q.question, answer: answers[i]! })));
+              else if (choice === "restart") setAnswers([]);
+              else onCancel();
+            }}
+            onCancel={onCancel}
+          />
+        </Box>
+      </Dialog>
+    );
+
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
-      <Text bold color="cyan">{question ? `Question ${answers.length + 1} of ${questions.length}` : "Review answers"}</Text>
-      {question ? <>
-        <Text>{question.question}</Text>
+    <Dialog title={`Question ${answers.length + 1} of ${questions.length}`} footer={footer}>
+      <Text>{question.question}</Text>
+      <Box marginTop={1}>
         {question.options && !custom ? (
-          <Select key={answers.length} options={[
-            ...question.options.map((label) => ({ label, value: label })),
-            { label: "Other — type an answer", value: null },
-          ]} onSelect={(choice) => choice === null ? setCustom(true) : answer(choice)} onCancel={onCancel} />
+          <Select
+            key={answers.length}
+            options={[...question.options.map((label) => ({ label, value: label })), { label: "Other — type an answer", value: null }]}
+            onSelect={(choice) => (choice === null ? setCustom(true) : answer(choice))}
+            onCancel={onCancel}
+          />
         ) : (
           <TextField value={value} onChange={setValue} onSubmit={answer} onCancel={onCancel} placeholder="Type your answer…" />
         )}
-      </> : <>
-        {questions.map((q, i) => <Text key={i}>{q.question}: <Text color="cyan">{answers[i]}</Text></Text>)}
-        <Select key="review" options={[
-          { label: "Submit answers", value: "submit" },
-          { label: "Start over", value: "restart" },
-          { label: "Cancel", value: "cancel" },
-        ]} onSelect={(choice) => {
-          if (choice === "submit") onSubmit(questions.map((q, i) => ({ question: q.question, answer: answers[i]! })));
-          else if (choice === "restart") setAnswers([]);
-          else onCancel();
-        }} onCancel={onCancel} />
-      </>}
-      <Text dimColor>Enter to continue · Esc to cancel and interrupt</Text>
-    </Box>
+      </Box>
+    </Dialog>
   );
 }
