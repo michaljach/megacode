@@ -186,6 +186,8 @@ src/
     settings.ts       settings.json
     project.ts        working directory and AGENTS.md / CLAUDE.md for the system prompt
     accounts.ts       /login and /logout use cases: verify, save, remove credentials
+    skills.ts         skill discovery and installation
+    update.ts         background automatic updates for global npm installs
     providers/
       catalog.ts      known providers and OpenAI-compatible presets
       credentials.ts  credential precedence (env, saved, ChatGPT, local, ant profile)
