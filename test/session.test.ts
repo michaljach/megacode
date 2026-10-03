@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { stripVTControlCharacters as plain } from "node:util";
 import type { AgentEvents } from "../src/core/agent.ts";
 import type { PermissionMode } from "../src/core/settings.ts";
 import { AgentSession, type SessionAgent, type SessionHost } from "../src/ui/session.ts";
@@ -197,7 +198,7 @@ test("tool results are added to the transcript with their diff and a summary", a
   await session.submit("go");
   const tool = items.find((i) => i.kind === "tool");
   assert.ok(tool?.kind === "tool" && tool.diff);
-  assert.equal(tool.output, "Added 1 line, removed 1 line");
+  assert.equal(plain(tool.output), "Added 1 line, removed 1 line"); // counts are bold when color is on
   assert.deepEqual(tool.diff.rows.map((r) => r.type), ["remove", "add"]);
   assert.equal(session.state.activeTool, null);
 });

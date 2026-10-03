@@ -154,7 +154,8 @@ const { StatusLine } = await import('../src/ui/StatusLine.tsx');
 const { Select } = await import('../src/ui/Select.tsx');
 const { Help } = await import('../src/ui/Help.tsx');
 const { Dialog } = await import('../src/ui/Dialog.tsx');
-const view = (element, columns) => stripVTControlCharacters(renderToString(element, { columns })).split('\n').filter((line) => line.trim());
+// Trailing spaces are trimmed: with color on, colored bands keep their padding.
+const view = (element, columns) => stripVTControlCharacters(renderToString(element, { columns })).split('\n').map((line) => line.trimEnd()).filter(Boolean);
 
 test('status line keeps the mode whole and gives up the path before the details', () => {
   const props = { model: 'openai:gpt-6-astra', loggedIn: true, exitArmed: false, usage: { input: 12000, output: 3400 }, worktree: 'nimble-river-737' };
