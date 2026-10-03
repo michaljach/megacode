@@ -1,7 +1,7 @@
 import { Box, Text, useInput } from "ink";
 import { useState } from "react";
 import { loadSettings } from "../adapters/settings.ts";
-import { CONFIG_DIR } from "../adapters/storage.ts";
+import { configDir } from "../adapters/storage.ts";
 import { DEFAULT_SETTINGS, type PermissionMode, type Settings } from "../core/settings.ts";
 import { tildify } from "./format.ts";
 
@@ -9,7 +9,6 @@ type Key = Exclude<keyof Settings, "model">;
 type Choice = { value: Settings[Key]; label: string };
 type Entry = { key: Key; label: string; description: string; choices: Choice[] };
 
-const DIR = tildify(CONFIG_DIR);
 const seconds = (ms: number) => (ms < 60_000 ? `${ms / 1000}s` : `${ms / 60_000}m`);
 const onOff: Choice[] = [
   { value: true, label: "on" },
@@ -69,7 +68,7 @@ const ENTRIES: Entry[] = [
   {
     key: "saveHistory",
     label: "Save prompt history",
-    description: `Keep ↑/↓ history across sessions in ${DIR}/history.json`,
+    description: "Keep ↑/↓ history across sessions in history.json",
     choices: onOff,
   },
 ];
@@ -121,7 +120,7 @@ export function ConfigMenu({
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
       <Text>
         <Text bold>Settings</Text>
-        <Text dimColor> · saved to {DIR}/settings.json</Text>
+        <Text dimColor> · saved to {tildify(configDir())}/settings.json</Text>
       </Text>
       <Box flexDirection="column" marginTop={1}>
         <Row selected={index === 0} label="Model" value={model} />

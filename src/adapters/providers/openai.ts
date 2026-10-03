@@ -8,6 +8,8 @@ import { fallbackCallId, imageDataUrl, parseToolArguments } from "./shared.ts";
 export class OpenAIProvider implements Provider {
   client: OpenAI;
   filter?: (id: string) => boolean;
+  /** Models that rejected reasoning_effort; it isn't sent to them again this session. */
+  private noEffort = new Set<string>();
 
   constructor(opts: { apiKey?: string; baseURL?: string; filter?: (id: string) => boolean } = {}) {
     this.client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL });
@@ -24,9 +26,8 @@ export class OpenAIProvider implements Provider {
       .filter((id) => !this.filter || this.filter(id));
   }
 
-  async turn(req: TurnRequest): Promise<TurnResult> {
-    const effort = explicitEffort(req.effort);
-    const stream = await this.client.chat.completions.create(
+  private stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
+    return this.client.chat.completions.create(
       {
         model: req.model,
         ...(effort ? { reasoning_effort: effort } : {}),
@@ -40,6 +41,19 @@ export class OpenAIProvider implements Provider {
       },
       { signal: req.signal },
     );
+  }
+
+  async turn(req: TurnRequest): Promise<TurnResult> {
+    const effort = this.noEffort.has(req.model) ? undefined : explicitEffort(req.effort);
+    let stream;
+    try {
+      stream = await this.stream(req, effort);
+    } catch (e) {
+      // Models without reasoning (and some compatible servers) reject the parameter instead of ignoring it.
+      if (!effort || !rejectsEffort(e)) throw e;
+      this.noEffort.add(req.model);
+      stream = await this.stream(req, undefined);
+    }
 
     let text = "";
     let finish: string | null = null;
@@ -71,6 +85,9 @@ export class OpenAIProvider implements Provider {
     return { message: { role: "assistant", text, toolCalls }, stop: mapStop(finish, toolCalls.length > 0), usage };
   }
 }
+
+const rejectsEffort = (e: unknown) =>
+  e instanceof OpenAI.BadRequestError && (e.param === "reasoning_effort" || /reasoning_effort/.test(e.message));
 
 function mapStop(r: string | null, hasTools: boolean): StopReason {
   if (r === "length") return "max_tokens";

@@ -4,15 +4,18 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-// Keep ~/.megacode/mcp.json untouched: config paths are computed from HOME at import time.
-process.env.HOME = mkdtempSync(path.join(os.tmpdir(), 'megacode-mcp-home-'));
-const { mcp } = await import('../src/adapters/mcp/manager.ts');
-const { splitCommand } = await import('../src/adapters/mcp/config.ts');
+import { splitCommand } from '../src/adapters/mcp/config.ts';
+import { mcp } from '../src/adapters/mcp/manager.ts';
+import { setConfigDir } from '../src/adapters/storage.ts';
+
+// Keep the real ~/.megacode/mcp.json untouched.
+const configDir = mkdtempSync(path.join(os.tmpdir(), 'megacode-mcp-config-'));
+setConfigDir(configDir);
 
 const server = { command: process.execPath, args: [path.join(import.meta.dirname, 'fixtures', 'mcp-echo-server.mjs')] };
 const allow = async () => true;
 const call = (name, input, approve = allow) => mcp.execute({ id: 't', name, input }, { approve });
-const saved = () => JSON.parse(readFileSync(path.join(process.env.HOME, '.megacode', 'mcp.json'), 'utf8')).mcpServers;
+const saved = () => JSON.parse(readFileSync(path.join(configDir, 'mcp.json'), 'utf8')).mcpServers;
 
 test.after(() => mcp.closeAll());
 

@@ -7,6 +7,7 @@ import { PROVIDERS } from "./adapters/providers/catalog.ts";
 import { defaultModel } from "./adapters/providers/registry.ts";
 import { loadSettings } from "./adapters/settings.ts";
 import { runSkillsCommand } from "./adapters/skills.ts";
+import { setConfigDir } from "./adapters/storage.ts";
 import { parseCliArgs } from "./args.ts";
 import { createAgent } from "./composition.ts";
 import type { Agent } from "./core/agent.ts";
@@ -63,9 +64,9 @@ async function runOnce(agent: Agent, prompt: string, mode: PermissionMode, workt
   await mcp.closeAll();
   if (worktree) {
     // No one to ask: remove a worktree this run created and left untouched; keep anything else.
-    const changes = worktreeChanges(worktree);
+    const changes = await worktreeChanges(worktree);
     process.chdir(home);
-    if (worktree.created && changes && !changes.files && !changes.commits) removeWorktree(worktree);
+    if (worktree.created && changes && !changes.files && !changes.commits) await removeWorktree(worktree);
     else console.error(`Worktree kept at ${worktree.path} (branch ${worktree.branch}, ${describeChanges(changes)}).`);
   }
   return code;
@@ -82,6 +83,8 @@ async function runInteractive(agent: Agent, mode: PermissionMode, worktree: Work
   if (exitMessage) console.log(exitMessage);
   return 0;
 }
+
+if (process.env.MEGACODE_CONFIG_DIR) setConfigDir(process.env.MEGACODE_CONFIG_DIR);
 
 // Skill management doesn't require credentials, a model, MCP, or piped input.
 if (process.argv[2] === "skills") {
@@ -101,7 +104,7 @@ if (options.help) {
 
 // Enter the worktree before creating the agent: its system prompt includes the working directory.
 const home = process.cwd();
-const worktree = options.worktree ? orFail(() => openWorktree(options.worktree!.name)) : null;
+const worktree = options.worktree ? await openWorktree(options.worktree.name).catch((e: Error) => fail(e.message)) : null;
 if (worktree) process.chdir(worktree.path);
 
 const agent = orFail(() => createAgent(options.model ?? defaultModel()));

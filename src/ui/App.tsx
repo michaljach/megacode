@@ -101,14 +101,10 @@ export function App({
   }, []);
 
   /** Runs `action` unless a turn is running, reporting its message or error. */
-  const whenIdle = (what: string, action: () => string) => {
+  const whenIdle = (what: string, action: () => Promise<string>) => {
     setDialog(null);
     if (session.running) return notice(`Can't ${what} ${BUSY}.`, "warn");
-    try {
-      notice(action());
-    } catch (e) {
-      notice((e as Error).message, "error");
-    }
+    action().then(notice, (e: Error) => notice(e.message, "error"));
   };
 
   function selectModel(spec: string) {
@@ -164,13 +160,9 @@ export function App({
     exit();
   }
 
-  function exitWorktree(remove: boolean) {
+  async function exitWorktree(remove: boolean) {
     session.abort();
-    try {
-      onExitMessage?.(leave(remove));
-    } catch (e) {
-      onExitMessage?.((e as Error).message);
-    }
+    onExitMessage?.(await leave(remove).catch((e: Error) => e.message));
     exit();
   }
 

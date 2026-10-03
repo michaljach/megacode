@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parse } from "yaml";
+import { configDir } from "./storage.ts";
 
 export type Skill = { name: string; description: string; file: string };
 export type SkillOptions = { cwd?: string; home?: string };
@@ -26,8 +27,9 @@ function readSkill(directory: string): Skill {
   return { name: metadata.name, description: metadata.description.trim(), file };
 }
 
-function roots({ cwd = process.cwd(), home = os.homedir() }: SkillOptions) {
-  return [path.join(home, ".megacode", "skills"), path.join(cwd, ".megacode", "skills")];
+function roots({ cwd = process.cwd(), home }: SkillOptions) {
+  const global = home ? path.join(home, ".megacode") : configDir();
+  return [path.resolve(global, "skills"), path.resolve(cwd, ".megacode", "skills")];
 }
 
 /** Project skills override global skills with the same name. Broken skills don't prevent startup. */
