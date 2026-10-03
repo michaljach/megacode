@@ -288,7 +288,7 @@ export function App({
       {session.running && !blocking && <Spinner verb={session.verb} />}
 
       {session.queued.length > 0 && (
-        <Box flexDirection="column" marginTop={1} paddingX={2}>
+        <Box flexDirection="column" marginTop={1} paddingX={2} backgroundColor="#262626">
           {session.queued.map((q, i) => (
             <Text key={i} dimColor wrap="wrap">
               {"⏳ "}
