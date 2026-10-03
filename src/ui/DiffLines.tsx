@@ -1,11 +1,7 @@
 import { Box, Text } from "ink";
-import { CODE } from "./syntax.ts";
-import { DIFF_COLORS, gutter, numberColor, rowBackground, type DiffModel } from "./diff.ts";
+import { DIFF_COLORS, gutter, pieces, rowStyle, type DiffModel } from "./diff.ts";
 
-/**
- * Diff rows as Claude Code draws them. Changed rows fill their whole width with color; long lines
- * wrap under the code, never under the line numbers.
- */
+/** Diff rows as Claude Code draws them. Changed rows fill their width; long lines wrap under the code. */
 export function DiffLines({ model }: { model: DiffModel }) {
   return (
     <Box flexDirection="column">
@@ -16,19 +12,19 @@ export function DiffLines({ model }: { model: DiffModel }) {
               {gutter(row, model)}…
             </Text>
           );
-        const background = rowBackground(row);
+        const style = rowStyle(row);
         return (
-          <Box key={i} backgroundColor={background}>
+          <Box key={i} backgroundColor={style.background}>
             <Box flexShrink={0}>
-              <Text color={numberColor(row)} backgroundColor={background}>
+              <Text color={style.number} backgroundColor={style.background}>
                 {gutter(row, model)}
               </Text>
             </Box>
             <Box flexGrow={1} flexShrink={1} minWidth={0}>
-              <Text wrap="wrap" backgroundColor={background}>
-                {row.segments.map((s, j) => (
-                  <Text key={j} color={s.color ?? CODE} backgroundColor={s.background ?? background}>
-                    {s.text}
+              <Text wrap="wrap" backgroundColor={style.background}>
+                {pieces(row).map((p, j) => (
+                  <Text key={j} backgroundColor={p.changed ? style.word : style.background}>
+                    {p.text}
                   </Text>
                 ))}
               </Text>

@@ -1,10 +1,9 @@
 import os from "node:os";
-import { styleText } from "node:util";
+import { stripVTControlCharacters, styleText } from "node:util";
 import chalk from "chalk";
 import type { ToolCall } from "../core/conversation.ts";
 import type { ApprovalRequest, FileChange } from "../core/tools.ts";
 import { buildDiff, diffToAnsi, type DiffModel } from "./diff.ts";
-import { highlightCode } from "./syntax.ts";
 
 const TOOL_LABELS: Record<string, string> = {
   ask_questions: "Ask",
@@ -92,23 +91,13 @@ export function displayOutput(call: ToolCall, result: { output: string; isError:
  */
 export function renderMarkdown(md: string): string {
   const out: string[] = [];
-  let fence: { marker: string; language: string } | undefined;
-  let code: string[] = [];
-  const flushCode = () => {
-    if (code.length) out.push(highlightCode(code.join("\n"), fence?.language).split("\n").map((line) => `  ${line}`).join("\n"));
-    code = [];
-  };
+  let fence: string | undefined;
   for (const line of md.split("\n")) {
-    const marker = line.match(/^\s*(`{3,}|~{3,})(.*)$/);
-    if (fence) {
-      if (marker && marker[1]![0] === fence.marker[0] && marker[1]!.length >= fence.marker.length && !marker[2]!.trim()) {
-        flushCode();
-        fence = undefined;
-      } else code.push(line);
-      continue;
-    }
-    if (marker) {
-      fence = { marker: marker[1]!, language: marker[2]!.trim().split(/\s+/)[0]! };
+    const next = fenceAfter(fence, line);
+    if (fence !== undefined || next !== undefined) {
+      // Code is indented; control characters are dropped so a reply can't restyle the terminal.
+      if (fence !== undefined && next !== undefined) out.push(`  ${stripVTControlCharacters(line)}`);
+      fence = next;
       continue;
     }
     let m: RegExpMatchArray | null;
@@ -118,8 +107,15 @@ export function renderMarkdown(md: string): string {
     else if (/^\s*([-*_])\1{2,}\s*$/.test(line)) out.push(styleText("dim", "─".repeat(40)));
     else out.push(inline(line));
   }
-  flushCode(); // Also render an unfinished fence while a reply is streaming.
   return out.join("\n");
+}
+
+/** The fence open after `line`: a line of ``` or ~~~ opens one; the same marker, at least as long, closes it. */
+function fenceAfter(open: string | undefined, line: string): string | undefined {
+  const m = line.match(/^\s*(`{3,}|~{3,})(.*)$/);
+  if (!m) return open;
+  if (open === undefined) return m[1];
+  return m[1]![0] === open[0] && m[1]!.length >= open.length && !m[2]!.trim() ? undefined : open;
 }
 
 function inline(s: string): string {
@@ -135,11 +131,7 @@ export function lastSafeBreak(text: string): number {
   let last = -1;
   let offset = 0;
   for (const line of text.split("\n")) {
-    const marker = line.match(/^\s*(`{3,}|~{3,})(.*)$/);
-    if (marker) {
-      if (!fence) fence = marker[1]!;
-      else if (marker[1]![0] === fence[0] && marker[1]!.length >= fence.length && !marker[2]!.trim()) fence = undefined;
-    }
+    fence = fenceAfter(fence, line);
     const end = offset + line.length;
     if (!fence && text[end] === "\n" && text[end + 1] === "\n") last = end + 2;
     offset = end + 1;

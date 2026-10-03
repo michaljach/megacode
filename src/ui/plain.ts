@@ -6,7 +6,6 @@ import type { Agent } from "../core/agent.ts";
 import { autoApproved, type PermissionMode } from "../core/settings.ts";
 import type { Approve } from "../core/tools.ts";
 import { approvalBody, displayOutput, formatCall, previewOutput } from "./format.ts";
-import { fileLanguage, loadLanguage } from "./syntax.ts";
 
 /** Non-interactive mode for one-shot prompts and pipes: prints the transcript as plain text. */
 export async function runPlain(agent: Agent, prompt: string, mode: PermissionMode): Promise<number> {
@@ -22,7 +21,6 @@ export async function runPlain(agent: Agent, prompt: string, mode: PermissionMod
   const approve: Approve = async (req) => {
     if (autoApproved(mode, req.tool)) return true;
     if (!rl) return false;
-    if (req.change) await loadLanguage(fileLanguage(req.change.file));
     console.log(`${styleText("yellow", req.title)}\n${approvalBody(req)}`);
     try {
       const answer = await rl.question(styleText("yellow", "Allow? [y/N] "), { signal: controller.signal });

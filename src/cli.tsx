@@ -14,7 +14,6 @@ import type { Agent } from "./core/agent.ts";
 import type { PermissionMode } from "./core/settings.ts";
 import { App } from "./ui/App.tsx";
 import { runPlain } from "./ui/plain.ts";
-import { preloadHighlighter } from "./ui/syntax.ts";
 
 const HELP = `megacode - minimal multi-provider coding agent
 
@@ -109,7 +108,6 @@ const worktree = options.worktree ? await openWorktree(options.worktree.name).ca
 if (worktree) process.chdir(worktree.path);
 
 const agent = orFail(() => createAgent(options.model ?? defaultModel()));
-preloadHighlighter(); // grammars load in the background while the session starts
 const mode = options.ask ? "ask" : loadSettings().permissionMode;
 const prompt = await withPipedInput(options.prompt);
 

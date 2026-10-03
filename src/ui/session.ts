@@ -7,7 +7,6 @@ import type { Answer, Approve, AskQuestions, Question } from "../core/tools.ts";
 import type { ApprovalChoice, PendingApproval } from "./ApprovalDialog.tsx";
 import { buildDiff } from "./diff.ts";
 import { displayOutput } from "./format.ts";
-import { fileLanguage, loadLanguage } from "./syntax.ts";
 import type { Item } from "./Transcript.tsx";
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
@@ -167,10 +166,8 @@ export class AgentSession {
     else notice((error as Error).message, "error");
   }
 
-  #approve: Approve = async (req) => {
-    if (autoApproved(this.#host.mode(), req.tool) || this.#alwaysAllow.has(req.tool)) return true;
-    // Load the file's grammar first so the diff is highlighted from the first frame.
-    if (req.change) await loadLanguage(fileLanguage(req.change.file));
+  #approve: Approve = (req) => {
+    if (autoApproved(this.#host.mode(), req.tool) || this.#alwaysAllow.has(req.tool)) return Promise.resolve(true);
     return new Promise((resolve) => this.#update({ approval: { ...req, resolve } }));
   };
 
