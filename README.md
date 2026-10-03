@@ -248,6 +248,12 @@ src/
     DiffLines.tsx     diff rows in the TUI
     format.ts         Markdown rendering, tool labels, previews
 test/                 node:test suites (npm test); e2e.test.mjs runs the CLI against a fake model server
+bench/
+  run.ts, tasks.ts     task runner, fixtures, and independent grading
+  megacode.ts          instrumented agent entry point: per-step and tool timings
+  compare-gateway.py   paired five-repeat runs through the installed local gateway
+  report.html          standalone benchmark charts and results
+  results/             sanitized metrics snapshots; raw artifacts stay in ignored .bench/
 ```
 
 Conversation history is stored in a neutral format (`core/conversation.ts`). Each assistant turn also keeps the provider's native content. That content is sent back verbatim to the same provider, so Anthropic thinking blocks and Gemini thought signatures are preserved. When you switch providers, the next one gets the neutral text and tool calls instead.
@@ -258,11 +264,16 @@ To add a provider, implement the `Provider` port (`core/provider.ts`) in `src/ad
 
 ## Harness benchmark
 
-See [bench/README.md](bench/README.md) for fixed coding tasks, independent grading, same-model comparisons with other CLI harnesses, and local megacode results.
+See [bench/README.md](bench/README.md) for fixed coding tasks, independent grading, and reproducible comparisons. Open [bench/report.html](bench/report.html) locally for the charts, or read the [five-repeat same-model gateway comparison](bench/gateway-comparison.md).
 
 ```sh
 npm run bench -- --model openai:gpt-6-astra --repeats 5
+npm run bench -- --model openai:gpt-6-astra --effort medium --effort low --repeats 5
 ```
+
+Repeated `--effort` flags alternate effort order between repeats without changing saved settings. Per-step metrics include model duration, first-visible-text latency, backend model identity where reported, usage, and tool duration. `MEGACODE_CONFIG_DIR` isolates benchmark settings; `BENCH_AGENT_TIMEOUT_MS` overrides the built-in agent's 240s abort (the process deadline remains 300s). See the benchmark guide for timing definitions and caveats.
+
+Anthropic input usage now includes uncached, cache-read, and cache-creation tokens. Historical benchmark snapshots retain their original accounting; tokens represent repeated context, not dollar cost.
 
 ## Development
 

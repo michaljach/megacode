@@ -1,0 +1,3955 @@
+{
+  "source": ".bench/2026-10-03T18-53-01.604Z-gateway-comparison/results.json",
+  "startedAt": "2026-10-03T18-53-01.604Z",
+  "model": "gpt-6-astra",
+  "effort": "medium",
+  "repeats": 5,
+  "gatewayVersion": "8.0.13",
+  "gatewayPolicy": {
+    "config-version": 8,
+    "server": {
+      "host": "127.0.0.1",
+      "port": 8317,
+      "discovery": {
+        "enabled": false
+      }
+    },
+    "routing": {
+      "strategy": "fill-first",
+      "session-affinity": true,
+      "retry": {
+        "request-retry": 0,
+        "max-retry-credentials": 1,
+        "max-retry-interval": 0
+      }
+    },
+    "requests": {
+      "streaming": {
+        "keepalive-seconds": 0,
+        "bootstrap-retries": 0
+      },
+      "payload": {
+        "override": [
+          {
+            "models": [
+              {
+                "name": "gpt-6-astra",
+                "protocol": "codex"
+              }
+            ],
+            "params": {
+              "reasoning.effort": "medium",
+              "reasoning.summary": "auto"
+            }
+          }
+        ]
+      }
+    },
+    "upstream": {
+      "codex": {
+        "disable-codex-cloaking": true,
+        "response-steering": false,
+        "stream-bootstrap-buffering": false
+      }
+    },
+    "observability": {
+      "logs": {
+        "debug": false,
+        "logging-to-file": false,
+        "request-log": false
+      },
+      "usage": {
+        "usage-statistics-enabled": true
+      },
+      "pprof": {
+        "enable": false
+      }
+    }
+  },
+  "sourceHashes": {
+    "bench/megacode.ts": "8b02d17980ec56d42ba8f5aa068775fca7e2b4d2887e3c300d443a5bf3b0da0b",
+    "bench/run.ts": "07219dd3b3701812d030a7bb3fca9ea708e1b1e8e68a1f79d8885659525b39b4",
+    "bench/tasks.ts": "bd50ed8aaadcc29963b0d6af686fb924641274143d137b91becff8ce006018b4",
+    "src/adapters/accounts.ts": "55f16d9602d78400a194f9ffd4076bf88d6d9f70738e004e2e337c2f658a7a68",
+    "src/adapters/auth/anthropic.ts": "a6d13a81df4dd4cecc017eb8779a319d312e24c18d28e404b3f98ffb33ee7bd3",
+    "src/adapters/auth/chatgpt.ts": "5d2bceddf7ee9f656cd80c7a9842180a47536eb1596d83a92bbece06b0440b7c",
+    "src/adapters/auth/oauth.ts": "4b4ed8951861e8d667c4d594c4f1227876a67ba6367f48ef1d8c07bf893be225",
+    "src/adapters/auth/openrouter.ts": "66559a06999ce7026fff6d17c7b0e2fcab915cc698aaa3b0f7f3d3c45cccc819",
+    "src/adapters/auth/store.ts": "1fca61c704bb0e77ca13addafab4b5e06f54b88088c1ab25fa6ef246a770b4dd",
+    "src/adapters/git/worktree.ts": "ed9baed93d1d572fa23ec76f15de5d9623ad568defeadb592898740480cf1f7e",
+    "src/adapters/mcp/config.ts": "79ac5ae5a3c3da4a197890edb9a07c8766bc6b4b12ded4f4e5bbfbc2b4cd74c9",
+    "src/adapters/mcp/manager.ts": "7913be3800dcaa3228614ae0e8bb13f64b4acbdb9f15a88e51d993b58d3d71a6",
+    "src/adapters/mcp/results.ts": "0c38c5c8069833eb0512d61036a73bbb9806e20e02cdd55ae9ce7deced954c46",
+    "src/adapters/mcp/transport.ts": "cc3586ea3c5b8c71cd9969df8255b62a60bcaa777859d967b001486d228430d3",
+    "src/adapters/project.ts": "9b3dbbff17cc8f36ce9ff85b5e42377dd45e41c93550a563303cd4971626587e",
+    "src/adapters/providers/anthropic.ts": "5a394d58248c454347433d7b5975a2a34fbb86c5c2eefe6d63e257176fc95f57",
+    "src/adapters/providers/catalog.ts": "36dcb965253996698477085e2dff1fc5d98cfb86034e8aa43a11f6849bcc6c74",
+    "src/adapters/providers/chatgpt.ts": "d2523549a40ed82f740f82b4a90b3c47cfb7c5a4811c1684bb027f7a2999c842",
+    "src/adapters/providers/credentials.ts": "70422f1a6fe2c9393ed3b815ff5d2e14155ecbaaf907b07938245be23a6a87d9",
+    "src/adapters/providers/gemini.ts": "fd9f347e9e5f270f6a7f4ee5ef13bdbbbe83a919a42abeca69d26309e329196b",
+    "src/adapters/providers/openai.ts": "644320a1585f016c6d1ca8ab521233729beed7a80b9b0e1ac229b69debaabc5f",
+    "src/adapters/providers/registry.ts": "f462e54e509bc2013bb95bcdf9a7fc879169340b677c38ca59a04eab53ea13cd",
+    "src/adapters/providers/shared.ts": "455cd4229d5a111b5ac8c2c7350ea425349ea0327fc387749bc84e605e648ff5",
+    "src/adapters/providers/usage.ts": "ccfb8585d8e63f2915b60ee5c8839d948739643bf3d3f11e515c06ab46783fec",
+    "src/adapters/settings.ts": "957b5001fcf26945b5a07059f04b1d3632e661ed6a0807388aaa8991d8c721fb",
+    "src/adapters/skills.ts": "d2aef4877648591234f7e03735cfd6e19d6bea035f85cfdbb10850175b92c791",
+    "src/adapters/storage.ts": "3e28e2b5cfda159899665971c646e4664181c3c4e4b7d385e82ea3c3dfd37aea",
+    "src/adapters/tools/files.ts": "6c000c0430c90565015de29d397b56c402f1580ef4c67a9fd4ab5b5d911e56d3",
+    "src/adapters/tools/image.ts": "292207a346d04b778ce59ce4eaf5d0f867bee073edd70a25edb55d15afe99f9c",
+    "src/adapters/tools/index.ts": "43a0a511fba833af7f29450fd63a27ede116cc2dbfba11ff5cc32e243e67433f",
+    "src/adapters/tools/output.ts": "7253c087c46b990e1c7a1170ec293615a9419e572f49be781e1c6270c4b066c4",
+    "src/adapters/tools/paths.ts": "7e0137d40e584864409c39c3036c9377d3e2547db570f8681ee0295a199fda61",
+    "src/adapters/tools/questions.ts": "978014d0cbbcea968824976761ec598ff0079006f02fbb4837a6d70993fd6f8c",
+    "src/adapters/tools/shell.ts": "10405f5d6916fa8f605a762b9168ca57f95ae7542499c9fc241383381de41120",
+    "src/adapters/tools/validation.ts": "2baab2b9c11973b88df95ba6e03e20f0d018c8f5d7bec8027db899c03b848535",
+    "src/composition.ts": "2f4cf894cf2533cbffb4d19bab08062f44eb8350b36c62e56f4db2e503aaf48b",
+    "src/core/agent.ts": "b2da30e2af29f85a370fa4fb28b541ffae040f2576969c3edf0762b673ffa39a",
+    "src/core/conversation.ts": "6ab3f41c3de184df15b45f2d91174c05860469ec439967f32b5df141100167e2",
+    "src/core/prompts.ts": "df61fe18053d1732df3a1dc5067bb31779d0adc2dde813783187278934ab2c31",
+    "src/core/provider.ts": "a62fba30662ab6fcb95a41524879146fea2b345115905dd61dce434492f9808a",
+    "src/core/settings.ts": "213b964195c9fd038dc17cf18df012d99cd36f2e7b8ddcd9301367772118aaaa",
+    "src/core/suggestion.ts": "92945af06a98d554a60b9dbdcbcae78d077fe9a5b6aeff3f3c6620e7a8ade7b8",
+    "src/core/tools.ts": "f7cbe9788c280e300e6991432af446a338a132dd3a92bdba7b107cf0579b2dc4"
+  },
+  "claudeVersion": "2.1.288 (Claude Code)",
+  "nodeVersion": "v26.8.2",
+  "gatewayConfigHash": "2f52a0182d8684991367cdc653d77c9e57f20d60a8b6b329589d32c2527ad6f5",
+  "processDeadlineMs": 300000,
+  "megacodeAgentDeadlineMs": 300000,
+  "order": "Per task: megacode then Claude in odd repeats, reversed in even repeats",
+  "results": [
+    {
+      "task": "range-parser",
+      "repeat": 1,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 60136,
+      "metrics": {
+        "usage": {
+          "input": 10147,
+          "output": 1057
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 59612.771292000005,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2234.978375,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 997,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 997,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 3609.9599160000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1036,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 1036,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 4159.3892080000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1085,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1085,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 11298.011207999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1134,
+              "output": 248,
+              "inputBreakdown": {
+                "uncached": 1134,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 28369.183333,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1445,
+              "output": 628,
+              "inputBreakdown": {
+                "uncached": 421,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 3073.366291999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2134,
+              "output": 20,
+              "inputBreakdown": {
+                "uncached": 854,
+                "cacheRead": 1280,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 6721.8970830000035,
+            "firstTextMs": 2315.980958,
+            "status": "completed",
+            "usage": {
+              "input": 2316,
+              "output": 102,
+              "inputBreakdown": {
+                "uncached": 2316,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_pyJX8eocJXQzaIc5ksILH3aj",
+            "name": "list_files",
+            "startedMs": 2237.0621250000004,
+            "durationMs": 8.660583999999744,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_Xy16z9Sq3YT84J2c2iKXMYcc",
+            "name": "read_file",
+            "startedMs": 5857.823792,
+            "durationMs": 1.466957999999977,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_YAC5Z5MxeRDT6826T6HQTcF4",
+            "name": "read_file",
+            "startedMs": 10020.14,
+            "durationMs": 0.43420900000091933,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_0yHMI7lD9CuWwDdcn8AMqjqZ",
+            "name": "edit_file",
+            "startedMs": 21320.583791999998,
+            "durationMs": 2.370083000001614,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_8NT9JAJjIlPWZYAJW4XIVcuW",
+            "name": "write_file",
+            "startedMs": 49694.212042,
+            "durationMs": 1.559958000005281,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_SXKTpwenzEXLd6cOSRSHj4xd",
+            "name": "bash",
+            "startedMs": 52771.136292,
+            "durationMs": 117.74975000000268,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T18-53-02.069Z-gateway-megacode-r1",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 10147,
+          "output": 1057
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 1,
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 49432,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T18-54-02.654Z-gateway-claude-code-r1",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 4886,
+          "output": 1029,
+          "inputBreakdown": {
+            "uncached": 3862,
+            "cacheRead": 1024,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 48048,
+        "nativeDurationMs": 48902,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 1,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 99257,
+      "metrics": {
+        "usage": {
+          "input": 12690,
+          "output": 1925
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 98831.268709,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2380.67975,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1034,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 1034,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 4951.205208,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1127,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1127,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 4197.674,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1166,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 142,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 25966.940166999997,
+            "firstTextMs": 13457.71775,
+            "status": "completed",
+            "usage": {
+              "input": 1215,
+              "output": 510,
+              "inputBreakdown": {
+                "uncached": 191,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 51957.335709,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1789,
+              "output": 1227,
+              "inputBreakdown": {
+                "uncached": 765,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 2730.191791999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3078,
+              "output": 20,
+              "inputBreakdown": {
+                "uncached": 1414,
+                "cacheRead": 1664,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 6499.821790999995,
+            "firstTextMs": 2112.0827080000017,
+            "status": "completed",
+            "usage": {
+              "input": 3281,
+              "output": 109,
+              "inputBreakdown": {
+                "uncached": 337,
+                "cacheRead": 2944,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_XNavDM5db6EMaap1nrQoXKN6",
+            "name": "read_file",
+            "startedMs": 2383.23225,
+            "durationMs": 1.8375420000002123,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_A3Udkc7ALjxCRYFfZ9tUe4QR",
+            "name": "list_files",
+            "startedMs": 7338.55275,
+            "durationMs": 8.35241700000006,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_mxSDd1WpQlaHF9ppV3OcIbbQ",
+            "name": "read_file",
+            "startedMs": 11546.737375,
+            "durationMs": 0.8016250000000582,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_zHnME8g0gcbI2MwQJho9kqWQ",
+            "name": "edit_file",
+            "startedMs": 37515.626792,
+            "durationMs": 1.2673329999961425,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_WMLPVn2GUNJjgiiMVrIBEJmJ",
+            "name": "write_file",
+            "startedMs": 89476.154375,
+            "durationMs": 1.9643339999893215,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_6kPsOS8uFGKJNLoedac6xfCY",
+            "name": "bash",
+            "startedMs": 92210.318542,
+            "durationMs": 120.15216699999291,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T18-54-52.589Z-gateway-megacode-r1",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 12690,
+          "output": 1925
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 1,
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 87862,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T18-56-32.328Z-gateway-claude-code-r1",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 5719,
+          "output": 2008,
+          "inputBreakdown": {
+            "uncached": 4567,
+            "cacheRead": 1152,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 86812,
+        "nativeDurationMs": 87341,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 1,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 66096,
+      "metrics": {
+        "usage": {
+          "input": 27684,
+          "output": 1149
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 9,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 65622.855333,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2827.934416,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1025,
+              "output": 23,
+              "inputBreakdown": {
+                "uncached": 1025,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 5648.509125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3690,
+              "output": 94,
+              "inputBreakdown": {
+                "uncached": 3690,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 5234.3983339999995,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3926,
+              "output": 29,
+              "inputBreakdown": {
+                "uncached": 342,
+                "cacheRead": 3584,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 13673.671291999999,
+            "firstTextMs": 4969.200084,
+            "status": "completed",
+            "usage": {
+              "input": 4080,
+              "output": 292,
+              "inputBreakdown": {
+                "uncached": 240,
+                "cacheRead": 3840,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 23694.425042000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4435,
+              "output": 554,
+              "inputBreakdown": {
+                "uncached": 467,
+                "cacheRead": 3968,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 8006.434459000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 5050,
+              "output": 35,
+              "inputBreakdown": {
+                "uncached": 698,
+                "cacheRead": 4352,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 6295.248749999992,
+            "firstTextMs": 1388.7538749999949,
+            "status": "completed",
+            "usage": {
+              "input": 5478,
+              "output": 122,
+              "inputBreakdown": {
+                "uncached": 614,
+                "cacheRead": 4864,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_c49W24K0upZXoYzm3fAjXMRI",
+            "name": "bash",
+            "startedMs": 2840.0947079999996,
+            "durationMs": 70.87195900000006,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_zFLGodrW9L1XtCCX7UWdOjYn",
+            "name": "grep",
+            "startedMs": 8561.189750000001,
+            "durationMs": 9.10045799999898,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_iCjYl6u85gHqRtVSdohnMKS7",
+            "name": "list_files",
+            "startedMs": 8570.65125,
+            "durationMs": 5.670874999999796,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_8EpIGMmpztH9Rxct9fxmmlpg",
+            "name": "read_file",
+            "startedMs": 8576.506667000001,
+            "durationMs": 0.40812499999992724,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_UaM22WdlLVeJ50jKmVkccnnW",
+            "name": "read_file",
+            "startedMs": 8577.049417,
+            "durationMs": 0.16720800000075542,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_osykuoBF7Li2QiRu0fJV0L3f",
+            "name": "read_file",
+            "startedMs": 13812.950708,
+            "durationMs": 0.8880840000001626,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_tlaYAPsT9OIapWqm0rGTEKeb",
+            "name": "edit_file",
+            "startedMs": 27489.719333,
+            "durationMs": 2.989583999999013,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_fmZSCuMwGw7TqeT8WdIUooPI",
+            "name": "write_file",
+            "startedMs": 51189.37425,
+            "durationMs": 1.9493749999965075,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_FsDwiaGGJGfZNEHtMhm6f3t9",
+            "name": "bash",
+            "startedMs": 59198.722708,
+            "durationMs": 126.55529199999728,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T18-58-00.705Z-gateway-megacode-r1",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 27684,
+          "output": 1149
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 1,
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 69489,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T18-59-07.172Z-gateway-claude-code-r1",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 26646,
+          "output": 1242,
+          "inputBreakdown": {
+            "uncached": 7830,
+            "cacheRead": 18816,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 68093,
+        "nativeDurationMs": 69189,
+        "nativeTurns": 6,
+        "toolCalls": 5,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 2,
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 59401,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-00-17.189Z-gateway-claude-code-r2",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 4665,
+          "output": 1190,
+          "inputBreakdown": {
+            "uncached": 4665,
+            "cacheRead": 0,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 58089,
+        "nativeDurationMs": 59060,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 2,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 62568,
+      "metrics": {
+        "usage": {
+          "input": 10896,
+          "output": 1142
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 62100.100375,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2512.714708,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 997,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 997,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 3694.8361250000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1046,
+              "output": 18,
+              "inputBreakdown": {
+                "uncached": 1046,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 3394.3120830000007,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1079,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1079,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 15063.144083,
+            "firstTextMs": 4572.143,
+            "status": "completed",
+            "usage": {
+              "input": 1128,
+              "output": 332,
+              "inputBreakdown": {
+                "uncached": 1128,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 26850.872417,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1523,
+              "output": 621,
+              "inputBreakdown": {
+                "uncached": 1523,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 4763.7750000000015,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2205,
+              "output": 26,
+              "inputBreakdown": {
+                "uncached": 2205,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 5667.283874999994,
+            "firstTextMs": 1491.5599589999983,
+            "status": "completed",
+            "usage": {
+              "input": 2918,
+              "output": 105,
+              "inputBreakdown": {
+                "uncached": 1894,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_AvFouehYH1USmFmLlnCIofh0",
+            "name": "read_file",
+            "startedMs": 2514.09575,
+            "durationMs": 1.1332499999998618,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_jbsO0m0EP2pfcYRnBoAoOCUa",
+            "name": "list_files",
+            "startedMs": 6211.054542,
+            "durationMs": 4.707416999999623,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_0T0FwqdSmqTXWMh2fAeP58k2",
+            "name": "read_file",
+            "startedMs": 9612.215792,
+            "durationMs": 0.8259170000001177,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_NAPla2t2ozQlHSHBdX6TAnyh",
+            "name": "edit_file",
+            "startedMs": 24678.448334,
+            "durationMs": 3.6719999999986612,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_b50NkSjxOoJCm6PJateXZrop",
+            "name": "write_file",
+            "startedMs": 51535.026334,
+            "durationMs": 1.930000000000291,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_cbyzqDkua9WXT90tdvOhvbCY",
+            "name": "bash",
+            "startedMs": 56302.692959,
+            "durationMs": 127.85016600000381,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-01-17.083Z-gateway-megacode-r2",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 10896,
+          "output": 1142
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 2,
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 91656,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-02-20.104Z-gateway-claude-code-r2",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 7390,
+          "output": 1991,
+          "inputBreakdown": {
+            "uncached": 4830,
+            "cacheRead": 2560,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 90456,
+        "nativeDurationMs": 91365,
+        "nativeTurns": 4,
+        "toolCalls": 3,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 2,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 102460,
+      "metrics": {
+        "usage": {
+          "input": 13057,
+          "output": 2022
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 102012.863708,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3618.75075,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1034,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 1034,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 2385.4117910000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1127,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1127,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 6140.690541999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1166,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1166,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 22506.875167000006,
+            "firstTextMs": 9888.817625000001,
+            "status": "completed",
+            "usage": {
+              "input": 1215,
+              "output": 511,
+              "inputBreakdown": {
+                "uncached": 191,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 54897.812125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1790,
+              "output": 1319,
+              "inputBreakdown": {
+                "uncached": 1790,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 3810.0393750000076,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3171,
+              "output": 26,
+              "inputBreakdown": {
+                "uncached": 2147,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 8522.658374999999,
+            "firstTextMs": 1747.0477919999976,
+            "status": "completed",
+            "usage": {
+              "input": 3554,
+              "output": 107,
+              "inputBreakdown": {
+                "uncached": 482,
+                "cacheRead": 3072,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_stOmX36dZOSQoFGeLsdQ1pLd",
+            "name": "read_file",
+            "startedMs": 3621.3536670000003,
+            "durationMs": 1.9281659999996918,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_q0NSA5Tht3gwCAXLId1uAkL4",
+            "name": "list_files",
+            "startedMs": 6009.749208,
+            "durationMs": 7.611041999999543,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_tEQrIldg6eJhFKIFTXFeGdm0",
+            "name": "read_file",
+            "startedMs": 12160.154833,
+            "durationMs": 0.8235420000000886,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_ddNsrJPd7SUoijUoI7tFkebW",
+            "name": "edit_file",
+            "startedMs": 34669.719208,
+            "durationMs": 3.74358399999619,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_K3KX8Tq9qzl41HMyMHAyfoTZ",
+            "name": "write_file",
+            "startedMs": 89573.314958,
+            "durationMs": 2.1328749999956926,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_k7FYgyljvbwYelGRtxFzNcNO",
+            "name": "bash",
+            "startedMs": 93386.181125,
+            "durationMs": 101.88691699999617,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-03-52.113Z-gateway-megacode-r2",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 13057,
+          "output": 2022
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 2,
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 63551,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-05-34.940Z-gateway-claude-code-r2",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 19530,
+          "output": 1222,
+          "inputBreakdown": {
+            "uncached": 12106,
+            "cacheRead": 7424,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 62319,
+        "nativeDurationMs": 63251,
+        "nativeTurns": 5,
+        "toolCalls": 4,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 2,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 66075,
+      "metrics": {
+        "usage": {
+          "input": 27348,
+          "output": 1113
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 65585.511709,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3248.5009999999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1025,
+              "output": 37,
+              "inputBreakdown": {
+                "uncached": 1025,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 9032.826833,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3763,
+              "output": 28,
+              "inputBreakdown": {
+                "uncached": 3763,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 4516.335457999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3823,
+              "output": 67,
+              "inputBreakdown": {
+                "uncached": 239,
+                "cacheRead": 3584,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 12657.794750000001,
+            "firstTextMs": 3764.321,
+            "status": "completed",
+            "usage": {
+              "input": 4084,
+              "output": 274,
+              "inputBreakdown": {
+                "uncached": 372,
+                "cacheRead": 3712,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 23900.9555,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4421,
+              "output": 552,
+              "inputBreakdown": {
+                "uncached": 453,
+                "cacheRead": 3968,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 3143.343458000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 5034,
+              "output": 26,
+              "inputBreakdown": {
+                "uncached": 810,
+                "cacheRead": 4224,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 8851.860290999997,
+            "firstTextMs": 3915.4432910000032,
+            "status": "completed",
+            "usage": {
+              "input": 5198,
+              "output": 129,
+              "inputBreakdown": {
+                "uncached": 334,
+                "cacheRead": 4864,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_Aho9nAWssYdw2DAkQdaSjjmX",
+            "name": "bash",
+            "startedMs": 3250.984209,
+            "durationMs": 82.57791599999973,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_CrxQVELOvn5RgAjUbZD48dku",
+            "name": "grep",
+            "startedMs": 12367.441292,
+            "durationMs": 5.937125000000378,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_tuB8dB4CAXfSwXII7rBlpq8s",
+            "name": "read_file",
+            "startedMs": 16891.866125,
+            "durationMs": 1.7130419999994047,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_5HdBXFwLPJzsG1vq33y9sdss",
+            "name": "read_file",
+            "startedMs": 16894.353,
+            "durationMs": 0.7620419999984733,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_etm2w7Uw3pPm92OY8w4F7eFP",
+            "name": "edit_file",
+            "startedMs": 29555.311959,
+            "durationMs": 2.6727910000008706,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_VJBxdXFqpgKarSAs2zV1WjJF",
+            "name": "write_file",
+            "startedMs": 53460.64275,
+            "durationMs": 2.2219590000022436,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_VFoB9IL7cYdlg01U6kfdNmZK",
+            "name": "bash",
+            "startedMs": 56608.442042,
+            "durationMs": 122.76799999999639,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-06-39.025Z-gateway-megacode-r2",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 27348,
+          "output": 1113
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 3,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 62113,
+      "metrics": {
+        "usage": {
+          "input": 10831,
+          "output": 1117
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 61725.14575,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4458.3625,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 997,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 997,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 3223.7800830000006,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1046,
+              "output": 18,
+              "inputBreakdown": {
+                "uncached": 1046,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2281.8736670000008,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1079,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1079,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 14515.080917,
+            "firstTextMs": 4219.035667,
+            "status": "completed",
+            "usage": {
+              "input": 1128,
+              "output": 330,
+              "inputBreakdown": {
+                "uncached": 1128,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 27398.826,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1521,
+              "output": 601,
+              "inputBreakdown": {
+                "uncached": 497,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 3725.713708000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2183,
+              "output": 26,
+              "inputBreakdown": {
+                "uncached": 775,
+                "cacheRead": 1408,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 5964.7017080000005,
+            "firstTextMs": 1443.356249999997,
+            "status": "completed",
+            "usage": {
+              "input": 2877,
+              "output": 102,
+              "inputBreakdown": {
+                "uncached": 829,
+                "cacheRead": 2048,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_cm1LiNyDr08dk61RKEcolcmd",
+            "name": "read_file",
+            "startedMs": 4461.028333,
+            "durationMs": 2.2087499999997817,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_fvOjA5j57P52DZhJVezAsBmQ",
+            "name": "list_files",
+            "startedMs": 7689.504416,
+            "durationMs": 7.6437919999998485,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_TZOI2uQtXaCKF2OAl8yMjnc7",
+            "name": "read_file",
+            "startedMs": 9981.171583,
+            "durationMs": 0.8645830000004935,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_uQSdrc5wilyPGYiPW3wFilEf",
+            "name": "edit_file",
+            "startedMs": 24499.116708,
+            "durationMs": 2.9668749999982538,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_7C9wwIeoXrtQMQBMaQohqEid",
+            "name": "write_file",
+            "startedMs": 51903.096916,
+            "durationMs": 2.156042000002344,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_nl7ThO3xA7rqqpQZd02aXofk",
+            "name": "bash",
+            "startedMs": 55632.829458,
+            "durationMs": 125.33895800000028,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-07-45.451Z-gateway-megacode-r3",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 10831,
+          "output": 1117
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 3,
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 64580,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-08-47.957Z-gateway-claude-code-r3",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 6973,
+          "output": 1146,
+          "inputBreakdown": {
+            "uncached": 4413,
+            "cacheRead": 2560,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 63437,
+        "nativeDurationMs": 64275,
+        "nativeTurns": 4,
+        "toolCalls": 3,
+        "tools": [
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 3,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 84605,
+      "metrics": {
+        "usage": {
+          "input": 12399,
+          "output": 1717
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 84177.66141599999,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4061.2117080000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1034,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 1034,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 2544.865417,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1127,
+              "output": 18,
+              "inputBreakdown": {
+                "uncached": 1127,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2664.092334000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1160,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1160,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 20285.834334,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1209,
+              "output": 446,
+              "inputBreakdown": {
+                "uncached": 185,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 44686.946958,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1719,
+              "output": 1079,
+              "inputBreakdown": {
+                "uncached": 695,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 2738.5804580000113,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2860,
+              "output": 20,
+              "inputBreakdown": {
+                "uncached": 1836,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 7051.902375000005,
+            "firstTextMs": 2393.775125,
+            "status": "completed",
+            "usage": {
+              "input": 3290,
+              "output": 114,
+              "inputBreakdown": {
+                "uncached": 602,
+                "cacheRead": 2688,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_jgF7EtsfZL2uzPoz1DEkbnXP",
+            "name": "read_file",
+            "startedMs": 4063.6269999999995,
+            "durationMs": 2.1969159999998737,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_gehJSHproynVpHmEWPmLsrB1",
+            "name": "list_files",
+            "startedMs": 6611.905791,
+            "durationMs": 3.0535839999993186,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_eycyABIB43cjXzbyZ8suLiWo",
+            "name": "read_file",
+            "startedMs": 9280.877958,
+            "durationMs": 0.737542000000758,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_KTp4runAm67X5jNVcGIAeaMt",
+            "name": "edit_file",
+            "startedMs": 29569.441083,
+            "durationMs": 3.1963749999995343,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_J3btBnWcdZPdVgFuZYG77KSG",
+            "name": "write_file",
+            "startedMs": 74262.1385,
+            "durationMs": 2.0940409999893745,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_uUQtoEJvsNMFwYcazobrOipt",
+            "name": "bash",
+            "startedMs": 77004.706041,
+            "durationMs": 118.66537499999686,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-09-53.032Z-gateway-megacode-r3",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 12399,
+          "output": 1717
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 3,
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 93710,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-11-18.038Z-gateway-claude-code-r3",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 9602,
+          "output": 2102,
+          "inputBreakdown": {
+            "uncached": 5378,
+            "cacheRead": 4224,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 92499,
+        "nativeDurationMs": 93423,
+        "nativeTurns": 4,
+        "toolCalls": 3,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 3,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 60531,
+      "metrics": {
+        "usage": {
+          "input": 31981,
+          "output": 1068
+        },
+        "effort": "medium",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 60098.602458,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2730.2771669999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1025,
+              "output": 29,
+              "inputBreakdown": {
+                "uncached": 1025,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 4049.052542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3697,
+              "output": 58,
+              "inputBreakdown": {
+                "uncached": 3697,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2601.893167,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4013,
+              "output": 28,
+              "inputBreakdown": {
+                "uncached": 429,
+                "cacheRead": 3584,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 3072.741582999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4073,
+              "output": 29,
+              "inputBreakdown": {
+                "uncached": 233,
+                "cacheRead": 3840,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 11712.95375,
+            "firstTextMs": 1470.6267499999994,
+            "status": "completed",
+            "usage": {
+              "input": 4227,
+              "output": 256,
+              "inputBreakdown": {
+                "uncached": 259,
+                "cacheRead": 3968,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 24737.987583000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4546,
+              "output": 501,
+              "inputBreakdown": {
+                "uncached": 450,
+                "cacheRead": 4096,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 4109.630124999996,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 5108,
+              "output": 49,
+              "inputBreakdown": {
+                "uncached": 756,
+                "cacheRead": 4352,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 8,
+            "durationMs": 6797.526666999998,
+            "firstTextMs": 2119.998833999998,
+            "status": "completed",
+            "usage": {
+              "input": 5292,
+              "output": 118,
+              "inputBreakdown": {
+                "uncached": 300,
+                "cacheRead": 4992,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_Lqon5CN0OKMQ3tQjdE7rRBl9",
+            "name": "bash",
+            "startedMs": 2732.793666,
+            "durationMs": 66.63604199999963,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_NWdz0uYiKpjlxSRxfRZQJTpi",
+            "name": "bash",
+            "startedMs": 6850.263541,
+            "durationMs": 50.45629199999985,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_YX3Pf158ef872BExRM5laNPW",
+            "name": "grep",
+            "startedMs": 9504.405083,
+            "durationMs": 9.440708000000086,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_Bl4XyGmk2FQ7ADbPbi6AGgzP",
+            "name": "read_file",
+            "startedMs": 12587.858833,
+            "durationMs": 1.109042000000045,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_9t9BQiJ6SWSskJsGN0ckSuow",
+            "name": "edit_file",
+            "startedMs": 24303.980583,
+            "durationMs": 2.760707999997976,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_XnQX9TTYlTjSfGdO8ZDXFKDe",
+            "name": "write_file",
+            "startedMs": 49047.045874999996,
+            "durationMs": 2.158500000005006,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_CyQyAYAfEjd6DoKDyahyfJVx",
+            "name": "bash",
+            "startedMs": 53160.978375,
+            "durationMs": 137.74145800000406,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-12-52.241Z-gateway-megacode-r3",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 31981,
+          "output": 1068
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 3,
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 61905,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-13-53.238Z-gateway-claude-code-r3",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 28460,
+          "output": 1204,
+          "inputBreakdown": {
+            "uncached": 12716,
+            "cacheRead": 15744,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 60609,
+        "nativeDurationMs": 61623,
+        "nativeTurns": 6,
+        "toolCalls": 5,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 4,
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 50764,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-14-55.628Z-gateway-claude-code-r4",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 5311,
+          "output": 1087,
+          "inputBreakdown": {
+            "uncached": 4287,
+            "cacheRead": 1024,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 49663,
+        "nativeDurationMs": 50483,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 4,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 61524,
+      "metrics": {
+        "usage": {
+          "input": 11041,
+          "output": 1130
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 61097.607707999996,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3659.466833,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 997,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 997,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 2781.992125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1046,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1046,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2557.901334,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1085,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1085,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 15439.255707999999,
+            "firstTextMs": 4853.961041999999,
+            "status": "completed",
+            "usage": {
+              "input": 1134,
+              "output": 322,
+              "inputBreakdown": {
+                "uncached": 1134,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 27931.649,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1519,
+              "output": 620,
+              "inputBreakdown": {
+                "uncached": 495,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 2731.4316249999974,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2200,
+              "output": 26,
+              "inputBreakdown": {
+                "uncached": 2200,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 5836.789375,
+            "firstTextMs": 1916.0257920000004,
+            "status": "completed",
+            "usage": {
+              "input": 3060,
+              "output": 103,
+              "inputBreakdown": {
+                "uncached": 1012,
+                "cacheRead": 2048,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_6UdRMpdMdemLDrjglXp8uBxm",
+            "name": "read_file",
+            "startedMs": 3662.219583,
+            "durationMs": 2.593334000000141,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_JuUtycBGWrWGhhHRb1cBkkD6",
+            "name": "list_files",
+            "startedMs": 6449.13775,
+            "durationMs": 9.303458000000319,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_K4oOFHbFssjq7XDCj5UQmgWY",
+            "name": "read_file",
+            "startedMs": 9018.540792,
+            "durationMs": 0.7976660000003903,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_RZ2Arn57qxyFuQp9tQWJtAoF",
+            "name": "edit_file",
+            "startedMs": 24460.751042,
+            "durationMs": 3.620915999999852,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_pwMvKOaoBLs1oncfJtLGQ5tb",
+            "name": "write_file",
+            "startedMs": 52398.205541999996,
+            "durationMs": 2.1935410000005504,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_o2wCBZ19nuzhbIqPFO0yeo9C",
+            "name": "bash",
+            "startedMs": 55133.841374999996,
+            "durationMs": 125.21266699999978,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-15-46.749Z-gateway-megacode-r4",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 11041,
+          "output": 1130
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 4,
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 83185,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-16-48.675Z-gateway-claude-code-r4",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 5812,
+          "output": 1922,
+          "inputBreakdown": {
+            "uncached": 5812,
+            "cacheRead": 0,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 82128,
+        "nativeDurationMs": 82907,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 4,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 91659,
+      "metrics": {
+        "usage": {
+          "input": 12578,
+          "output": 1886
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 91225.45291600001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2798.429625,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1034,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 1034,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 2436.8655839999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1127,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1127,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2355.3780419999994,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1166,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 142,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 21580.080292,
+            "firstTextMs": 9628.058958000001,
+            "status": "completed",
+            "usage": {
+              "input": 1215,
+              "output": 468,
+              "inputBreakdown": {
+                "uncached": 191,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 50706.35708399999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1747,
+              "output": 1230,
+              "inputBreakdown": {
+                "uncached": 723,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 3433.9846249999973,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3039,
+              "output": 20,
+              "inputBreakdown": {
+                "uncached": 3039,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 7760.876707999996,
+            "firstTextMs": 2459.6812079999945,
+            "status": "completed",
+            "usage": {
+              "input": 3250,
+              "output": 109,
+              "inputBreakdown": {
+                "uncached": 306,
+                "cacheRead": 2944,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_zI9xfeS9YnD1y7Wzu4zeFdH9",
+            "name": "read_file",
+            "startedMs": 2801.0052910000004,
+            "durationMs": 2.3366669999995793,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_VRwhO2fHLVbXl54ohL4eHb8v",
+            "name": "list_files",
+            "startedMs": 5242.398666,
+            "durationMs": 9.354542000000038,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_Gfj0m0lj5vYzWSCflIQeb767",
+            "name": "read_file",
+            "startedMs": 7609.385,
+            "durationMs": 0.8282079999999041,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_62JB9bVKikaMzESgNfBgG3jV",
+            "name": "edit_file",
+            "startedMs": 29192.384916,
+            "durationMs": 4.189666999998735,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_PFaESyOfckSd3yFWjHXMjs97",
+            "name": "write_file",
+            "startedMs": 79904.075583,
+            "durationMs": 1.4996670000109589,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_rYRmUj4ittEheQhEoBIAoHtC",
+            "name": "bash",
+            "startedMs": 83341.521083,
+            "durationMs": 121.06745800000499,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-18-12.353Z-gateway-megacode-r4",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 12578,
+          "output": 1886
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 4,
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 61894,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-19-44.508Z-gateway-claude-code-r4",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 18091,
+          "output": 1242,
+          "inputBreakdown": {
+            "uncached": 11179,
+            "cacheRead": 6912,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 60660,
+        "nativeDurationMs": 61587,
+        "nativeTurns": 5,
+        "toolCalls": 4,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 4,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 66313,
+      "metrics": {
+        "usage": {
+          "input": 32549,
+          "output": 1173
+        },
+        "effort": "medium",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 65847.08575,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 5299.634209,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1025,
+              "output": 23,
+              "inputBreakdown": {
+                "uncached": 1025,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 4161.604584,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3690,
+              "output": 62,
+              "inputBreakdown": {
+                "uncached": 3690,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2870.185125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4000,
+              "output": 28,
+              "inputBreakdown": {
+                "uncached": 4000,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 2517.6077920000007,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4060,
+              "output": 29,
+              "inputBreakdown": {
+                "uncached": 220,
+                "cacheRead": 3840,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 14460.514,
+            "firstTextMs": 4781.684832999999,
+            "status": "completed",
+            "usage": {
+              "input": 4291,
+              "output": 270,
+              "inputBreakdown": {
+                "uncached": 323,
+                "cacheRead": 3968,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 24447.080375,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4624,
+              "output": 572,
+              "inputBreakdown": {
+                "uncached": 528,
+                "cacheRead": 4096,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 3545.1588330000013,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 5257,
+              "output": 45,
+              "inputBreakdown": {
+                "uncached": 777,
+                "cacheRead": 4480,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 8,
+            "durationMs": 8252.391292,
+            "firstTextMs": 2480.678375000003,
+            "status": "completed",
+            "usage": {
+              "input": 5602,
+              "output": 144,
+              "inputBreakdown": {
+                "uncached": 482,
+                "cacheRead": 5120,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_BwUygYtIlwQjO4sOwJVZ2KtW",
+            "name": "bash",
+            "startedMs": 5302.301917,
+            "durationMs": 69.31804099999954,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_926hHoJJlGwcQtCfBhRpQkFh",
+            "name": "bash",
+            "startedMs": 9535.278375,
+            "durationMs": 52.868750000001455,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_fnouMF6h9koev0fZgKpy1Vse",
+            "name": "grep",
+            "startedMs": 12460.293042000001,
+            "durationMs": 9.882458000000042,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_iq1qC4s3yUcayV63SzhVKSyB",
+            "name": "read_file",
+            "startedMs": 14989.82825,
+            "durationMs": 1.488166999999521,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_EJyopyKEnQsuZHjJ7UMCBqrl",
+            "name": "edit_file",
+            "startedMs": 29453.85,
+            "durationMs": 2.3847920000007434,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_zLlxCSPhHpCh0yuY4htIf5jn",
+            "name": "write_file",
+            "startedMs": 53905.145292,
+            "durationMs": 2.076374999996915,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_W7SRJVSpN2nSIfsc0MBhB9ut",
+            "name": "bash",
+            "startedMs": 57453.897708,
+            "durationMs": 138.64704200000415,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-20-46.887Z-gateway-megacode-r4",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 32549,
+          "output": 1173
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 5,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 54640,
+      "metrics": {
+        "usage": {
+          "input": 10748,
+          "output": 1008
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 54255.277125,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2757.545208,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 997,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 997,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 2215.2660419999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1046,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1046,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2116.8544999999995,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1085,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1085,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 12273.580332999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1134,
+              "output": 256,
+              "inputBreakdown": {
+                "uncached": 1134,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 25275.44775,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1453,
+              "output": 568,
+              "inputBreakdown": {
+                "uncached": 1453,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 2644.613167000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2082,
+              "output": 20,
+              "inputBreakdown": {
+                "uncached": 1058,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 6810.5745409999945,
+            "firstTextMs": 2616.5141249999942,
+            "status": "completed",
+            "usage": {
+              "input": 2951,
+              "output": 105,
+              "inputBreakdown": {
+                "uncached": 1031,
+                "cacheRead": 1920,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_VgAXVsrGmFdhImHKD0jqkS37",
+            "name": "read_file",
+            "startedMs": 2759.664583,
+            "durationMs": 1.3241250000000946,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_R4TYSAhay01bUkVOP6W9ikJj",
+            "name": "list_files",
+            "startedMs": 4978.182833,
+            "durationMs": 7.573833000000377,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_oyhWGm158nC7BrCCzvCROCv8",
+            "name": "read_file",
+            "startedMs": 7104.1265,
+            "durationMs": 0.37191600000005565,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_j4o8r7VyWxzpUAOGGPQjtIoq",
+            "name": "edit_file",
+            "startedMs": 19379.963,
+            "durationMs": 3.342124999999214,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_CxCe1YftRq4JvgyIyS6UCuZJ",
+            "name": "write_file",
+            "startedMs": 44661.107208,
+            "durationMs": 2.5282919999954174,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_Darh3GGVCA4bMyCG3akk5PE8",
+            "name": "bash",
+            "startedMs": 47310.378375,
+            "durationMs": 132.11016599999857,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-21-53.605Z-gateway-megacode-r5",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 10748,
+          "output": 1008
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 5,
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 51666,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-22-48.610Z-gateway-claude-code-r5",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 5467,
+          "output": 1128,
+          "inputBreakdown": {
+            "uncached": 5467,
+            "cacheRead": 0,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 50352,
+        "nativeDurationMs": 51217,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 5,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 90919,
+      "metrics": {
+        "usage": {
+          "input": 12605,
+          "output": 1909
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 90466.86775,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2632.848209,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1034,
+              "output": 21,
+              "inputBreakdown": {
+                "uncached": 1034,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 2281.261291,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1127,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1127,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 2879.8788750000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1166,
+              "output": 19,
+              "inputBreakdown": {
+                "uncached": 1166,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 19426.472584000003,
+            "firstTextMs": 7357.705334,
+            "status": "completed",
+            "usage": {
+              "input": 1215,
+              "output": 446,
+              "inputBreakdown": {
+                "uncached": 191,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 53649.031416,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1725,
+              "output": 1274,
+              "inputBreakdown": {
+                "uncached": 701,
+                "cacheRead": 1024,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 2185.0429580000055,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3061,
+              "output": 20,
+              "inputBreakdown": {
+                "uncached": 1525,
+                "cacheRead": 1536,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 7279.3554580000055,
+            "firstTextMs": 2817.6735000000044,
+            "status": "completed",
+            "usage": {
+              "input": 3277,
+              "output": 110,
+              "inputBreakdown": {
+                "uncached": 333,
+                "cacheRead": 2944,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_V1Rst93TzPda1hkModkE9jG2",
+            "name": "read_file",
+            "startedMs": 2635.932167,
+            "durationMs": 2.150499999999738,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_OkYMPdMbRpaiACU9aOFHnkGF",
+            "name": "list_files",
+            "startedMs": 4921.0975,
+            "durationMs": 9.904582999999548,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_epRKM9pdlvVGGdpXXdlyGCmq",
+            "name": "read_file",
+            "startedMs": 7813.080375,
+            "durationMs": 0.7523330000003625,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_faxO9B27fLGIrXa2ZC6pWdoP",
+            "name": "edit_file",
+            "startedMs": 27242.84575,
+            "durationMs": 4.802832999997918,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_arLbqIqz7h5mzQlAGwJCUXXl",
+            "name": "write_file",
+            "startedMs": 80898.640125,
+            "durationMs": 1.2915000000066357,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_FDLKKzCjbUk8RmN5eTQXqzR9",
+            "name": "bash",
+            "startedMs": 83085.765167,
+            "durationMs": 101.09733299999789,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-23-40.796Z-gateway-megacode-r5",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 12605,
+          "output": 1909
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 5,
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 80550,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-25-12.103Z-gateway-claude-code-r5",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 5476,
+          "output": 1853,
+          "inputBreakdown": {
+            "uncached": 4324,
+            "cacheRead": 1152,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 79367,
+        "nativeDurationMs": 80230,
+        "nativeTurns": 3,
+        "toolCalls": 2,
+        "tools": [
+          "Bash",
+          "Bash"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 5,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 67387,
+      "metrics": {
+        "usage": {
+          "input": 28264,
+          "output": 1213
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 8,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 66994.126417,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2343.6034170000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1025,
+              "output": 23,
+              "inputBreakdown": {
+                "uncached": 1025,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 2,
+            "durationMs": 8210.831458999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3691,
+              "output": 91,
+              "inputBreakdown": {
+                "uncached": 3691,
+                "cacheRead": 0,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 3,
+            "durationMs": 3204.815291000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4072,
+              "output": 29,
+              "inputBreakdown": {
+                "uncached": 488,
+                "cacheRead": 3584,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 4,
+            "durationMs": 13197.660708,
+            "firstTextMs": 4437.187957999999,
+            "status": "completed",
+            "usage": {
+              "input": 4226,
+              "output": 280,
+              "inputBreakdown": {
+                "uncached": 258,
+                "cacheRead": 3968,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 5,
+            "durationMs": 27574.235583000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4569,
+              "output": 619,
+              "inputBreakdown": {
+                "uncached": 473,
+                "cacheRead": 4096,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 6,
+            "durationMs": 4496.232375,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 5249,
+              "output": 35,
+              "inputBreakdown": {
+                "uncached": 769,
+                "cacheRead": 4480,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          },
+          {
+            "step": 7,
+            "durationMs": 7712.609375,
+            "firstTextMs": 2307.050958,
+            "status": "completed",
+            "usage": {
+              "input": 5432,
+              "output": 136,
+              "inputBreakdown": {
+                "uncached": 312,
+                "cacheRead": 5120,
+                "cacheCreation": 0
+              }
+            },
+            "responseModel": "gpt-6-astra"
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_betDAwVGqm8aGesCP1qDQGZV",
+            "name": "bash",
+            "startedMs": 2345.9345000000003,
+            "durationMs": 63.207916999999725,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_SBPdJI0NRJYMuEPFja4cNXNz",
+            "name": "bash",
+            "startedMs": 10622.155959,
+            "durationMs": 43.87458300000071,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_QBkQYWvjklGaI3nOqcDs3fSt",
+            "name": "grep",
+            "startedMs": 10666.359334,
+            "durationMs": 3.8178329999991547,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_4i9Osy90ZY0MbnL5AMOEQoLh",
+            "name": "read_file",
+            "startedMs": 10670.442084,
+            "durationMs": 0.47287499999947613,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_zrbdMlNL3FDUm0wuXb3nzVI2",
+            "name": "read_file",
+            "startedMs": 13876.594542,
+            "durationMs": 0.2955000000001746,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_Cm0T095emCK8mldvSbUpmxT6",
+            "name": "edit_file",
+            "startedMs": 27076.372541999997,
+            "durationMs": 2.3369999999995343,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_jt3xpWNFIcL1tBWAvGI1grEL",
+            "name": "write_file",
+            "startedMs": 54653.900709,
+            "durationMs": 0.7090409999946132,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_9Q7paSKQPxHE11EarAGc9AeQ",
+            "name": "bash",
+            "startedMs": 59152.900167,
+            "durationMs": 126.3517920000013,
+            "isError": false
+          }
+        ],
+        "timeoutMs": 300000,
+        "settings": {
+          "permissionMode": "yolo",
+          "maxSteps": 50,
+          "bashTimeoutMs": 120000,
+          "maxToolOutput": 12000,
+          "projectInstructions": false,
+          "saveHistory": false,
+          "promptAutocomplete": false,
+          "worktreeBase": "fresh",
+          "effort": "medium"
+        }
+      },
+      "harness": "megacode",
+      "artifactDirectory": ".bench/2026-10-03T19-26-33.053Z-gateway-megacode-r5",
+      "diagnostics": {
+        "normalizedUsage": {
+          "input": 28264,
+          "output": 1213
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 5,
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 61541,
+      "metrics": null,
+      "harness": "claude-code",
+      "effort": "medium",
+      "artifactDirectory": ".bench/2026-10-03T19-27-40.835Z-gateway-claude-code-r5",
+      "diagnostics": {
+        "nativeError": false,
+        "nativeTerminalReason": "completed",
+        "normalizedUsage": {
+          "input": 18082,
+          "output": 1246,
+          "inputBreakdown": {
+            "uncached": 6818,
+            "cacheRead": 11264,
+            "cacheCreation": 0
+          }
+        },
+        "reportedModels": [
+          "gpt-6-astra"
+        ],
+        "nativeApiMs": 60385,
+        "nativeDurationMs": 61275,
+        "nativeTurns": 5,
+        "toolCalls": 4,
+        "tools": [
+          "Bash",
+          "Bash",
+          "Edit",
+          "Bash"
+        ]
+      }
+    }
+  ],
+  "finished": true,
+  "completedAt": "2026-10-03T19:28:42.496137+00:00"
+}

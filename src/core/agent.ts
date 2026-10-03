@@ -6,11 +6,23 @@ import type { ExecutionResult, ToolContext, ToolSource } from "./tools.ts";
 
 export type NoticeLevel = "info" | "warn" | "error";
 
+export type ModelTiming = {
+  /** One-based step within this send; includes retries inside the provider/turn. */
+  step: number;
+  durationMs: number;
+  /** First nonempty visible text, not first network byte or reasoning token. */
+  firstTextMs: number | null;
+  status: "completed" | "error" | "aborted";
+  usage?: Usage;
+  responseModel?: string;
+};
+
 /** How the agent reaches the user: interaction for tools, plus progress callbacks. */
 export type AgentEvents = Pick<ToolContext, "approve" | "askQuestions"> & {
   onText(delta: string): void;
   /** One model response finished (it may be followed by tool calls). */
   onStepEnd(): void;
+  onModelTiming?(timing: ModelTiming): void;
   onToolStart(call: ToolCall): void;
   onToolEnd(call: ToolCall, result: ExecutionResult): void;
   onNotice(text: string, level: NoticeLevel): void;
@@ -71,15 +83,30 @@ export class Agent {
 
     try {
       for (let step = 0; step < maxSteps; step++) {
-        const res = await this.#turn(provider, {
-          model,
-          effort,
-          system: [this.#system, tools.instructions?.()].filter(Boolean).join("\n\n"),
-          messages: this.messages,
-          tools: tools.specs(),
-          signal,
-          onText: ev.onText,
-        }, ev);
+        const started = performance.now();
+        let firstTextMs: number | null = null;
+        let res: TurnResult | undefined;
+        try {
+          res = await this.#turn(provider, {
+            model,
+            effort,
+            system: [this.#system, tools.instructions?.()].filter(Boolean).join("\n\n"),
+            messages: this.messages,
+            tools: tools.specs(),
+            signal,
+            onText: text => {
+              if (text && firstTextMs === null) firstTextMs = performance.now() - started;
+              ev.onText(text);
+            },
+          }, ev);
+        } finally {
+          ev.onModelTiming?.({
+            step: step + 1, durationMs: performance.now() - started, firstTextMs,
+            status: res ? "completed" : signal.aborted ? "aborted" : "error",
+            usage: res?.usage,
+            responseModel: res?.responseModel,
+          });
+        }
         this.#addUsage(res.usage);
         this.messages.push(res.message);
         ev.onStepEnd();

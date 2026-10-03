@@ -57,7 +57,16 @@ export class AnthropicProvider implements Provider {
     return {
       message: { role: "assistant", text, toolCalls, raw: { provider: "anthropic", content: msg.content } },
       stop: mapStop(msg.stop_reason),
-      usage: { input: msg.usage.input_tokens, output: msg.usage.output_tokens },
+      responseModel: msg.model,
+      usage: {
+        input: msg.usage.input_tokens + (msg.usage.cache_read_input_tokens ?? 0) + (msg.usage.cache_creation_input_tokens ?? 0),
+        output: msg.usage.output_tokens,
+        inputBreakdown: {
+          uncached: msg.usage.input_tokens,
+          cacheRead: msg.usage.cache_read_input_tokens ?? 0,
+          cacheCreation: msg.usage.cache_creation_input_tokens ?? 0,
+        },
+      },
     };
   }
 }

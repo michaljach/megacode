@@ -9,7 +9,12 @@ export type Effort = (typeof EFFORTS)[number];
 /** The effort to request explicitly, or undefined to leave the provider's default in place. */
 export const explicitEffort = (effort: Effort | undefined) => (effort === "default" ? undefined : effort);
 
-export type Usage = { input: number; output: number };
+export type Usage = {
+  input: number;
+  output: number;
+  /** When reported separately, these components sum to input. */
+  inputBreakdown?: { uncached: number; cacheRead: number; cacheCreation: number };
+};
 
 export type TurnRequest = {
   effort?: Effort;
@@ -25,6 +30,8 @@ export type TurnResult = {
   message: AssistantMessage;
   stop: StopReason;
   usage?: Usage;
+  /** Model identity reported by the backend, if available. */
+  responseModel?: string;
 };
 
 /** Port implemented by every model backend (Anthropic, OpenAI, Gemini, …). */

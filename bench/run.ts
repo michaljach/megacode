@@ -5,12 +5,14 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { tasks } from "./tasks.ts";
 import { defaultModel } from "../src/adapters/providers/registry.ts";
+import { EFFORTS, type Effort } from "../src/core/provider.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const { values } = parseArgs({ options: {
   model: { type: "string" }, command: { type: "string" }, label: { type: "string" },
   repeats: { type: "string", default: "1" }, task: { type: "string" },
   baseline: { type: "boolean", default: false },
+  effort: { type: "string", multiple: true },
 } });
 const repeats = Number(values.repeats);
 if (!Number.isInteger(repeats) || repeats < 1) throw new Error("--repeats must be a positive integer");
@@ -20,6 +22,10 @@ const model = values.model ?? defaultModel();
 const external: string[] | undefined = values.command ? JSON.parse(values.command) : undefined;
 if (external && (!Array.isArray(external) || !external.length || external.some(x => typeof x !== "string")))
   throw new Error('--command must be a JSON argv array, e.g. ["my-wrapper"]');
+const efforts = values.effort as Effort[] | undefined;
+if (efforts?.some(e => !EFFORTS.includes(e)) || (efforts && new Set(efforts).size !== efforts.length))
+  throw new Error("--effort must be a unique selection of default, low, medium, high");
+if (efforts && (external || values.baseline)) throw new Error("--effort is only supported for megacode runs");
 const label = values.label ?? (values.baseline ? "baseline" : external ? "external" : "megacode");
 const runDir = path.join(root, ".bench", `${new Date().toISOString().replaceAll(":", "-")}-${label.replace(/[^\w-]/g, "_")}`);
 await mkdir(runDir, { recursive: true });
@@ -43,8 +49,8 @@ async function command(argv: string[], cwd: string, env: NodeJS.ProcessEnv, time
 }
 
 const results: Record<string, unknown>[] = [];
-for (let repeat = 1; repeat <= repeats; repeat++) for (const task of selected) {
-  const dir = path.join(runDir, `${task.id}-${repeat}`);
+for (let repeat = 1; repeat <= repeats; repeat++) for (const task of selected) for (const effort of (repeat % 2 ? [...(efforts ?? [undefined])] : [...(efforts ?? [undefined])].reverse())) {
+  const dir = path.join(runDir, `${task.id}-${repeat}${effort ? `-${effort}` : ""}`);
   const workspace = path.join(dir, "workspace");
   await mkdir(workspace, { recursive: true });
   const files = { "package.json": '{"private":true,"type":"module","scripts":{"test":"node --test"}}\n', ...task.files };
@@ -57,7 +63,7 @@ for (let repeat = 1; repeat <= repeats; repeat++) for (const task of selected) {
   // The grader is created only AFTER the agent exits. Never put reference tests in its workspace.
   const invocation = external ? [...external, task.prompt] : [process.execPath, path.join(root, "node_modules/tsx/dist/cli.mjs"), path.join(root, "bench/megacode.ts"), model, task.prompt];
   const run = values.baseline ? { code: 0, signal: null, timedOut: false, ms: 0, output: "Unmodified fixture" } :
-    await command(invocation, workspace, { ...process.env, BENCH_METRICS: metricsFile, BENCH_MODEL: model }, 300_000);
+    await command(invocation, workspace, { ...process.env, BENCH_METRICS: metricsFile, BENCH_MODEL: model, BENCH_EFFORT: effort }, 300_000);
   await writeFile(path.join(dir, "transcript.txt"), run.output);
   const entry = Object.keys(task.files).find(name => name.startsWith("src/"))!;
   const grader = `import assert from 'node:assert/strict';\nimport {test} from 'node:test';\nimport {readFile} from 'node:fs/promises';\nimport path from 'node:path';\nimport {pathToFileURL} from 'node:url';\nconst mod = await import(pathToFileURL(path.join(process.env.BENCH_WORKSPACE, ${JSON.stringify(entry)})));\n${task.tests}`;
@@ -67,12 +73,12 @@ for (let repeat = 1; repeat <= repeats; repeat++) for (const task of selected) {
   await writeFile(path.join(dir, "grade.txt"), grade.output);
   let metrics: unknown = null;
   if (!external && !values.baseline) try { metrics = JSON.parse(await readFile(metricsFile, "utf8")); } catch {}
-  const result = { task: task.id, repeat, passed: grade.code === 0 && !grade.timedOut,
+  const result = { task: task.id, repeat, effort, passed: grade.code === 0 && !grade.timedOut,
     checksPassed: Number(grade.output.match(/^# pass (\d+)/m)?.[1] ?? 0),
     checksFailed: Number(grade.output.match(/^# fail (\d+)/m)?.[1] ?? 0),
     agentExit: run.code, timedOut: run.timedOut, elapsedMs: run.ms, metrics };
   results.push(result);
   console.log(JSON.stringify(result));
-  await writeFile(path.join(runDir, "results.json"), JSON.stringify({ label, model, external, repeats, results }, null, 2));
+  await writeFile(path.join(runDir, "results.json"), JSON.stringify({ label, model, external, repeats, efforts, results }, null, 2));
 }
 console.log(`Task pass rate: ${results.filter(r => r.passed).length}/${results.length}`);

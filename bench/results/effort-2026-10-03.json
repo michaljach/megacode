@@ -1,0 +1,4498 @@
+{
+  "date": "2026-10-03",
+  "backend": "ChatGPT subscription / Responses API",
+  "source": ".bench/2026-10-03T14-30-34.388Z-megacode-effort/results.json",
+  "label": "megacode-effort",
+  "model": "openai:gpt-6-astra",
+  "repeats": 5,
+  "efforts": [
+    "medium",
+    "low"
+  ],
+  "results": [
+    {
+      "task": "range-parser",
+      "repeat": 1,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 58094,
+      "metrics": {
+        "usage": {
+          "input": 8640,
+          "output": 1076
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 57622.554875,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4697.791,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2128.5047080000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2699.7355000000007,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 14672.000334,
+            "firstTextMs": 5770.814624999999,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 324
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 24522.793542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1214,
+              "output": 567
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2699.225124999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1840,
+              "output": 26
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 6045.515875000005,
+            "firstTextMs": 1621.4919160000063,
+            "status": "completed",
+            "usage": {
+              "input": 2534,
+              "output": 105
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_nfCSptvAV54hTcmc1RBoCUvP",
+            "name": "read_file",
+            "startedMs": 4699.660875,
+            "durationMs": 1.6349170000003141,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_NRSW68HrGR1IRlgwy7XSKyKE",
+            "name": "list_files",
+            "startedMs": 6832.03925,
+            "durationMs": 11.325584000000163,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_XgZnucTQKBr62hygEk3uX2ur",
+            "name": "read_file",
+            "startedMs": 9545.447458999999,
+            "durationMs": 0.7412500000009459,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_v4wKfqLKrd80ZjVV7yDA4aGt",
+            "name": "edit_file",
+            "startedMs": 24220.789500000003,
+            "durationMs": 2.454333999998198,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_Nd7AkDIjXdONNykwnz8Wf31E",
+            "name": "write_file",
+            "startedMs": 48748.170292,
+            "durationMs": 2.4856670000008307,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_xy730Ot3moY8gnWELaeIGsNU",
+            "name": "bash",
+            "startedMs": 51452.187125000004,
+            "durationMs": 122.31233399999473,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 1,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 55889,
+      "metrics": {
+        "usage": {
+          "input": 8681,
+          "output": 1087
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 55501.410416,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2533.406625,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2230.1769590000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3799.363875000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 12417.263958999998,
+            "firstTextMs": 5343.133542,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 317
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 25628.411207999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1207,
+              "output": 591
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2805.6021249999976,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1857,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 5944.350249999996,
+            "firstTextMs": 2529.6503329999978,
+            "status": "completed",
+            "usage": {
+              "input": 2565,
+              "output": 105
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_cD2ov2tVSE2UZoXSPa4bMVw3",
+            "name": "read_file",
+            "startedMs": 2535.287791,
+            "durationMs": 1.8042500000001382,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_5fe9c1032d4f4f33962a9b8d39ac1a54",
+            "name": "list_files",
+            "startedMs": 4769.563083,
+            "durationMs": 9.318083000000115,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_hhl6CSxFIGAjHHFbkchZ1RMR",
+            "name": "read_file",
+            "startedMs": 8580.676040999999,
+            "durationMs": 0.7755420000012236,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_fdd24f787f6a4a8eacc43dd45d19fe58",
+            "name": "edit_file",
+            "startedMs": 21001.254541000002,
+            "durationMs": 2.973333999998431,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_8F9naEpHAaJBhTGqyK2PA9FQ",
+            "name": "write_file",
+            "startedMs": 46635.371499999994,
+            "durationMs": 2.3811250000071595,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_6KXVxZ9AINDyaHjPEL1QkehC",
+            "name": "bash",
+            "startedMs": 49445.143874999994,
+            "durationMs": 109.16816600000311,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 1,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 91419,
+      "metrics": {
+        "usage": {
+          "input": 10526,
+          "output": 1905
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 91051.61562499999,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3125.737958,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2780.92675,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2884.0437500000007,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 22179.523375,
+            "firstTextMs": 9546.017292,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 492
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 51588.62016700001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1464,
+              "output": 1240
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2397.493416000012,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2764,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 5945.283791000009,
+            "firstTextMs": 1859.4057500000054,
+            "status": "completed",
+            "usage": {
+              "input": 2966,
+              "output": 99
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_Ysqs08sNlUIgvFvhJ4YzkwQ9",
+            "name": "read_file",
+            "startedMs": 3128.5552909999997,
+            "durationMs": 2.4393749999999272,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_ojP0KkjBpIvOnI8freyXeKWk",
+            "name": "list_files",
+            "startedMs": 5914.473416,
+            "durationMs": 10.231292000000394,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_f6721eebf03449318f9b4ac7195ee6f1",
+            "name": "read_file",
+            "startedMs": 8811.257666,
+            "durationMs": 0.7666250000002037,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_ihePmEiUiQqTgNVJmzY6BSmi",
+            "name": "edit_file",
+            "startedMs": 30992.63225,
+            "durationMs": 1.4031250000007276,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_sbVnEJRBZLeGz9wkeaVwbMgD",
+            "name": "write_file",
+            "startedMs": 82584.624916,
+            "durationMs": 2.635792000000947,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_MWVjXwvqxcHc5H6Dqt4UePnv",
+            "name": "bash",
+            "startedMs": 84986.532375,
+            "durationMs": 117.09012500000244,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 1,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 96914,
+      "metrics": {
+        "usage": {
+          "input": 16195,
+          "output": 2058
+        },
+        "effort": "low",
+        "steps": 9,
+        "calls": 8,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 96372.70195900001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4927.603333,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2225.2991660000007,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2618.3410839999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 11389.221249999999,
+            "firstTextMs": 7104.388374999999,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 421
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 50573.77983299999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1393,
+              "output": 1117
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 6636.536499999987,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2570,
+              "output": 143
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 2522.7425420000072,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2775,
+              "output": 51
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 8102.370167000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2888,
+              "output": 157
+            }
+          },
+          {
+            "step": 9,
+            "durationMs": 7218.727874999997,
+            "firstTextMs": 2686.3297909999965,
+            "status": "completed",
+            "usage": {
+              "input": 3237,
+              "output": 115
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_1MbkPlVjhjpSBaIcFJ0DaDfh",
+            "name": "read_file",
+            "startedMs": 4929.358084,
+            "durationMs": 1.9135409999998956,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_VgVXiYXApHzLC0l4g3iX0Fnc",
+            "name": "list_files",
+            "startedMs": 7158.690709,
+            "durationMs": 7.876916000000165,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_utVPFoy1HLZAbmdyjfgFxHEi",
+            "name": "read_file",
+            "startedMs": 9786.598209,
+            "durationMs": 0.6221659999991971,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_a31f08b53e144b76986012b85e8c182d",
+            "name": "edit_file",
+            "startedMs": 21178.71975,
+            "durationMs": 2.8914589999985765,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_NV5pI7oQC6A9nCLkn0A57zt1",
+            "name": "write_file",
+            "startedMs": 71758.006917,
+            "durationMs": 2.5507499999948777,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_fd1037d0b73e45919e2c430f68c8ae9a",
+            "name": "edit_file",
+            "startedMs": 78398.79104200001,
+            "durationMs": 1.0672919999924488,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_f53d1780fbc345b386d90bac628ec036",
+            "name": "edit_file",
+            "startedMs": 80924.974375,
+            "durationMs": 1.7132500000006985,
+            "isError": false
+          },
+          {
+            "step": 8,
+            "id": "call_OGMoYUGKQvU2GGe3dzaK08Vp",
+            "name": "bash",
+            "startedMs": 89031.495792,
+            "durationMs": 120.05883300000278,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 1,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 69513,
+      "metrics": {
+        "usage": {
+          "input": 25395,
+          "output": 1147
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 9,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 69004.40216700001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4768.621709,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 29
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 5963.119083,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3397,
+              "output": 94
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3517.3398749999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3633,
+              "output": 29
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 11963.480458,
+            "firstTextMs": 1883.0417079999988,
+            "status": "completed",
+            "usage": {
+              "input": 3798,
+              "output": 251
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 25183.000958,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4110,
+              "output": 563
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 6048.025667000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4732,
+              "output": 36
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 11316.711583000004,
+            "firstTextMs": 7847.590833000002,
+            "status": "completed",
+            "usage": {
+              "input": 5000,
+              "output": 145
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_EU2CHcHdRZ1Eog34bQUjxm1d",
+            "name": "bash",
+            "startedMs": 4770.669709,
+            "durationMs": 67.18925000000036,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_EackNdKUr9oAUL4zkLq4sCR3",
+            "name": "grep",
+            "startedMs": 10802.028959000001,
+            "durationMs": 5.066957999999431,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_ANmfxx8HRmOUnLrpUyI1y3jb",
+            "name": "list_files",
+            "startedMs": 10807.259750000001,
+            "durationMs": 3.4220839999998134,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_3dEuGVAPTVwUHC7wVQyQg1AX",
+            "name": "read_file",
+            "startedMs": 10810.806625000001,
+            "durationMs": 0.2628339999992022,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_MhihTv2TNRdH9zeGaqodxCbO",
+            "name": "read_file",
+            "startedMs": 10811.152334,
+            "durationMs": 0.1312080000006972,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_07346134921942698b64ffafb78aaf61",
+            "name": "read_file",
+            "startedMs": 14330.641709000001,
+            "durationMs": 1.0789999999997235,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_0WN740cJvJBj5eMHij42KbnW",
+            "name": "edit_file",
+            "startedMs": 26298.601584,
+            "durationMs": 2.72454099999959,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_uIPyTMmUq7M25HIgiGNfV3Fo",
+            "name": "write_file",
+            "startedMs": 51487.06225,
+            "durationMs": 2.365833999996539,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_ekZWdLfoWhFpEtAXT7Dt78tF",
+            "name": "bash",
+            "startedMs": 57539.627709,
+            "durationMs": 145.2602079999997,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 1,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 57290,
+      "metrics": {
+        "usage": {
+          "input": 25413,
+          "output": 1045
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 56747.227666,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2907.3053330000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 23
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 4530.6235830000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3390,
+              "output": 60
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2969.0530420000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3695,
+              "output": 29
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 13247.063875,
+            "firstTextMs": 3299.1137089999993,
+            "status": "completed",
+            "usage": {
+              "input": 3827,
+              "output": 248
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 21960.029333,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4136,
+              "output": 509
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3241.896209000006,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4704,
+              "output": 39
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 7634.051917000004,
+            "firstTextMs": 2019.4502500000017,
+            "status": "completed",
+            "usage": {
+              "input": 4936,
+              "output": 137
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_Y9g1PBSfN9fOubbjMJLtX4Z3",
+            "name": "bash",
+            "startedMs": 2910.140958,
+            "durationMs": 69.65816700000005,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_abea99d9775f4904b1adead4deff6f82",
+            "name": "bash",
+            "startedMs": 7511.340999999999,
+            "durationMs": 20.481916000000638,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_u9MfadqsQcW1kJLGotOqn09E",
+            "name": "read_file",
+            "startedMs": 10502.8145,
+            "durationMs": 1.5556660000002012,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_35P4SMuvzIGX0xmyFcGhYb2b",
+            "name": "edit_file",
+            "startedMs": 23753.473916,
+            "durationMs": 3.1005420000001322,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_8deR61iNUflxH8nrFr3JCeRa",
+            "name": "write_file",
+            "startedMs": 45719.697791,
+            "durationMs": 2.379750000000058,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_AO6e4huo3SBvFFmvfuwaPLkL",
+            "name": "bash",
+            "startedMs": 48966.416666,
+            "durationMs": 144.30079200000182,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 2,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 63867,
+      "metrics": {
+        "usage": {
+          "input": 7686,
+          "output": 1199
+        },
+        "effort": "low",
+        "steps": 6,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 63345.560708000005,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3269.050083,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 19
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3933.51175,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 736,
+              "output": 52
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 16331.5095,
+            "firstTextMs": 6847.6810000000005,
+            "status": "completed",
+            "usage": {
+              "input": 844,
+              "output": 332
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 29008.784416,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1237,
+              "output": 671
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 3525.3226670000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1967,
+              "output": 20
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 7127.016707999996,
+            "firstTextMs": 2893.7687499999956,
+            "status": "completed",
+            "usage": {
+              "input": 2205,
+              "output": 105
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_K25BeKHt8aZfMbc2eR9QQjx3",
+            "name": "list_files",
+            "startedMs": 3271.277333,
+            "durationMs": 7.2826670000004015,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_dbNhaQ4qsBeSAZxM791prjGj",
+            "name": "read_file",
+            "startedMs": 7214.484375,
+            "durationMs": 1.7595000000001164,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_OH38LcIOt4vNR3dgzONl3HVD",
+            "name": "read_file",
+            "startedMs": 7216.5815,
+            "durationMs": 0.37745799999993324,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_gedbdIvfODgG2arT9WoUoUd5",
+            "name": "edit_file",
+            "startedMs": 23550.707791,
+            "durationMs": 3.166709000000992,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_9hJ1Xd7AMCBjTkP9ic1EvXY2",
+            "name": "write_file",
+            "startedMs": 52564.649208,
+            "durationMs": 2.3178750000006403,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_MM0LucR0aMlToyEny0Mk9wMD",
+            "name": "bash",
+            "startedMs": 56094.643833,
+            "durationMs": 122.32154199999786,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 2,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 62995,
+      "metrics": {
+        "usage": {
+          "input": 8949,
+          "output": 1137
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 62569.492,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2819.360584,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 4386.286875,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3762.5420839999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 14957.33425,
+            "firstTextMs": 5270.9100419999995,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 336
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 29584.696625,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1226,
+              "output": 616
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2724.012416999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1901,
+              "output": 26
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 4174.086958,
+            "firstTextMs": 1760.0246249999982,
+            "status": "completed",
+            "usage": {
+              "input": 2770,
+              "output": 105
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_EDZOtULzz5ni1D6znzVgiQxJ",
+            "name": "read_file",
+            "startedMs": 2821.2747499999996,
+            "durationMs": 1.7568750000000364,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_oqC4CQ0DJdDzVGSRrfM43iw3",
+            "name": "list_files",
+            "startedMs": 7211.505541,
+            "durationMs": 9.721416999999747,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_kewhCrDiXtt8V95xDTh8QxzL",
+            "name": "read_file",
+            "startedMs": 10986.173666,
+            "durationMs": 0.778334000000541,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_eUg4lMkNxkxKxxXaqiuDPIrC",
+            "name": "edit_file",
+            "startedMs": 25946.708708,
+            "durationMs": 3.1505829999987327,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_bxH36jG0kpn58oG33E1jitlT",
+            "name": "write_file",
+            "startedMs": 55536.766791,
+            "durationMs": 2.490624999998545,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_ux4leu2XZGI4069NAeu05vGK",
+            "name": "bash",
+            "startedMs": 58265.882790999996,
+            "durationMs": 127.10874999999942,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 2,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 88652,
+      "metrics": {
+        "usage": {
+          "input": 10130,
+          "output": 1749
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 88274.921208,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3877.1180000000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2110.123292,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2303.0325409999996,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 21090.096542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 457
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 46598.74250000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1429,
+              "output": 1095
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3864.258415999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2584,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 8270.595457999996,
+            "firstTextMs": 3132.4248329999973,
+            "status": "completed",
+            "usage": {
+              "input": 2785,
+              "output": 123
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_iVTDbUH5bUpLfpNY1e3C1A8j",
+            "name": "read_file",
+            "startedMs": 3879.0809169999998,
+            "durationMs": 1.870125000000371,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_O3GJo2QErig9kPrsKEX6KhM2",
+            "name": "list_files",
+            "startedMs": 5993.409707999999,
+            "durationMs": 10.908959000000323,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_UHJnWVU7Ib66l9JS8GGvCG6y",
+            "name": "read_file",
+            "startedMs": 8309.789958000001,
+            "durationMs": 0.7082499999996799,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_bwcQqiLMP116H3sZqFsEPKtu",
+            "name": "edit_file",
+            "startedMs": 29403.338249999997,
+            "durationMs": 4.353167000001122,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_hcapX9F55DfJGvBDDsPXas2j",
+            "name": "write_file",
+            "startedMs": 76009.310208,
+            "durationMs": 2.429166999994777,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_gDVOlVqEaK3qWOHvKsMuP8j9",
+            "name": "bash",
+            "startedMs": 79878.222583,
+            "durationMs": 124.40308400000504,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 2,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 83356,
+      "metrics": {
+        "usage": {
+          "input": 10222,
+          "output": 1780
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 82769.13079200001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2180.748833,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2297.866292,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2767.6272499999995,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 19924.382916,
+            "firstTextMs": 9701.449333,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 454
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 47185.481875,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1426,
+              "output": 1139
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2162.785208999994,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2625,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 6114.802166000009,
+            "firstTextMs": 1400.2828330000048,
+            "status": "completed",
+            "usage": {
+              "input": 2839,
+              "output": 113
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_37fd07a7fd484c24ac37b3893b77d9d4",
+            "name": "read_file",
+            "startedMs": 2183.132458,
+            "durationMs": 1.9112499999996544,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_NctaIxx5gMmiTzDU8SFKa3c4",
+            "name": "list_files",
+            "startedMs": 4485.403083,
+            "durationMs": 9.432084000000032,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_v0tOMkUleiO4SB1sQYYzjh4d",
+            "name": "read_file",
+            "startedMs": 7264.997792,
+            "durationMs": 0.7333330000001297,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_GIlG5xxallZE5wr7atvxX2IV",
+            "name": "edit_file",
+            "startedMs": 27191.292542000003,
+            "durationMs": 2.171707999998034,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_owjSq0MLDSKreQmiXZdi4caw",
+            "name": "write_file",
+            "startedMs": 74380.78595800001,
+            "durationMs": 3.1669589999946766,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_w6WYxl9638HwbEgdgEArP5lc",
+            "name": "bash",
+            "startedMs": 76547.64516700001,
+            "durationMs": 104.26958300000115,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 2,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 63397,
+      "metrics": {
+        "usage": {
+          "input": 29138,
+          "output": 1140
+        },
+        "effort": "low",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 62800.753416,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3173.626375,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 29
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3599.932625,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3396,
+              "output": 50
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2113.7828329999993,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3610,
+              "output": 28
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 3799.747625,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3670,
+              "output": 29
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 12896.160875,
+            "firstTextMs": 4928.482916999999,
+            "status": "completed",
+            "usage": {
+              "input": 3846,
+              "output": 257
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 25284.522082999996,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4164,
+              "output": 556
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 3758.756125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4779,
+              "output": 41
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 7876.196667000004,
+            "firstTextMs": 1825.3395000000019,
+            "status": "completed",
+            "usage": {
+              "input": 4948,
+              "output": 150
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_mr7qWTzLKfG3DYiZJB0Se7VO",
+            "name": "bash",
+            "startedMs": 3175.943583,
+            "durationMs": 67.46624999999995,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_n133aIhiYYledqxH25NMZYWp",
+            "name": "bash",
+            "startedMs": 6845.494333,
+            "durationMs": 53.883208000000195,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_d4702e77a42d4cb2ad89ece4539d5cae",
+            "name": "grep",
+            "startedMs": 9015.361707999999,
+            "durationMs": 10.13379200000054,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_lFDOBQ6Av9VmslDEfoLKfIHs",
+            "name": "read_file",
+            "startedMs": 12827.786041,
+            "durationMs": 1.6877499999991414,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_HPMZqYjOhOW8pQ2lDn2d3lao",
+            "name": "edit_file",
+            "startedMs": 25728.146458,
+            "durationMs": 2.4895420000029844,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_sZVGWvO7rWKQdthjsw8M9QYP",
+            "name": "write_file",
+            "startedMs": 51017.724333,
+            "durationMs": 2.9656249999970896,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_3bRc9Z0bD8LIOlS0YvaVc2yN",
+            "name": "bash",
+            "startedMs": 54782.265166,
+            "durationMs": 139.69820900000195,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 2,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 62371,
+      "metrics": {
+        "usage": {
+          "input": 30390,
+          "output": 1181
+        },
+        "effort": "medium",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 61824.667375,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3758.2114169999995,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 29
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 4164.017416,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3398,
+              "output": 57
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 1939.1912919999995,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3759,
+              "output": 28
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 3215.549208999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3819,
+              "output": 29
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 11607.862707999999,
+            "firstTextMs": 1588.6486249999998,
+            "status": "completed",
+            "usage": {
+              "input": 4072,
+              "output": 251
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 25076.066708,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4384,
+              "output": 587
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 3194.1331659999996,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 5030,
+              "output": 41
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 8584.256457999996,
+            "firstTextMs": 2135.840041999996,
+            "status": "completed",
+            "usage": {
+              "input": 5203,
+              "output": 159
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_wfIM7XH8BzoWBEWDv6N3patN",
+            "name": "bash",
+            "startedMs": 3759.5753750000003,
+            "durationMs": 61.51916600000004,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_R2kPvVWYxaIv8kQbs5VugZoj",
+            "name": "bash",
+            "startedMs": 7987.650707999999,
+            "durationMs": 58.266333000001396,
+            "isError": true
+          },
+          {
+            "step": 3,
+            "id": "call_bae6e79669f141ceb9d96a07b68eb7cc",
+            "name": "grep",
+            "startedMs": 9987.233541,
+            "durationMs": 11.151499999999942,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_OetuafTUHDGszPSDcGLziRnA",
+            "name": "read_file",
+            "startedMs": 13216.536083,
+            "durationMs": 2.103916999998546,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_1LVfcSO6UShzPHU6W93fbS6h",
+            "name": "edit_file",
+            "startedMs": 24829.151916,
+            "durationMs": 2.597125000000233,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_S72VrnczSDPBuRlexZK78h8T",
+            "name": "write_file",
+            "startedMs": 49910.16233299999,
+            "durationMs": 1.9901250000039,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_OisuSjLf6weYAOMgIQQtMh3W",
+            "name": "bash",
+            "startedMs": 53108.551499999994,
+            "durationMs": 129.0735410000052,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 3,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 44763,
+      "metrics": {
+        "usage": {
+          "input": 7502,
+          "output": 1044
+        },
+        "effort": "medium",
+        "steps": 5,
+        "calls": 4,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 44234.039084000004,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4014.1563340000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 61
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 7189.828624999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 961,
+              "output": 282
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 24697.905124999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1304,
+              "output": 576
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 2717.243417000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1939,
+              "output": 26
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 5446.879000000001,
+            "firstTextMs": 1434.237374999997,
+            "status": "completed",
+            "usage": {
+              "input": 2601,
+              "output": 99
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_t14VqDtpFzbVhrgy2AS7nH3b",
+            "name": "bash",
+            "startedMs": 4016.2027089999997,
+            "durationMs": 27.197000000000116,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_c90a06c4bde54709b4886f6f2c798c51",
+            "name": "edit_file",
+            "startedMs": 11235.945667,
+            "durationMs": 3.6193750000002183,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_lmdbSzZ3FuMep932evcvKvCJ",
+            "name": "write_file",
+            "startedMs": 35938.693334,
+            "durationMs": 0.9365829999951529,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_wLshVLannllMEDqzLUeK6qdp",
+            "name": "bash",
+            "startedMs": 38658.986709000004,
+            "durationMs": 125.18045799999527,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 3,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 55464,
+      "metrics": {
+        "usage": {
+          "input": 8463,
+          "output": 996
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 54922.399833,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2616.349333,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2410.923542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 19
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3650.5020829999994,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 785,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 12100.720042,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 834,
+              "output": 250
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 24311.8,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1145,
+              "output": 566
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3976.429624999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1770,
+              "output": 26
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 5698.975250000003,
+            "firstTextMs": 1753.326291999998,
+            "status": "completed",
+            "usage": {
+              "input": 2486,
+              "output": 95
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_C2AHY7EGvNImE7UHRbbDFdBW",
+            "name": "read_file",
+            "startedMs": 2618.607583,
+            "durationMs": 2.036000000000058,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_HQuL0fYjD3jiC30d5QN42FYJ",
+            "name": "list_files",
+            "startedMs": 5033.808666,
+            "durationMs": 10.055250000000342,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_4lbgZ4w7Tccbk6qPan5d7B08",
+            "name": "read_file",
+            "startedMs": 8697.194207999999,
+            "durationMs": 1.1130420000008598,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_LgunOvb6Zh8Dk5AniCoJeMer",
+            "name": "edit_file",
+            "startedMs": 20801.700416,
+            "durationMs": 3.2805000000007567,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_gNU2Lb8yOgn6tnK87dSetRNq",
+            "name": "write_file",
+            "startedMs": 45118.145708000004,
+            "durationMs": 2.0096669999984442,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_1Q6SD9PzpkRLHS1uT5zUKvea",
+            "name": "bash",
+            "startedMs": 49099.244333,
+            "durationMs": 121.78766699999687,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 3,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 88567,
+      "metrics": {
+        "usage": {
+          "input": 10248,
+          "output": 1784
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 88184.90279200001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2684.833083,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2173.1001249999995,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 19
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3308.283875,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 866,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 21841.988917000002,
+            "firstTextMs": 9942.211292,
+            "status": "completed",
+            "usage": {
+              "input": 915,
+              "output": 462
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 47323.426542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1439,
+              "output": 1134
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2940.519291999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2633,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 7764.442834000001,
+            "firstTextMs": 3291.120999999999,
+            "status": "completed",
+            "usage": {
+              "input": 2834,
+              "output": 109
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_6daa06a8957e4aaa968195df632ba7f3",
+            "name": "read_file",
+            "startedMs": 2687.001375,
+            "durationMs": 2.073500000000422,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_SiwsZLXqG6xrERTcGTfCq36N",
+            "name": "list_files",
+            "startedMs": 4864.457583,
+            "durationMs": 9.21570900000006,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_LRUfaEfSIJfOBaupcvPkdnm2",
+            "name": "read_file",
+            "startedMs": 8184.488625,
+            "durationMs": 0.8937500000010914,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_tNo9jS3BbOWSSkwgi5J1oIrB",
+            "name": "edit_file",
+            "startedMs": 30029.332417,
+            "durationMs": 2.8612079999984417,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_4iOOYVioQxNBo13LEBFHSlAk",
+            "name": "write_file",
+            "startedMs": 77357.556125,
+            "durationMs": 1.8604170000035083,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_JbIUWpdtFS7UqZ5SGRsIFScv",
+            "name": "bash",
+            "startedMs": 80302.044708,
+            "durationMs": 116.05654200000572,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 3,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 86326,
+      "metrics": {
+        "usage": {
+          "input": 10430,
+          "output": 1794
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 85953.897667,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2717.91225,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3962.6735409999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 23497.711791,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 22195.141042,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 496
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 23925.606875000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1468,
+              "output": 1103
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2798.2130419999885,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2631,
+              "output": 26
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 6699.957416000005,
+            "firstTextMs": 1559.4677079999965,
+            "status": "completed",
+            "usage": {
+              "input": 2999,
+              "output": 115
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_h6togIg4HstqM7BXBoZQy5Ux",
+            "name": "read_file",
+            "startedMs": 2719.904167,
+            "durationMs": 1.7889579999996386,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_ukD1ORLqSxg2bcN41xBTKCL2",
+            "name": "list_files",
+            "startedMs": 6686.416375000001,
+            "durationMs": 9.401833999998416,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_MUpn5wh38u7RzSVbFajEf2t4",
+            "name": "read_file",
+            "startedMs": 30196,
+            "durationMs": 0.8868340000008175,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_2yFxiR9GwPEJi5c4pwgTh4rW",
+            "name": "edit_file",
+            "startedMs": 52394.183750000004,
+            "durationMs": 4.2664999999979045,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_95917ff0a93546f1b7986e9329d1cf66",
+            "name": "write_file",
+            "startedMs": 76326.375042,
+            "durationMs": 2.4246669999993173,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_bFTfHTlIfT8rDbBAv8aTTWrc",
+            "name": "bash",
+            "startedMs": 79128.982334,
+            "durationMs": 123.117957999988,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 3,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 61137,
+      "metrics": {
+        "usage": {
+          "input": 29189,
+          "output": 1170
+        },
+        "effort": "medium",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 60591.420542,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3169.612834,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 29
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 6455.072457999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3397,
+              "output": 59
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 4179.85425,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3621,
+              "output": 28
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 9163.111000000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3681,
+              "output": 29
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 12424.908417000002,
+            "firstTextMs": 3514.865417000001,
+            "status": "completed",
+            "usage": {
+              "input": 3835,
+              "output": 274
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 12102.530499999993,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4170,
+              "output": 558
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 4455.756542000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4787,
+              "output": 49
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 8360.551833000005,
+            "firstTextMs": 2483.4012500000026,
+            "status": "completed",
+            "usage": {
+              "input": 4973,
+              "output": 144
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_0K2HobyC6Xk7WKPboLpaucpZ",
+            "name": "bash",
+            "startedMs": 3171.971167,
+            "durationMs": 61.496415999999954,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_RiZCYax2N2YZvZmkgimZ6Y5c",
+            "name": "bash",
+            "startedMs": 9690.709042,
+            "durationMs": 45.30145799999991,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_SQ4xEOJRCmaqtTdrvdhA4tId",
+            "name": "grep",
+            "startedMs": 13918.31275,
+            "durationMs": 11.300792000000001,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_XfaYINuDpC3m67suKJGY5Awl",
+            "name": "read_file",
+            "startedMs": 23095.546542,
+            "durationMs": 1.8557910000017728,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_xM8AAN9fB8jawbPsiLdFRfo4",
+            "name": "edit_file",
+            "startedMs": 35525.056542,
+            "durationMs": 2.4303750000035507,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_0d057eef89f8493a93cc3548832e7b6c",
+            "name": "write_file",
+            "startedMs": 47632.502542,
+            "durationMs": 2.8019159999967087,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_2sJG7hot1IIuuWyONZx4s3Na",
+            "name": "bash",
+            "startedMs": 52093.595833,
+            "durationMs": 134.67820900000515,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 3,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 65749,
+      "metrics": {
+        "usage": {
+          "input": 25470,
+          "output": 1145
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 9,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 65371.718958000005,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3165.972875,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 23
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 6598.498125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3392,
+              "output": 102
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2977.5694999999996,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3636,
+              "output": 29
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 13041.017583,
+            "firstTextMs": 3210.9930829999994,
+            "status": "completed",
+            "usage": {
+              "input": 3801,
+              "output": 247
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 26819.939083,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4109,
+              "output": 581
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3755.758415999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4749,
+              "output": 38
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 8769.431667000004,
+            "firstTextMs": 3626.1464590000032,
+            "status": "completed",
+            "usage": {
+              "input": 5058,
+              "output": 125
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_JS4Fij6Vwz5qh1igcGqVXfVO",
+            "name": "bash",
+            "startedMs": 3167.992208,
+            "durationMs": 59.02945899999986,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_fT1gqOxTO4JNIan3dS8wI4Xz",
+            "name": "grep",
+            "startedMs": 9827.618332999999,
+            "durationMs": 10.256250000000364,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_zFXlVRkutPifWPekjx73xtif",
+            "name": "list_files",
+            "startedMs": 9838.367917,
+            "durationMs": 6.569790999999896,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_xcM1jhS9Y8daVqAuLk1D9Eg2",
+            "name": "read_file",
+            "startedMs": 9845.15425,
+            "durationMs": 0.4513329999990674,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_fnhc3TRpTv1trd4DDS7DSPjv",
+            "name": "read_file",
+            "startedMs": 9845.731708,
+            "durationMs": 0.1832090000007156,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_kf45lj7JWmH8lpv2GUiDfxXK",
+            "name": "read_file",
+            "startedMs": 12825.57675,
+            "durationMs": 0.9011669999999867,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_QD5qn1vG5BAxUSVzQwkInSUI",
+            "name": "edit_file",
+            "startedMs": 25869.987417,
+            "durationMs": 2.150375000001077,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_wIKJETGSb88plqaJipR46qpZ",
+            "name": "write_file",
+            "startedMs": 52694.069042,
+            "durationMs": 2.098582999999053,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_RNiyJqYKLUfI6bv1To12jfez",
+            "name": "bash",
+            "startedMs": 56454.552708,
+            "durationMs": 145.51666699999623,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 4,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 67141,
+      "metrics": {
+        "usage": {
+          "input": 8226,
+          "output": 1121
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 66755.41712499999,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3505.812083,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 5003.95525,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2976.1179170000014,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 14287.324292,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 274
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 32108.994375000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1164,
+              "output": 680
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 4668.219917000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1903,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 4084.1034999999974,
+            "firstTextMs": 1812.4559579999986,
+            "status": "completed",
+            "usage": {
+              "input": 2107,
+              "output": 93
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_0WLmKYi0K7PZFLPEKSgOhsE5",
+            "name": "read_file",
+            "startedMs": 3508.0355830000003,
+            "durationMs": 1.8711249999996653,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_MHmSgxuTcoBI9kiAT7r1XQg2",
+            "name": "list_files",
+            "startedMs": 8515.983041,
+            "durationMs": 10.138792000001558,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_ISyv9XQg6lncWeKKAzUeLkXr",
+            "name": "read_file",
+            "startedMs": 11503.139416,
+            "durationMs": 1.1470420000005106,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_f3R44W133yjSWIst685xkDky",
+            "name": "edit_file",
+            "startedMs": 25793.242583,
+            "durationMs": 1.9709580000017013,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_Ld34BwmUaF57i4e2uCV7fN8p",
+            "name": "write_file",
+            "startedMs": 57906.600666,
+            "durationMs": 2.2779169999994338,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_DkIlGQXnImxfaMLgdT2ol1vz",
+            "name": "bash",
+            "startedMs": 62577.765291,
+            "durationMs": 90.8506669999988,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 4,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 49847,
+      "metrics": {
+        "usage": {
+          "input": 8682,
+          "output": 1086
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 49322.956667,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3243.33525,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3465.713292,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3516.1978750000007,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 15375.484375,
+            "firstTextMs": 7437.640708999999,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 337
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 13592.732958,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1227,
+              "output": 569
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2798.5487500000017,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1855,
+              "output": 26
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 7172.891709000003,
+            "firstTextMs": 3064.894500000002,
+            "status": "completed",
+            "usage": {
+              "input": 2548,
+              "output": 100
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_pACSAOSskjKH2Ibe6ECb2r7z",
+            "name": "read_file",
+            "startedMs": 3245.391792,
+            "durationMs": 1.8051249999998618,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_EubsF58QmzGEh4wfjTcHPgul",
+            "name": "list_files",
+            "startedMs": 6715.760084,
+            "durationMs": 10.122333000000253,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_W9RpHm3hA2yZdNO2od2asvd9",
+            "name": "read_file",
+            "startedMs": 10244.601959,
+            "durationMs": 0.8537909999995463,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_YHfmyYJDOFDg3l9faaJfZc4D",
+            "name": "edit_file",
+            "startedMs": 25623.635625000003,
+            "durationMs": 2.9390839999978198,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_a3091bab2dfc4465a9c6f52df185107c",
+            "name": "write_file",
+            "startedMs": 39221.772833999996,
+            "durationMs": 2.236457999999402,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_B1qOqUXOAoDkVYnsAOWbw54C",
+            "name": "bash",
+            "startedMs": 42025.257417,
+            "durationMs": 122.00058300000092,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 4,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 82262,
+      "metrics": {
+        "usage": {
+          "input": 10165,
+          "output": 1760
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 81886.19504199999,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2179.1330000000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2372.950167,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 19
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2271.0907079999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 866,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 18901.639708000002,
+            "firstTextMs": 7970.951749999999,
+            "status": "completed",
+            "usage": {
+              "input": 915,
+              "output": 423
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 47388.25195799999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1400,
+              "output": 1145
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2210.401666000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2605,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 6410.527707999994,
+            "firstTextMs": 1954.2465419999935,
+            "status": "completed",
+            "usage": {
+              "input": 2818,
+              "output": 113
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_El2aw34AQisZSyiQQ593gr5i",
+            "name": "read_file",
+            "startedMs": 2180.8592080000003,
+            "durationMs": 1.931416999999783,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_6246efc340464190b44b023cd267433b",
+            "name": "list_files",
+            "startedMs": 4558.147875,
+            "durationMs": 9.980457999999999,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_Np6vKqyInctlkjCNEGffJlnE",
+            "name": "read_file",
+            "startedMs": 6840.65025,
+            "durationMs": 0.4031670000003942,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_o9Jdkghx3BYWxmkgc1AS7Giq",
+            "name": "edit_file",
+            "startedMs": 25745.269458,
+            "durationMs": 3.329375000001164,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_DR7agMY3bykWSyOSf0mpAK9F",
+            "name": "write_file",
+            "startedMs": 73138.04941699999,
+            "durationMs": 0.7190000000118744,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_xNUL2rmrJikTSdZ0BQv2olqi",
+            "name": "bash",
+            "startedMs": 75351.578333,
+            "durationMs": 121.4597919999942,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 4,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 123023,
+      "metrics": {
+        "usage": {
+          "input": 10817,
+          "output": 2012
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 122650.52012500001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2135.553583,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3590.5216670000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2309.863209000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 50009.513915999996,
+            "firstTextMs": 19229.078457999996,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 592
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 52719.135542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1564,
+              "output": 1228
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3072.282791999998,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2852,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 8662.055083999992,
+            "firstTextMs": 6252.687166999996,
+            "status": "completed",
+            "usage": {
+              "input": 3069,
+              "output": 118
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_75aa203fe1c84bf08cb29f1de1ede18d",
+            "name": "read_file",
+            "startedMs": 2137.714292,
+            "durationMs": 2.037083000000166,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_kYMR78b5LB8xmuuRsrh5eU6h",
+            "name": "list_files",
+            "startedMs": 5732.667459,
+            "durationMs": 10.035874999999578,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_f99OYbOuxoEIut9GqkeC6fos",
+            "name": "read_file",
+            "startedMs": 8055.066125,
+            "durationMs": 0.8650839999991149,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_85wphHY7HBEdb71p9LWoLvzS",
+            "name": "edit_file",
+            "startedMs": 58068.17604200001,
+            "durationMs": 3.372624999996333,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_t2Noe148bu3QXxOL49PzU213",
+            "name": "write_file",
+            "startedMs": 110793.381417,
+            "durationMs": 3.3312500000029104,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_HYGLE9hG0550TQWU8P9ydEjJ",
+            "name": "bash",
+            "startedMs": 113871.498292,
+            "durationMs": 114.32791700000234,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 4,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 75093,
+      "metrics": {
+        "usage": {
+          "input": 29048,
+          "output": 1112
+        },
+        "effort": "low",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 74721.038084,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4883.44075,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 29
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 6376.82775,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3397,
+              "output": 56
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 6822.355249999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3617,
+              "output": 28
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 3443.0832499999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3677,
+              "output": 29
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 14224.856125000002,
+            "firstTextMs": 3906.278083000001,
+            "status": "completed",
+            "usage": {
+              "input": 3831,
+              "output": 257
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 23819.504208,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4149,
+              "output": 529
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 4162.695207999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4737,
+              "output": 49
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 10709.336500000005,
+            "firstTextMs": 5301.426166999998,
+            "status": "completed",
+            "usage": {
+              "input": 4915,
+              "output": 135
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_19OJ7D2lWTD8XiTkHB73SoN6",
+            "name": "bash",
+            "startedMs": 4885.4945,
+            "durationMs": 57.71995900000002,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_CnJSNnVC6ctP90kTEAdx6xkI",
+            "name": "bash",
+            "startedMs": 11322.627250000001,
+            "durationMs": 44.96887499999866,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_vCWmJiOULNrYxood2oeLwzDA",
+            "name": "grep",
+            "startedMs": 18192.465334,
+            "durationMs": 12.060499999999593,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_b8eutMU4Z4XOevaWzbGSKyy3",
+            "name": "read_file",
+            "startedMs": 21649.98925,
+            "durationMs": 1.4478339999986929,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_QvTBxDLtr0HrVhDcQcd6PXH6",
+            "name": "edit_file",
+            "startedMs": 35877.93725,
+            "durationMs": 1.7591669999965234,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_YhQcey64EMDAF9q4aBaRLHHn",
+            "name": "write_file",
+            "startedMs": 59701.860667,
+            "durationMs": 2.319167000001471,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_jfUtogi5LYodoTb9Whv7q9TI",
+            "name": "bash",
+            "startedMs": 63869.113875,
+            "durationMs": 139.984375,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 4,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 66955,
+      "metrics": {
+        "usage": {
+          "input": 28888,
+          "output": 1130
+        },
+        "effort": "medium",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 66506.014167,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2811.062166,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 23
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3901.1626659999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3393,
+              "output": 55
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 1932.5466670000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3562,
+              "output": 28
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 3069.0715,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3622,
+              "output": 29
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 11509.98925,
+            "firstTextMs": 1623.7044170000008,
+            "status": "completed",
+            "usage": {
+              "input": 3798,
+              "output": 248
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 27289.758542,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4107,
+              "output": 598
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 3197.509582999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4764,
+              "output": 20
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 12556.310082999997,
+            "firstTextMs": 6925.983207999998,
+            "status": "completed",
+            "usage": {
+              "input": 4917,
+              "output": 129
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_qDX87yxoiDGfnv47CXsnp3hH",
+            "name": "bash",
+            "startedMs": 2812.887209,
+            "durationMs": 60.0595830000002,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_d9DV0Oeqo4nXS6zHWkM2xHfP",
+            "name": "bash",
+            "startedMs": 6776.526292,
+            "durationMs": 33.77600000000075,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_36debb85072e45dc8ad1b1bdc634a39f",
+            "name": "grep",
+            "startedMs": 8745.191125,
+            "durationMs": 10.337500000001455,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_OVgXGNxPT8yU5iN9eNXNJos8",
+            "name": "read_file",
+            "startedMs": 11827.2885,
+            "durationMs": 1.629084000000148,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_q3M3aM7hcYeLur0TKUEVhPwU",
+            "name": "edit_file",
+            "startedMs": 23341.787834,
+            "durationMs": 2.9550000000017462,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_ew1uYrNERKgJb1eVFGLSAJxj",
+            "name": "write_file",
+            "startedMs": 50636.866584,
+            "durationMs": 2.382333000001381,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_IYKUXMRe0tHs8xZlKb33pypy",
+            "name": "bash",
+            "startedMs": 53838.615334,
+            "durationMs": 108.26695800000016,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 5,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 66044,
+      "metrics": {
+        "usage": {
+          "input": 9116,
+          "output": 1166
+        },
+        "effort": "medium",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 65635.087208,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3121.292125,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3606.434167,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3607.6900000000005,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 17677.279542,
+            "firstTextMs": 5831.126124999999,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 338
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 29023.181500000002,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1228,
+              "output": 646
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 2667.978833000001,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1933,
+              "output": 26
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 5773.603917000008,
+            "firstTextMs": 2199.845917000006,
+            "status": "completed",
+            "usage": {
+              "input": 2903,
+              "output": 102
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_sW7tVE1DqlT6fP99jloYdpQU",
+            "name": "read_file",
+            "startedMs": 3124.061958,
+            "durationMs": 2.264458999999988,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_CS5HuFllQyZjvMJMznnq1rPI",
+            "name": "list_files",
+            "startedMs": 6735.18975,
+            "durationMs": 9.599291999999878,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_3g1TbbYRyV6H7zGrlE8hQM7l",
+            "name": "read_file",
+            "startedMs": 10354.860708,
+            "durationMs": 0.756959000000279,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_kTn7r9GDXxkrt3GHVAHc6pT2",
+            "name": "edit_file",
+            "startedMs": 28035.149667,
+            "durationMs": 2.8103749999972933,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_MqtRbWbQob0NNykqfu4WDJN7",
+            "name": "write_file",
+            "startedMs": 57063.465667000004,
+            "durationMs": 2.5976660000014817,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_B6bzbCe4bl7YWc892opsaJVe",
+            "name": "bash",
+            "startedMs": 59736.818167000005,
+            "durationMs": 122.94750000000204,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "range-parser",
+      "repeat": 5,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 5,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 62980,
+      "metrics": {
+        "usage": {
+          "input": 8196,
+          "output": 1109
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 62603.68625,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2758.284667,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 697,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 2738.694375,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 746,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 2420.8631670000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 780,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 13674.751,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 829,
+              "output": 294
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 29531.623667,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1184,
+              "output": 639
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 4526.474584000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1882,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 6807.104125000005,
+            "firstTextMs": 2738.714209000005,
+            "status": "completed",
+            "usage": {
+              "input": 2078,
+              "output": 102
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_M5qSV5qmsnTpzuRNVWQLw0Yv",
+            "name": "read_file",
+            "startedMs": 2760.3009589999997,
+            "durationMs": 1.8695830000001479,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_FkJVefwcI08z5OlTLbsSNf9z",
+            "name": "list_files",
+            "startedMs": 5503.307584,
+            "durationMs": 10.263165999999728,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_CrPiNVUkypJWZAaIoIqJe6Kf",
+            "name": "read_file",
+            "startedMs": 7936.891167,
+            "durationMs": 0.8322499999994761,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_PBHp8knJTiW0NWhKi7OKs5eP",
+            "name": "edit_file",
+            "startedMs": 21614.9635,
+            "durationMs": 3.5311669999973674,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_GgA0t1dHCrSTyRa6OkmxFzTA",
+            "name": "write_file",
+            "startedMs": 51151.47575,
+            "durationMs": 1.4492920000047889,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_J8xROY0FwImgzCAIASMMDO6w",
+            "name": "bash",
+            "startedMs": 55681.883042,
+            "durationMs": 111.71120800000062,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 5,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 81623,
+      "metrics": {
+        "usage": {
+          "input": 8490,
+          "output": 1719
+        },
+        "effort": "medium",
+        "steps": 5,
+        "calls": 4,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 81247.31975000001,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4565.574792,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 61
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 20145.727790999998,
+            "firstTextMs": 10486.298499999999,
+            "status": "completed",
+            "usage": {
+              "input": 936,
+              "output": 451
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 46839.077708000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1449,
+              "output": 1081
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 3063.099583000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2590,
+              "output": 20
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 6468.008541999996,
+            "firstTextMs": 2083.9899999999907,
+            "status": "completed",
+            "usage": {
+              "input": 2781,
+              "output": 106
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_qZmMfZeb4BFO0dbaX2r2pCBy",
+            "name": "bash",
+            "startedMs": 4568.548333000001,
+            "durationMs": 30.347624999998516,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_y5Rxo5wTo1hkh7j1QvvCnKe2",
+            "name": "edit_file",
+            "startedMs": 24747.252583,
+            "durationMs": 3.5681250000016007,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_4p7NqsejkNKEfwlNqegl6mqd",
+            "name": "write_file",
+            "startedMs": 71592.746375,
+            "durationMs": 2.3356670000066515,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_F3mFfZ2VHO9v1jbuYMrXNIli",
+            "name": "bash",
+            "startedMs": 74660.436833,
+            "durationMs": 116.33279200000106,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "inventory-transaction",
+      "repeat": 5,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 6,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 90755,
+      "metrics": {
+        "usage": {
+          "input": 10244,
+          "output": 1791
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 6,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 90379.846291,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 2195.974417,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 734,
+              "output": 21
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3162.932292,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 827,
+              "output": 14
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 3594.3215419999997,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 861,
+              "output": 19
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 25036.883959000003,
+            "firstTextMs": 15435.266667,
+            "status": "completed",
+            "usage": {
+              "input": 910,
+              "output": 502
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 45300.18945799999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 1474,
+              "output": 1087
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3861.388249999989,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 2621,
+              "output": 20
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 7076.319625000004,
+            "firstTextMs": 1842.3074999999953,
+            "status": "completed",
+            "usage": {
+              "input": 2817,
+              "output": 128
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_uleT6UYEoUPJiDOP0OyYQi7B",
+            "name": "read_file",
+            "startedMs": 2198.1219159999996,
+            "durationMs": 1.925542000000405,
+            "isError": false
+          },
+          {
+            "step": 2,
+            "id": "call_NR9doKn4TjeTl9WNbKyUQXMp",
+            "name": "list_files",
+            "startedMs": 5365.207458,
+            "durationMs": 9.263792000000649,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_a5DWsW3zfvNdVEBDPutrIhRz",
+            "name": "read_file",
+            "startedMs": 8971.566333,
+            "durationMs": 1.2412079999994603,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_Jt5avzsOfZGK57Z7BQniSLVI",
+            "name": "edit_file",
+            "startedMs": 34012.414874999995,
+            "durationMs": 3.227833000004466,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_VKKcEga9wQuVArsYj5ovtSlP",
+            "name": "write_file",
+            "startedMs": 79318.538291,
+            "durationMs": 2.3667920000007143,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_LHED0IbsIJ9nOhFUawrxTQY7",
+            "name": "bash",
+            "startedMs": 83184.441791,
+            "durationMs": 116.17083399998955,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 5,
+      "effort": "medium",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 66999,
+      "metrics": {
+        "usage": {
+          "input": 29352,
+          "output": 1129
+        },
+        "effort": "medium",
+        "steps": 8,
+        "calls": 7,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 66621.583625,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 4648.436958,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 23
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 5142.760958,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3390,
+              "output": 62
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 4250.714040999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3642,
+              "output": 28
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 3417.118166,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3702,
+              "output": 29
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 13477.105500000001,
+            "firstTextMs": 4818.073250000001,
+            "status": "completed",
+            "usage": {
+              "input": 3878,
+              "output": 278
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 23204.667791,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4217,
+              "output": 530
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 3787.155292000003,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4806,
+              "output": 53
+            }
+          },
+          {
+            "step": 8,
+            "durationMs": 8419.930083,
+            "firstTextMs": 3236.327250000002,
+            "status": "completed",
+            "usage": {
+              "input": 4992,
+              "output": 126
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_Bkl8W94yJQzwVu7DdRaWxi8r",
+            "name": "bash",
+            "startedMs": 4650.6605,
+            "durationMs": 59.9604589999999,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_NCl19PRm3kBFw89uksntdKDD",
+            "name": "bash",
+            "startedMs": 9855.780709,
+            "durationMs": 47.47308300000077,
+            "isError": true
+          },
+          {
+            "step": 3,
+            "id": "call_TTlL54bJo8HD0LzneSzgUmww",
+            "name": "grep",
+            "startedMs": 14156.048834000001,
+            "durationMs": 10.562624999998661,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_6JZ7aAPZLr1BXbCcWGRSOKXR",
+            "name": "read_file",
+            "startedMs": 17586.481917,
+            "durationMs": 2.1659579999977723,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_6yzBL5roDtyrMdLKPOv1hbK7",
+            "name": "edit_file",
+            "startedMs": 31068.840125,
+            "durationMs": 2.972542000003159,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_P4Yn8jGilNIw6r5zO0i23efD",
+            "name": "write_file",
+            "startedMs": 54279.182624999994,
+            "durationMs": 2.648209000006318,
+            "isError": false
+          },
+          {
+            "step": 7,
+            "id": "call_9370d4c39bae42458a1818943d3ba861",
+            "name": "bash",
+            "startedMs": 58069.925166999994,
+            "durationMs": 129.09625000000233,
+            "isError": false
+          }
+        ]
+      }
+    },
+    {
+      "task": "log-recovery",
+      "repeat": 5,
+      "effort": "low",
+      "passed": true,
+      "checksPassed": 4,
+      "checksFailed": 0,
+      "agentExit": 0,
+      "timedOut": false,
+      "elapsedMs": 60712,
+      "metrics": {
+        "usage": {
+          "input": 25254,
+          "output": 1086
+        },
+        "effort": "low",
+        "steps": 7,
+        "calls": 9,
+        "notices": [],
+        "finished": true,
+        "elapsedMs": 60175.591625,
+        "modelTimings": [
+          {
+            "step": 1,
+            "durationMs": 3565.643666,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 725,
+              "output": 23
+            }
+          },
+          {
+            "step": 2,
+            "durationMs": 3413.9653340000004,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3392,
+              "output": 32
+            }
+          },
+          {
+            "step": 3,
+            "durationMs": 5468.043499999999,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 3456,
+              "output": 95
+            }
+          },
+          {
+            "step": 4,
+            "durationMs": 12295.3335,
+            "firstTextMs": 3859.452125,
+            "status": "completed",
+            "usage": {
+              "input": 3830,
+              "output": 267
+            }
+          },
+          {
+            "step": 5,
+            "durationMs": 25498.733083,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4158,
+              "output": 506
+            }
+          },
+          {
+            "step": 6,
+            "durationMs": 3001.4524999999994,
+            "firstTextMs": null,
+            "status": "completed",
+            "usage": {
+              "input": 4723,
+              "output": 30
+            }
+          },
+          {
+            "step": 7,
+            "durationMs": 6664.6085419999945,
+            "firstTextMs": 3390.7584579999966,
+            "status": "completed",
+            "usage": {
+              "input": 4970,
+              "output": 133
+            }
+          }
+        ],
+        "toolTimings": [
+          {
+            "step": 1,
+            "id": "call_xttvktCnWZiN1Zjf0Y9Pvu4K",
+            "name": "bash",
+            "startedMs": 3568.320458,
+            "durationMs": 77.11066699999947,
+            "isError": true
+          },
+          {
+            "step": 2,
+            "id": "call_pQIT5CY3gMSxVzH9zysKgDod",
+            "name": "grep",
+            "startedMs": 7061.9045830000005,
+            "durationMs": 17.122792000000118,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_NoNofnUMEDOACbLtkRI5nPWR",
+            "name": "read_file",
+            "startedMs": 12549.253375,
+            "durationMs": 1.6306249999997817,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_yIPcACLrNlDNWGKtfthxmOgH",
+            "name": "list_files",
+            "startedMs": 12551.406291,
+            "durationMs": 10.672834000000876,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_Xk8urEWr5q3QrTVOxUqtVABr",
+            "name": "read_file",
+            "startedMs": 12562.604125,
+            "durationMs": 0.43787499999962165,
+            "isError": false
+          },
+          {
+            "step": 3,
+            "id": "call_o9SgJXH1PcmAHqvMLj8bwAuK",
+            "name": "read_file",
+            "startedMs": 12563.326083,
+            "durationMs": 0.3599579999990965,
+            "isError": false
+          },
+          {
+            "step": 4,
+            "id": "call_fRK6pupXyJdu7f7y9W4fkZec",
+            "name": "edit_file",
+            "startedMs": 24861.643125,
+            "durationMs": 2.2046250000021246,
+            "isError": false
+          },
+          {
+            "step": 5,
+            "id": "call_b5gXnvwuZUMxRCW2rHHmHMxU",
+            "name": "write_file",
+            "startedMs": 50364.255750000004,
+            "durationMs": 1.335040999998455,
+            "isError": false
+          },
+          {
+            "step": 6,
+            "id": "call_NqDD8SVwyAzm011eqy8r081E",
+            "name": "bash",
+            "startedMs": 53368.710208000004,
+            "durationMs": 140.46179200000188,
+            "isError": false
+          }
+        ]
+      }
+    }
+  ]
+}
