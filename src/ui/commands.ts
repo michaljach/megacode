@@ -90,12 +90,10 @@ export const COMMANDS: Command[] = [
     description: "Create or switch git worktrees (or /worktree name)",
     run(ctx, arg) {
       if (arg) return ctx.enterWorktree(arg);
-      try {
-        mainRoot();
-      } catch (e) {
-        return ctx.notice((e as Error).message, "warn");
-      }
-      ctx.open({ type: "worktree" });
+      mainRoot().then(
+        () => ctx.open({ type: "worktree" }),
+        (e: Error) => ctx.notice(e.message, "warn"),
+      );
     },
   },
   {

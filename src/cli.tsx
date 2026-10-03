@@ -61,9 +61,9 @@ async function runOnce(agent: Agent, prompt: string, mode: PermissionMode, workt
   await mcp.closeAll();
   if (worktree) {
     // No one to ask: remove a worktree this run created and left untouched; keep anything else.
-    const changes = worktreeChanges(worktree);
+    const changes = await worktreeChanges(worktree);
     process.chdir(home);
-    if (worktree.created && changes && !changes.files && !changes.commits) removeWorktree(worktree);
+    if (worktree.created && changes && !changes.files && !changes.commits) await removeWorktree(worktree);
     else console.error(`Worktree kept at ${worktree.path} (branch ${worktree.branch}, ${describeChanges(changes)}).`);
   }
   return code;
@@ -90,7 +90,7 @@ if (options.help) {
 
 // Enter the worktree before creating the agent: its system prompt includes the working directory.
 const home = process.cwd();
-const worktree = options.worktree ? orFail(() => openWorktree(options.worktree!.name)) : null;
+const worktree = options.worktree ? await openWorktree(options.worktree.name).catch((e: Error) => fail(e.message)) : null;
 if (worktree) process.chdir(worktree.path);
 
 const agent = orFail(() => createAgent(options.model ?? defaultModel()));

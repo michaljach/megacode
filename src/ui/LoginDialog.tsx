@@ -9,11 +9,10 @@ import { configDir } from "../adapters/storage.ts";
 import { envKeyName, PROVIDER_INFO, providerInfo, type LoginMethod } from "../adapters/providers/catalog.ts";
 import { authStatus, isConfigured } from "../adapters/providers/credentials.ts";
 import { tildify } from "./format.ts";
+import { firstStep, friendlyError, stepAfterFailure, stepBack, type LoginStep } from "./loginFlow.ts";
 import { Select } from "./Select.tsx";
 import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
-
-type Step = "pick" | "method" | "url" | "key" | "browser" | "verifying";
 
 const METHOD_LABELS: Record<LoginMethod, [label: string, hint: string]> = {
   chatgpt: ["Sign in with ChatGPT", "use your Plus / Pro / Business plan"],
@@ -38,7 +37,7 @@ export function LoginDialog({
   onCancel: () => void;
 }) {
   const [provider, setProvider] = useState(initialProvider);
-  const [step, setStep] = useState<Step>(initialProvider ? stepFor(initialProvider) : "pick");
+  const [step, setStep] = useState<LoginStep>(initialProvider ? firstStep(providerInfo(initialProvider)) : "pick");
   const [method, setMethod] = useState<LoginMethod>();
   const [baseURL, setBaseURL] = useState(initialProvider ? defaultURL(initialProvider) : "");
   const [apiKey, setApiKey] = useState("");
@@ -54,18 +53,15 @@ export function LoginDialog({
     setBaseURL(defaultURL(name));
     setApiKey("");
     setError("");
-    setStep(stepFor(name));
+    setStep(firstStep(providerInfo(name)));
   }
 
   function back() {
     setError("");
     if (step === "browser") abort.current?.abort();
-    const multi = info!.methods.length > 1;
-    if (step === "pick") return onCancel();
-    if (step === "key" && info!.keyOptional) return setStep("url");
-    if (step === "browser" || (step === "key" && multi)) return setStep("method");
-    if (initialProvider) return onCancel();
-    setStep("pick");
+    const previous = stepBack(step, info, !!initialProvider);
+    if (previous === "close") onCancel();
+    else setStep(previous);
   }
 
   function chooseMethod(m: LoginMethod) {
@@ -85,12 +81,12 @@ export function LoginDialog({
     try {
       if (m === "chatgpt") {
         saveChatGPTLogin(await loginChatGPT(setBrowserUrl, ctrl.signal));
-        return await finish(name);
+        return await finish(name, "", m);
       }
-      if (m === "openrouter-oauth") return await verify(await loginOpenRouter(setBrowserUrl, ctrl.signal));
+      if (m === "openrouter-oauth") return await verify(await loginOpenRouter(setBrowserUrl, ctrl.signal), m);
       if (m === "ant-cli") {
         await loginAnthropicCLI((line) => setOutput((o) => [...o.slice(-4), line]), ctrl.signal);
-        return await finish(name);
+        return await finish(name, "", m);
       }
     } catch (e) {
       if (ctrl.signal.aborted) return;
@@ -99,30 +95,36 @@ export function LoginDialog({
     }
   }
 
+  // `via` and `url` are passed along rather than read from state: they're often set in the same
+  // handler that calls these, and the state wouldn't show them yet.
+
   /** Save an API key / endpoint after checking it works. */
-  async function verify(key: string) {
+  async function verify(key: string, via = method, url = baseURL) {
     const name = provider!;
-    const p = providerInfo(name);
     setStep("verifying");
     setError("");
     try {
-      await verifyAndSaveKey(name, { apiKey: key, baseURL });
+      await verifyAndSaveKey(name, { apiKey: key, baseURL: url });
     } catch (e) {
-      setError(friendlyError(e as Error, p.local ? `Is ${p.label.replace(" (local)", "")} running at ${baseURL}?` : undefined));
-      return setStep(p.local || (p.keyOptional && !key) ? "url" : method && method !== "key" ? "method" : "key");
+      return fail(e as Error, key, via, url);
     }
-    await finish(name);
+    await finish(name, key, via);
   }
 
   /** Credentials are in place: count the models and hand back to the app. */
-  async function finish(name: string) {
+  async function finish(name: string, key: string, via: LoginMethod | undefined) {
     setStep("verifying");
     try {
       onDone(name, await countModels(name));
     } catch (e) {
-      setError(friendlyError(e as Error));
-      setStep(providerInfo(name).methods.length > 1 ? "method" : "key");
+      fail(e as Error, key, via);
     }
+  }
+
+  function fail(e: Error, key: string, via: LoginMethod | undefined, url = baseURL) {
+    const p = providerInfo(provider!);
+    setError(friendlyError(e, p, url));
+    setStep(stepAfterFailure(p, via, key));
   }
 
   useInput((_, key) => key.escape && back(), { isActive: step === "browser" });
@@ -207,7 +209,7 @@ export function LoginDialog({
                 const url = v || info.baseURL || "";
                 if (!url) return setError("An endpoint URL is required.");
                 setBaseURL(url);
-                if (info.local) verify("");
+                if (info.local) verify("", method, url);
                 else setStep("key");
               }}
               onCancel={back}
@@ -259,17 +261,4 @@ export function LogoutDialog({ onSelect, onCancel }: { onSelect: (provider: stri
   );
 }
 
-const stepFor = (name: string): Step => {
-  const methods = providerInfo(name).methods;
-  return methods.length > 1 ? "method" : methods[0] === "url" ? "url" : "key";
-};
-
 const defaultURL = (name: string) => savedCredentials(name)?.baseURL ?? providerInfo(name).baseURL ?? "";
-
-function friendlyError(e: Error & { status?: number }, localHint?: string): string {
-  if (e.status === 401 || e.status === 403 || /api key|unauthori[sz]ed|invalid.*key/i.test(e.message))
-    return "Those credentials were rejected. Check them and try again.";
-  if (/ECONNREFUSED|fetch failed|Connection error|Timed out/i.test(e.message))
-    return `Couldn't connect. ${localHint ?? "Check the URL and your network."}`;
-  return e.message.split("\n")[0]!;
-}

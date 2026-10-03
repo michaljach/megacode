@@ -1,10 +1,32 @@
 import { Box, Text } from "ink";
-import { useState } from "react";
-import { baseRef, describeChanges, listWorktrees, WORKTREE_NAME, worktreeChanges, type Worktree } from "../adapters/git/worktree.ts";
+import { useEffect, useState } from "react";
+import { baseRef, describeChanges, listWorktrees, WORKTREE_NAME, worktreeChanges, type Worktree, type WorktreeChanges } from "../adapters/git/worktree.ts";
 import { Select, type Option } from "./Select.tsx";
+import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
 
 type Action = { type: "new" } | { type: "open"; wt: Worktree } | { type: "leave"; remove: boolean };
+type MenuData = { worktrees: { wt: Worktree; changes: string }[]; base: string; currentChanges: string };
+
+/** Runs `load` once on mount; undefined until it resolves. */
+function useLoaded<T>(load: () => Promise<T>): T | undefined {
+  const [value, setValue] = useState<T>();
+  useEffect(() => {
+    let live = true;
+    load().then((v) => live && setValue(v));
+    return () => void (live = false);
+  }, []);
+  return value;
+}
+
+async function loadMenu(current: Worktree | null): Promise<MenuData> {
+  const [worktrees, base, currentChanges] = await Promise.all([
+    listWorktrees().then((list) => Promise.all(list.map(async (wt) => ({ wt, changes: describeChanges(await worktreeChanges(wt)) })))),
+    baseRef(),
+    current ? worktreeChanges(current).then(describeChanges) : "",
+  ]);
+  return { worktrees, base, currentChanges };
+}
 
 /** Create a worktree, switch to an existing one, or go back to the main checkout. */
 export function WorktreeMenu({
@@ -23,12 +45,9 @@ export function WorktreeMenu({
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  // git calls are synchronous; run them once when the menu opens.
-  const [{ worktrees, base, currentChanges }] = useState(() => ({
-    worktrees: listWorktrees().map((wt) => ({ wt, changes: describeChanges(worktreeChanges(wt)) })),
-    base: baseRef(),
-    currentChanges: current ? describeChanges(worktreeChanges(current)) : "",
-  }));
+  const data = useLoaded(() => loadMenu(current));
+  if (!data) return <Frame current={current}><Waiting text="Reading worktrees…" /></Frame>;
+  const { worktrees, base, currentChanges } = data;
 
   const options: Option<Action>[] = [
     { label: "New worktree", value: { type: "new" }, hint: `(branches from ${base})` },
@@ -61,32 +80,40 @@ export function WorktreeMenu({
   }
 
   return (
+    <Frame current={current} help={naming ? "enter create · esc back" : "↑↓ navigate · enter select · esc cancel"}>
+      {naming ? (
+        <>
+          <Text>Name for the new worktree (branch worktree-{name || "<name>"}):</Text>
+          <TextField
+            value={name}
+            onChange={(v) => {
+              setName(v);
+              setError("");
+            }}
+            onSubmit={submitName}
+            onCancel={() => setNaming(false)}
+            placeholder="leave empty for a random name"
+          />
+          {error && <Text color="red">{error}</Text>}
+        </>
+      ) : (
+        <Select options={options} onSelect={select} onCancel={onCancel} />
+      )}
+    </Frame>
+  );
+}
+
+function Frame({ current, help, children }: { current: Worktree | null; help?: string; children: React.ReactNode }) {
+  return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
       <Text>
         <Text bold>Worktrees</Text>
         <Text dimColor> · {current ? `in ${current.name} (${current.branch})` : "in the main checkout"}</Text>
       </Text>
       <Box flexDirection="column" marginTop={1}>
-        {naming ? (
-          <>
-            <Text>Name for the new worktree (branch worktree-{name || "<name>"}):</Text>
-            <TextField
-              value={name}
-              onChange={(v) => {
-                setName(v);
-                setError("");
-              }}
-              onSubmit={submitName}
-              onCancel={() => setNaming(false)}
-              placeholder="leave empty for a random name"
-            />
-            {error && <Text color="red">{error}</Text>}
-          </>
-        ) : (
-          <Select options={options} onSelect={select} onCancel={onCancel} />
-        )}
+        {children}
       </Box>
-      <Text dimColor>{naming ? "enter create · esc back" : "↑↓ navigate · enter select · esc cancel"}</Text>
+      {help && <Text dimColor>{help}</Text>}
     </Box>
   );
 }
@@ -101,8 +128,9 @@ export function ExitWorktreeDialog({
   onSelect: (remove: boolean) => void;
   onCancel: () => void;
 }) {
-  const [changes] = useState(() => worktreeChanges(worktree));
-  const summary = describeChanges(changes);
+  // undefined while git runs; null if git couldn't tell.
+  const changes = useLoaded<WorktreeChanges | null>(() => worktreeChanges(worktree));
+  const summary = changes === undefined ? "checking for changes…" : describeChanges(changes);
   const clean = changes?.files === 0 && changes.commits === 0;
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="yellow" paddingX={1} marginTop={1}>
@@ -113,15 +141,19 @@ export function ExitWorktreeDialog({
         {worktree.path} · branch {worktree.branch} · {summary}
       </Text>
       <Box marginTop={1}>
-        <Select
-          initialIndex={clean ? 1 : 0}
-          options={[
-            { label: "Keep worktree", value: false, hint: `(return with megacode -w ${worktree.name})` },
-            { label: "Remove worktree and branch", value: true, hint: clean ? "" : `(discards ${summary})` },
-          ]}
-          onSelect={onSelect}
-          onCancel={onCancel}
-        />
+        {changes === undefined ? (
+          <Waiting text="Checking for changes…" />
+        ) : (
+          <Select
+            initialIndex={clean ? 1 : 0}
+            options={[
+              { label: "Keep worktree", value: false, hint: `(return with megacode -w ${worktree.name})` },
+              { label: "Remove worktree and branch", value: true, hint: clean ? "" : `(discards ${summary})` },
+            ]}
+            onSelect={onSelect}
+            onCancel={onCancel}
+          />
+        )}
       </Box>
       <Text dimColor>esc to stay</Text>
     </Box>

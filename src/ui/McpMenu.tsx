@@ -3,17 +3,15 @@ import { useEffect, useReducer, useState } from "react";
 import {
   describeServer,
   draftToConfig,
-  isHttpUrl,
   MCP_FILE,
   parseExtra,
-  SERVER_NAME,
-  splitCommand,
   transportOf,
   type McpTransport,
   type ServerDraft,
 } from "../adapters/mcp/config.ts";
 import { mcp, type McpStatus } from "../adapters/mcp/manager.ts";
 import { configDir } from "../adapters/storage.ts";
+import { previousAddStep, serverNameError, targetError, type AddStep } from "./mcpWizard.ts";
 import { tildify } from "./format.ts";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
@@ -23,7 +21,7 @@ type Screen =
   | { type: "list" }
   | { type: "server"; name: string }
   | { type: "remove"; name: string }
-  | { type: "add"; step: "name" | "type" | "target" | "extras"; draft: Draft };
+  | { type: "add"; step: AddStep; draft: Draft };
 
 const MAX_TOOLS_SHOWN = 15;
 
@@ -151,8 +149,10 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
   } else {
     const { step, draft } = screen;
     const isUrl = draft.type !== "stdio";
-    const back = () =>
-      step === "name" ? go({ type: "list" }) : go({ type: "add", step: step === "extras" ? "target" : step === "target" ? "type" : "name", draft });
+    const back = () => {
+      const previous = previousAddStep(step);
+      go(previous ? { type: "add", step: previous, draft } : { type: "list" });
+    };
     help = "enter continue · esc back";
 
     const field = (prompt: string, placeholder: string, submit: (v: string) => void) => (
@@ -173,8 +173,8 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
 
     if (step === "name")
       body = field("Server name (used in tool names, e.g. mcp__github__create_issue):", "e.g. github", (v) => {
-        if (!SERVER_NAME.test(v)) return setError("Use letters, digits, - and _ (max 32).");
-        if (servers.some((s) => s.name === v)) return setError(`A server named ${v} already exists.`);
+        const problem = serverNameError(v, servers.map((s) => s.name));
+        if (problem) return setError(problem);
         go({ type: "add", step: "type", draft: { ...draft, name: v } });
       });
     else if (step === "type")
@@ -193,15 +193,15 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
         </>
       );
     else if (step === "target")
-      body = isUrl
-        ? field("Server URL:", "https://example.com/mcp", (v) => {
-            if (!isHttpUrl(v)) return setError("Enter an http:// or https:// URL.");
-            go({ type: "add", step: "extras", draft: { ...draft, target: v } });
-          })
-        : field("Command to start the server:", "npx -y @modelcontextprotocol/server-filesystem ~/projects", (v) => {
-            if (!splitCommand(v).length) return setError("Enter a command.");
-            go({ type: "add", step: "extras", draft: { ...draft, target: v } });
-          });
+      body = field(
+        isUrl ? "Server URL:" : "Command to start the server:",
+        isUrl ? "https://example.com/mcp" : "npx -y @modelcontextprotocol/server-filesystem ~/projects",
+        (v) => {
+          const problem = targetError(draft.type, v);
+          if (problem) return setError(problem);
+          go({ type: "add", step: "extras", draft: { ...draft, target: v } });
+        },
+      );
     else
       body = (
         <>

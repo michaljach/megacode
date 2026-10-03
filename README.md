@@ -45,7 +45,7 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 | `lmstudio`   | –                                         | `localhost:1234`                 |
 | `compat`     | `OPENAI_COMPAT_BASE_URL`, `OPENAI_COMPAT_API_KEY` | any other OpenAI-compatible server |
 
-`MEGACODE_MODEL` overrides the default model. Switching models mid-conversation keeps the history.
+`MEGACODE_MODEL` overrides the default model. Switching models mid-conversation keeps the history. `MEGACODE_CONFIG_DIR` moves everything megacode saves (credentials, settings, history, MCP servers) out of `~/.megacode`.
 
 ## Interactive UI
 
@@ -146,7 +146,7 @@ src/
     prompts.ts        system prompt composition
     suggestion.ts     next-prompt suggestions
   adapters/
-    storage.ts        ~/.megacode JSON files
+    storage.ts        JSON files in the config folder (~/.megacode or $MEGACODE_CONFIG_DIR)
     settings.ts       settings.json
     project.ts        working directory and AGENTS.md / CLAUDE.md for the system prompt
     accounts.ts       /login and /logout use cases: verify, save, remove credentials
@@ -197,15 +197,17 @@ src/
     ApprovalDialog.tsx  tool permission prompt
     ModelPicker.tsx   searchable live model list
     LoginDialog.tsx   provider login / logout
+    loginFlow.ts      /login steps, back navigation, error messages
     ConfigMenu.tsx    /config settings menu
     EffortPicker.tsx  /effort menu
     WorktreeMenu.tsx  /worktree menu, exit prompt
     McpMenu.tsx       /mcp server list, add wizard, details
+    mcpWizard.ts      /mcp add wizard steps and validation
     Questionnaire.tsx ask_questions form
     Select.tsx, TextField.tsx, Spinner.tsx, Help.tsx   small building blocks
     code.ts           syntax highlighting, diff rendering
     format.ts         Markdown rendering, tool labels, previews
-test/                 node:test suites (npm test)
+test/                 node:test suites (npm test); e2e.test.mjs runs the CLI against a fake model server
 ```
 
 Conversation history is stored in a neutral format (`core/conversation.ts`). Each assistant turn also keeps the provider's native content. That content is sent back verbatim to the same provider, so Anthropic thinking blocks and Gemini thought signatures are preserved. When you switch providers, the next one gets the neutral text and tool calls instead.
