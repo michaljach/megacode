@@ -1,6 +1,5 @@
 import { Box, Text, useInput } from "ink";
 import { basename } from "node:path";
-import { EDIT_TOOLS } from "../core/settings.ts";
 import type { ApprovalRequest } from "../core/tools.ts";
 import { Dialog } from "./Dialog.tsx";
 import { buildDiff, DIFF_COLORS } from "./diff.ts";
@@ -69,7 +68,7 @@ function FileChangeApproval({ request, onAnswer }: { request: PendingApproval; o
   );
 }
 
-/** Shell commands and MCP tools. */
+/** Shell commands and MCP tools. (File edits always carry a change, so they never come here.) */
 function CommandApproval({ request, onAnswer }: { request: PendingApproval; onAnswer: (choice: ApprovalChoice) => void }) {
   return (
     <Dialog title={request.title} tone="warn">
@@ -81,10 +80,7 @@ function CommandApproval({ request, onAnswer }: { request: PendingApproval; onAn
         <Select
           options={[
             { label: "Yes", value: "yes" as const },
-            {
-              label: EDIT_TOOLS.has(request.tool) ? "Yes, allow all edits this session" : `Yes, and don't ask again for ${request.tool} this session`,
-              value: "always" as const,
-            },
+            { label: `Yes, and don't ask again for ${request.tool} this session`, value: "always" as const },
             { label: "No, and tell megacode what to do differently", value: "no" as const, hint: "(esc)" },
           ]}
           onSelect={onAnswer}
