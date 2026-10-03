@@ -82,6 +82,30 @@ test("flushing the queue interrupts the turn and sends the queue right away", as
   assert.deepEqual(notices, ["info: Interrupted to send queued messages."]);
 });
 
+test("sending one queued message interrupts the turn, runs it, then sends the rest", async () => {
+  const { session, sent, notices, restored } = setup((text, signal) => (text === "first" ? untilAborted(signal) : Promise.resolve()));
+  const done = session.submit("first");
+  await session.submit("one");
+  await session.submit("two");
+  await session.submit("three");
+  session.sendQueued(1);
+  await done;
+  assert.deepEqual(sent, ["first", "two", "one\nthree"]);
+  assert.deepEqual(restored, []);
+  assert.deepEqual(notices, ["info: Interrupted to send a queued message."]);
+  assert.deepEqual(session.state.queued, []);
+});
+
+test("sending a queued message that doesn't exist leaves the turn running", async () => {
+  const { session } = setup((_, signal) => untilAborted(signal));
+  const done = session.submit("first");
+  await session.submit("one");
+  session.sendQueued(1);
+  assert.equal(session.state.running, true);
+  session.interrupt();
+  await done;
+});
+
 test("flushing an empty queue leaves the turn running", async () => {
   const { session } = setup((_, signal) => untilAborted(signal));
   const done = session.submit("first");

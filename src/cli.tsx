@@ -76,7 +76,8 @@ async function runInteractive(agent: Agent, mode: PermissionMode, worktree: Work
   let exitMessage = "";
   const app = render(
     <App agent={agent} initialMode={mode} initialWorktree={worktree} home={home} onExitMessage={(m) => (exitMessage = m)} />,
-    { exitOnCtrlC: false },
+    // The kitty keyboard protocol (where the terminal supports it) tells ctrl+1…9 apart from plain digits.
+    { exitOnCtrlC: false, kittyKeyboard: { mode: "auto" } },
   );
   await app.waitUntilExit();
   await mcp.closeAll();

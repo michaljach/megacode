@@ -62,7 +62,7 @@ export class AgentSession {
   #listeners = new Set<() => void>();
   #controller: AbortController | null = null;
   #denied = false;
-  #sendNow = false; // interrupted to send the queue: run it instead of handing it back
+  #sendNow: number | "all" | null = null; // interrupted to send the queue (or one message of it) instead of handing it back
   #alwaysAllow = new Set<string>();
   readonly #agent: SessionAgent;
   readonly #host: SessionHost;
@@ -107,7 +107,14 @@ export class AgentSession {
   flushQueue = (extra?: string) => {
     if (extra) this.#update({ queued: [...this.#state.queued, extra] });
     if (!this.#state.queued.length) return;
-    this.#sendNow = true;
+    this.#sendNow = "all";
+    this.interrupt();
+  };
+
+  /** Stops the running turn to send the queued message at `index` right away; the rest stay queued. */
+  sendQueued = (index: number) => {
+    if (!this.#controller || index < 0 || index >= this.#state.queued.length) return;
+    this.#sendNow = index;
     this.interrupt();
   };
 
@@ -135,7 +142,7 @@ export class AgentSession {
     host.push({ kind: "user", text });
     const ctrl = (this.#controller = new AbortController());
     this.#denied = false;
-    this.#sendNow = false;
+    this.#sendNow = null;
     this.#update({ running: true, verb: VERBS[Math.floor(Math.random() * VERBS.length)]! });
     let interrupted = false;
     try {
@@ -149,17 +156,25 @@ export class AgentSession {
       this.#controller = null;
       this.#update({ running: false, activeTool: null });
     }
-    // Send queued messages next; after an interrupt (other than flushQueue), hand them back to the input instead.
-    const next = this.#state.queued.join("\n");
+    // Send queued messages next; after an interrupt (other than flushQueue/sendQueued), hand them back to the input instead.
+    const { queued } = this.#state;
+    const pick = this.#sendNow;
+    if (!queued.length) return;
+    if (interrupted && typeof pick === "number") {
+      // The picked message runs now; the others wait for that turn to end.
+      this.#update({ queued: queued.filter((_, i) => i !== pick) });
+      return this.#send(queued[pick]!);
+    }
     this.#update({ queued: [] });
-    if (next && interrupted && !this.#sendNow) host.restoreInput(next);
-    else if (next) await this.#send(next);
+    if (interrupted && pick === null) host.restoreInput(queued.join("\n"));
+    else await this.#send(queued.join("\n"));
   }
 
   #reportFailure(error: unknown, interrupted: boolean) {
     const { notice } = this.#host;
     if (this.#denied) notice("Denied. Tell megacode what to do instead.", "warn");
-    else if (interrupted && this.#sendNow) notice("Interrupted to send queued messages.");
+    else if (interrupted && this.#sendNow === "all") notice("Interrupted to send queued messages.");
+    else if (interrupted && this.#sendNow !== null) notice("Interrupted to send a queued message.");
     else if (interrupted) notice("Interrupted. What should megacode do instead?", "warn");
     else if ([401, 403].includes((error as { status?: number }).status!))
       notice(`${providerInfo(providerOf(this.#agent.model)).label} rejected the credentials. Run /login to update them.`, "error");

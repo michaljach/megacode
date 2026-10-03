@@ -229,6 +229,7 @@ export function App({
     if (key.ctrl && input === "d" && !value && !session.running) return quit();
     if (blocking || dialogOpen) return; // those dialogs handle their own keys
     if (key.ctrl && input === "s") return sendQueuedNow();
+    if (key.ctrl && /^[1-9]$/.test(input)) return session.sendQueued(Number(input) - 1);
     if (key.escape) {
       if (session.running) return session.interrupt();
       setShowHelp(false);
@@ -292,7 +293,7 @@ export function App({
             <Text key={i} dimColor wrap="wrap">
               {"⏳ "}
               {previewPrompt(q)}
-              {" (ctrl+s to send now)"}
+              {i < 9 && ` (ctrl+${i + 1} to send now)`}
             </Text>
           ))}
         </Box>

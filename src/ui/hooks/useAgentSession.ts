@@ -33,6 +33,7 @@ export function useAgentSession(agent: SessionAgent, host: Omit<SessionHost, "on
     submit: session.submit,
     interrupt: session.interrupt,
     flushQueue: session.flushQueue,
+    sendQueued: session.sendQueued,
     answerApproval: session.answerApproval,
     abort: session.abort,
   };

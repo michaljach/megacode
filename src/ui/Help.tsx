@@ -5,6 +5,7 @@ import { KeyList } from "./KeyList.tsx";
 const SHORTCUTS: [string, string][] = [
   ["enter", "send message (queued while running)"],
   ["ctrl+s", "send queued messages now (interrupts the running turn)"],
+  ["ctrl+1…9", "send that queued message now (oldest is 1)"],
   ["\\ + enter, option+enter", "newline"],
   ["↑ / ↓", "prompt history"],
   ["tab", "accept prompt suggestion / complete command"],
