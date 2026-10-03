@@ -17,6 +17,8 @@ export function Questionnaire({ questions, onSubmit, onCancel }: {
   const question = questions[answers.length];
   function answer(text: string) {
     if (!text.trim()) return;
+    // A single answer has nothing to review, so it goes straight to the model.
+    if (questions.length === 1) return onSubmit([{ question: question!.question, answer: text.trim() }]);
     setAnswers([...answers, text.trim()]);
     setValue("");
     setCustom(false);

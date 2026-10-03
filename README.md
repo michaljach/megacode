@@ -16,6 +16,12 @@ megacode -w                      # work in a new git worktree
 megacode -w fix-auth "fix login" # named worktree, one-shot
 ```
 
+## Automatic updates
+
+Global npm installations check for a new stable release in the background when the interactive UI launches. Updates install silently without interrupting the session; a dim **Reopen to install update · v…** line appears below the prompt when ready. Reopen megacode to run the new version. Offline checks and installation failures are ignored and retried on a future launch.
+
+Set `MEGACODE_DISABLE_AUTO_UPDATE=1` to opt out. Development checkouts, linked/local installs, one-shot commands, and Windows installations are not automatically updated. To update manually, run `npm install -g @megacode/cli@latest` (also use this if your global npm directory requires elevated permissions; megacode never requests sudo).
+
 ## Providers
 
 Run `/login` to connect a provider. Where a provider supports browser sign-in, it's offered first:
