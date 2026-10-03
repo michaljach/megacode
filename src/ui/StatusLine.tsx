@@ -35,9 +35,10 @@ export function StatusLine({
   const modeLabel = MODE_LABELS[mode];
   const tokens = usage.input + usage.output;
   // When space runs out the path gives way first, then the details on the right; the mode never does.
+  // A zero basis gives the path only the space the details leave; shrinking both would cost the details a column too.
   return (
     <Box paddingX={2} gap={2}>
-      <Box flexGrow={1} flexShrink={100} minWidth={modeLabel ? modeLabel.text.length + 1 : 0}>
+      <Box flexGrow={1} flexBasis={0} minWidth={modeLabel ? modeLabel.text.length + 1 : 0}>
         {modeLabel && (
           <Box flexShrink={0} marginRight={1}>
             <Text color={modeLabel.color}>{modeLabel.text}</Text>

@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { stripVTControlCharacters } from 'node:util';
 import { createElement } from 'react';
@@ -157,11 +160,18 @@ const { Dialog } = await import('../src/ui/Dialog.tsx');
 // Trailing spaces are trimmed: with color on, colored bands keep their padding.
 const view = (element, columns) => stripVTControlCharacters(renderToString(element, { columns })).split('\n').map((line) => line.trimEnd()).filter(Boolean);
 
-test('status line keeps the mode whole and gives up the path before the details', () => {
+test('status line keeps the mode whole and gives up the path before the details', (t) => {
+  // A cwd too long for the row, wherever the repo is checked out.
+  const home = process.cwd();
+  const root = mkdtempSync(join(tmpdir(), 'status-line-'));
+  const deep = join(root, 'a-directory-name-long-enough', 'that-the-path-cannot-fit');
+  mkdirSync(deep, { recursive: true });
+  process.chdir(deep);
+  t.after(() => (process.chdir(home), rmSync(root, { recursive: true, force: true })));
   const props = { model: 'openai:gpt-6-astra', loggedIn: true, exitArmed: false, usage: { input: 12000, output: 3400 }, worktree: 'nimble-river-737' };
   const wide = view(createElement(StatusLine, { ...props, mode: 'ask' }), 100);
   assert.equal(wide.length, 1);
-  assert.match(wide[0], /^ {2}ask mode .*openai:gpt-6-astra · ⎇ nimble-river-737 · 15\.4k tokens$/);
+  assert.match(wide[0], /^ {2}ask mode ….*that-the-path-cannot-fit {2}openai:gpt-6-astra · ⎇ nimble-river-737 · 15\.4k tokens$/);
   for (const columns of [40, 50, 60]) {
     const narrow = view(createElement(StatusLine, { ...props, mode: 'ask' }), columns);
     assert.equal(narrow.length, 1, narrow.join('\n'));
