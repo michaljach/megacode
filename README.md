@@ -51,9 +51,9 @@ Credentials are verified (by fetching the model list) and saved to `~/.megacode/
 
 When the model needs clarification, it can call `ask_questions` to open an interactive questionnaire (up to eight questions). Choose a suggested answer with arrow keys and Enter, or choose **Other** to type your own; questions without options accept text directly. Review all answers before submitting, or start over. **Esc** or **Ctrl+C** cancels and interrupts the turn without submitting partial answers. Questions always require your input, even in bypass mode. In one-shot/plain mode, the tool tells the model to ask in text instead of waiting for an interactive form.
 
-Code changes and code blocks look like Claude Code's: edits show one line-number column with removed lines on red, added lines on green (the changed words brighter) and highlighted context; new files list their lines. Highlighting uses Shiki's TextMate grammars with Claude Code's Monokai-style colors; grammars load in the background, and unknown languages and Markdown stay plain.
+Code changes look like Claude Code's: edits show one line-number column, removed lines in red on a red band and added lines in green on a green band (the changed words brighter), with plain context around them; new files list their lines. Code is drawn in one color, without syntax highlighting, and code blocks in replies stay plain.
 
-Successful `edit_file` and `write_file` calls show persistent, syntax-highlighted diffs in the conversation in every permission mode, including automatically accepted edits. Previews include old/new line numbers, nearby context, and red `-` / green `+` markers. Ask-mode approvals use the same preview; overwriting a file shows both removals and additions. Long previews are explicitly truncated to 60 diff lines and 240 characters per source line; very large or expensive diffs show an omission notice. These are interactive previews of built-in file tools, not a live Git diff viewer (shell/MCP edits aren't tracked).
+Successful `edit_file` and `write_file` calls show persistent diffs in the conversation in every permission mode, including automatically accepted edits, under a summary such as "Added 2 lines, removed 1 line". Ask-mode approvals use the same view; overwriting a file shows both removals and additions. Previews are limited to 60 diff rows (the first 10 lines for a new file in the conversation), long lines wrap under the code, and files too large to compare show a notice instead. These are previews of built-in file tools, not a live Git diff viewer (shell/MCP edits aren't tracked).
 
 | Key                        | Action                                                        |
 | -------------------------- | ------------------------------------------------------------- |
@@ -236,7 +236,6 @@ src/
     Questionnaire.tsx ask_questions form
     Dialog.tsx        the frame every dialog uses
     Select.tsx, TextField.tsx, KeyList.tsx, Spinner.tsx, Help.tsx   small building blocks
-    syntax.ts         syntax highlighting (Shiki grammars, Claude Code colors)
     diff.ts           diff model: rows, word-level changes, plain-text rendering
     DiffLines.tsx     diff rows in the TUI
     format.ts         Markdown rendering, tool labels, previews
