@@ -2,12 +2,27 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
 
+/** Output cap when the model's own limit is unknown, and the most we ask for even when it's higher. */
+const MAX_OUTPUT = 64_000;
+
 export class AnthropicProvider implements Provider {
   client: Anthropic;
+  /** Model limits and capabilities from the Models API, fetched once per model. Null if unavailable. */
+  private models = new Map<string, Promise<Anthropic.ModelInfo | null>>();
 
   // Without a key the SDK falls back to $ANTHROPIC_API_KEY or an `ant auth login` profile.
   constructor(apiKey?: string) {
     this.client = new Anthropic(apiKey ? { apiKey } : {});
+  }
+
+  private modelInfo(model: string): Promise<Anthropic.ModelInfo | null> {
+    let info = this.models.get(model);
+    if (!info) {
+      // Without the lookup (e.g. a proxy that lacks the endpoint) fall back to the defaults.
+      info = this.client.models.retrieve(model).catch(() => null);
+      this.models.set(model, info);
+    }
+    return info;
   }
 
   async listModels(): Promise<string[]> {
@@ -17,12 +32,14 @@ export class AnthropicProvider implements Provider {
   }
 
   async turn(req: TurnRequest): Promise<TurnResult> {
-    const effort = explicitEffort(req.effort);
+    const info = await this.modelInfo(req.model);
+    const effort = supportedEffort(explicitEffort(req.effort), info);
     const stream = this.client.messages.stream(
       {
         model: req.model,
         ...(effort ? { output_config: { effort } } : {}),
-        max_tokens: 64000,
+        // Older models allow fewer output tokens; asking for more is a 400 on every turn.
+        max_tokens: Math.min(info?.max_tokens ?? MAX_OUTPUT, MAX_OUTPUT),
         system: req.system,
         cache_control: { type: "ephemeral" },
         tools: req.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.parameters })),
@@ -43,6 +60,13 @@ export class AnthropicProvider implements Provider {
       usage: { input: msg.usage.input_tokens, output: msg.usage.output_tokens },
     };
   }
+}
+
+/** The effort to send, or undefined when the model reports it can't take that level (sending it is a 400). */
+function supportedEffort(effort: ReturnType<typeof explicitEffort>, info: Anthropic.ModelInfo | null) {
+  const support = info?.capabilities?.effort;
+  if (!effort || !support) return effort; // unknown capabilities: send what the user chose
+  return support.supported && support[effort].supported ? effort : undefined;
 }
 
 function mapStop(r: Anthropic.StopReason | null): StopReason {

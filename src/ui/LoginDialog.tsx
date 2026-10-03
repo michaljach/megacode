@@ -5,8 +5,10 @@ import { loginAnthropicCLI } from "../adapters/auth/anthropic.ts";
 import { loginChatGPT } from "../adapters/auth/chatgpt.ts";
 import { loginOpenRouter } from "../adapters/auth/openrouter.ts";
 import { savedCredentials, savedProviders } from "../adapters/auth/store.ts";
+import { configDir } from "../adapters/storage.ts";
 import { envKeyName, PROVIDER_INFO, providerInfo, type LoginMethod } from "../adapters/providers/catalog.ts";
 import { authStatus, isConfigured } from "../adapters/providers/credentials.ts";
+import { tildify } from "./format.ts";
 import { Select } from "./Select.tsx";
 import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
@@ -150,7 +152,7 @@ export function LoginDialog({
               onCancel={onCancel}
             />
           </Box>
-          <Text dimColor>Credentials are saved to ~/.megacode/auth.json (readable only by you).</Text>
+          <Text dimColor>Credentials are saved to {tildify(configDir())}/auth.json (readable only by you).</Text>
         </>
       )}
 

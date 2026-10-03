@@ -13,7 +13,7 @@ import {
   type ServerDraft,
 } from "../adapters/mcp/config.ts";
 import { mcp, type McpStatus } from "../adapters/mcp/manager.ts";
-import { CONFIG_DIR } from "../adapters/storage.ts";
+import { configDir } from "../adapters/storage.ts";
 import { tildify } from "./format.ts";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
@@ -25,7 +25,6 @@ type Screen =
   | { type: "remove"; name: string }
   | { type: "add"; step: "name" | "type" | "target" | "extras"; draft: Draft };
 
-const FILE = `${tildify(CONFIG_DIR)}/${MCP_FILE}`;
 const MAX_TOOLS_SHOWN = 15;
 
 function statusText(s: McpStatus): string {
@@ -51,6 +50,7 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const servers = mcp.servers();
+  const file = `${tildify(configDir())}/${MCP_FILE}`;
 
   const go = (s: Screen) => {
     setScreen(s);
@@ -133,7 +133,7 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
   } else if (screen.type === "remove") {
     body = (
       <>
-        <Text>Remove {screen.name} from {FILE}?</Text>
+        <Text>Remove {screen.name} from {file}?</Text>
         <Select
           options={[
             { label: "No, keep it", value: false },
@@ -233,7 +233,7 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1} marginTop={1}>
       <Text>
         <Text bold>MCP servers</Text>
-        <Text dimColor> · {FILE}</Text>
+        <Text dimColor> · {file}</Text>
       </Text>
       <Box flexDirection="column" marginTop={1}>
         {body}

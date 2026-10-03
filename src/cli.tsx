@@ -6,6 +6,7 @@ import { mcp } from "./adapters/mcp/manager.ts";
 import { PROVIDERS } from "./adapters/providers/catalog.ts";
 import { defaultModel } from "./adapters/providers/registry.ts";
 import { loadSettings } from "./adapters/settings.ts";
+import { setConfigDir } from "./adapters/storage.ts";
 import { parseCliArgs } from "./args.ts";
 import { createAgent } from "./composition.ts";
 import type { Agent } from "./core/agent.ts";
@@ -80,6 +81,7 @@ async function runInteractive(agent: Agent, mode: PermissionMode, worktree: Work
   return 0;
 }
 
+if (process.env.MEGACODE_CONFIG_DIR) setConfigDir(process.env.MEGACODE_CONFIG_DIR);
 const options = orFail(() => parseCliArgs(process.argv.slice(2)));
 if (options.help) {
   console.log(HELP);
