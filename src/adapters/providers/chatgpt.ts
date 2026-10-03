@@ -93,7 +93,7 @@ export class ChatGPTProvider implements Provider {
   }
 }
 
-function toResponses(messages: Message[]): OpenAI.Responses.ResponseInputItem[] {
+export function toResponses(messages: Message[]): OpenAI.Responses.ResponseInputItem[] {
   return messages.flatMap((m): OpenAI.Responses.ResponseInputItem[] => {
     if (m.role === "user") return [{ role: "user", content: m.text }];
     if (m.role === "tool") {

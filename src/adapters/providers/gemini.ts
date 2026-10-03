@@ -96,9 +96,10 @@ function mapStop(r: FinishReason | undefined, hasTools: boolean): StopReason {
   return "other";
 }
 
-function toGemini(messages: Message[]): Content[] {
+export function toGemini(messages: Message[]): Content[] {
   const out: Content[] = [];
   const push = (role: "user" | "model", parts: Part[]) => {
+    if (!parts.length) return; // the API rejects empty turns, e.g. an empty reply
     const last = out.at(-1);
     if (last?.role === role) last.parts!.push(...parts);
     else out.push({ role, parts: [...parts] });

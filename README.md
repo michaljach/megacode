@@ -184,8 +184,9 @@ src/
   ui/                 Ink (React) TUI and plain output
     App.tsx           layout, dialogs, keyboard shortcuts, command context
     commands.ts       slash command registry (name, description, handler)
+    session.ts        AgentSession: turns, queue, interrupts, approvals, questionnaires (no React)
     hooks/
-      useAgentSession.ts   turns, queue, interrupts, approvals, questionnaires
+      useAgentSession.ts   React binding for AgentSession
       useWorktree.ts       entering and leaving worktrees
       useStreamedText.ts   streamed-text buffering
       usePromptSuggestion.ts

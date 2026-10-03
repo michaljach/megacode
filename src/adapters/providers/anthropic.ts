@@ -59,9 +59,10 @@ function mapStop(r: Anthropic.StopReason | null): StopReason {
   }
 }
 
-function toAnthropic(messages: Message[]): Anthropic.MessageParam[] {
+export function toAnthropic(messages: Message[]): Anthropic.MessageParam[] {
   const out: Anthropic.MessageParam[] = [];
   const push = (role: "user" | "assistant", blocks: Anthropic.ContentBlockParam[]) => {
+    if (!blocks.length) return; // the API rejects empty turns, e.g. an empty reply
     const last = out.at(-1);
     // Merge consecutive same-role turns (e.g. an interrupted tool result followed by new user text).
     if (last && last.role === role && Array.isArray(last.content)) last.content.push(...blocks);

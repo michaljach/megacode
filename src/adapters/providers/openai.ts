@@ -79,7 +79,7 @@ function mapStop(r: string | null, hasTools: boolean): StopReason {
   return r === "stop" ? "end" : "other";
 }
 
-function toOpenAI(messages: Message[]): OpenAI.ChatCompletionMessageParam[] {
+export function toOpenAI(messages: Message[]): OpenAI.ChatCompletionMessageParam[] {
   return messages.flatMap((m): OpenAI.ChatCompletionMessageParam[] => {
     if (m.role === "user") return [{ role: "user", content: m.text }];
     if (m.role === "tool") {
@@ -93,6 +93,8 @@ function toOpenAI(messages: Message[]): OpenAI.ChatCompletionMessageParam[] {
       }
       return results;
     }
+    // An assistant message needs content or tool calls; leave out empty replies.
+    if (!m.text && !m.toolCalls.length) return [];
     return [
       {
         role: "assistant",

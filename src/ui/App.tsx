@@ -66,9 +66,8 @@ export function App({
   const notice = (text: string, level: NoticeLevel = "info") => push({ kind: "notice", text, level });
   const closeDialog = () => setDialog(null);
 
-  const session = useAgentSession({
-    agent,
-    mode,
+  const session = useAgentSession(agent, {
+    mode: () => mode,
     push,
     notice,
     canSend(text) {
@@ -80,7 +79,8 @@ export function App({
       return false;
     },
     onAllowEdits: () => setMode("accept-edits"),
-    restoreInput: setValue,
+    // Keep anything typed since; the queued messages go first.
+    restoreInput: (text) => setValue((current) => (current.trim() ? `${text}\n${current}` : text)),
   });
   const { worktree, enter, leave } = useWorktree(agent, initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {
