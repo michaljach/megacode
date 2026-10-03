@@ -15,16 +15,22 @@ export async function runPlain(agent: Agent, prompt: string, mode: PermissionMod
     console.error(`Not logged in to ${info.label}. Run megacode and use /login${env}.`);
     return 1;
   }
+  const controller = new AbortController();
+  process.on("SIGINT", () => controller.abort());
   const rl = process.stdin.isTTY ? createInterface({ input: process.stdin, output: process.stdout }) : null;
   const approve: Approve = async (req) => {
     if (autoApproved(mode, req.tool)) return true;
     if (!rl) return false;
     console.log(styleText("yellow", `${req.title}\n${approvalBody(req)}`));
-    return (await rl.question(styleText("yellow", "Allow? [y/N] "))).trim().toLowerCase() === "y";
+    try {
+      const answer = await rl.question(styleText("yellow", "Allow? [y/N] "), { signal: controller.signal });
+      return answer.trim().toLowerCase() === "y";
+    } catch {
+      // Ctrl+C at the prompt: readline takes it (so SIGINT never fires) and rejects. Stop the whole run.
+      controller.abort();
+      return false;
+    }
   };
-
-  const controller = new AbortController();
-  process.on("SIGINT", () => controller.abort());
   let midLine = false;
   try {
     await agent.send(prompt, controller.signal, {

@@ -1,5 +1,5 @@
-import { closeOpenToolCalls, type Message, type ToolCall, type ToolMessage, type ToolResult } from "./conversation.ts";
-import type { ModelResolver, TurnResult, Usage } from "./provider.ts";
+import { closeOpenToolCalls, dropImages, type Message, type ToolCall, type ToolMessage, type ToolResult } from "./conversation.ts";
+import type { ModelResolver, Provider, TurnRequest, TurnResult, Usage } from "./provider.ts";
 import type { Settings } from "./settings.ts";
 import { canSuggest, suggestNextPrompt } from "./suggestion.ts";
 import type { ExecutionResult, ToolContext, ToolSource } from "./tools.ts";
@@ -25,6 +25,7 @@ export type AgentDeps = {
 };
 
 const INTERRUPTED = "Interrupted by user.";
+const IMAGE_REJECTED = "Image not sent: the model rejected it.";
 
 /** The agent loop: model turn → run requested tools → repeat until the model stops. */
 export class Agent {
@@ -68,7 +69,7 @@ export class Agent {
 
     try {
       for (let step = 0; step < maxSteps; step++) {
-        const res = await provider.turn({
+        const res = await this.#turn(provider, {
           model,
           effort,
           system: [this.#system, tools.instructions?.()].filter(Boolean).join("\n\n"),
@@ -76,7 +77,7 @@ export class Agent {
           tools: tools.specs(),
           signal,
           onText: ev.onText,
-        });
+        }, ev);
         this.#addUsage(res.usage);
         this.messages.push(res.message);
         ev.onStepEnd();
@@ -99,6 +100,21 @@ export class Agent {
     if (signal.aborted) return "";
     this.#addUsage(usage);
     return text;
+  }
+
+  /**
+   * Providers reject images they can't take: a model without vision, an unsupported file. Left in
+   * history, the image would fail every later request too, so on a 400 drop images and retry once.
+   * (A 400 for another reason just costs the images and one extra request before it surfaces.)
+   */
+  async #turn(provider: Provider, req: TurnRequest, ev: AgentEvents): Promise<TurnResult> {
+    try {
+      return await provider.turn(req);
+    } catch (e) {
+      if (req.signal.aborted || (e as { status?: number }).status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
+      ev.onNotice("The model rejected an image, so it was removed from the conversation.", "warn");
+      return provider.turn({ ...req, messages: this.messages });
+    }
   }
 
   /** True when this response finishes the turn (reporting why, if it's unusual). */

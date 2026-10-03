@@ -65,6 +65,8 @@ export function App({
   const push = (...add: Item[]) => setItems((prev) => [...prev, ...add]);
   const notice = (text: string, level: NoticeLevel = "info") => push({ kind: "notice", text, level });
   const closeDialog = () => setDialog(null);
+  /** Puts text back in the input, ahead of anything typed since. */
+  const restoreInput = (text: string) => setValue((current) => (current.trim() ? `${text}\n${current}` : text));
 
   const session = useAgentSession(agent, {
     mode: () => mode,
@@ -73,14 +75,13 @@ export function App({
     canSend(text) {
       if (!needsLogin(agent.model)) return true;
       const provider = providerOf(agent.model);
-      setValue(text);
+      restoreInput(text);
       notice(`Not logged in to ${providerInfo(provider).label}.`, "warn");
       setDialog({ type: "login", provider });
       return false;
     },
     onAllowEdits: () => setMode("accept-edits"),
-    // Keep anything typed since; the queued messages go first.
-    restoreInput: (text) => setValue((current) => (current.trim() ? `${text}\n${current}` : text)),
+    restoreInput,
   });
   const { worktree, enter, leave } = useWorktree(agent, initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {

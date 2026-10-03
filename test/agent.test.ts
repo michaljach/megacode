@@ -128,3 +128,61 @@ test("combined tool sources route calls and report unknown tools", async () => {
   assert.deepEqual(await tools.execute({ id: "1", name: "nope", input: {} }, ctx), { output: "Unknown tool: nope", isError: true });
   assert.equal(tools.instructions?.(), "Use echo.");
 });
+
+/** A provider that rejects any request containing an image, like a model without vision. */
+function rejectsImages() {
+  const requests: TurnRequest[] = [];
+  let step = 0;
+  const provider: Provider = {
+    async listModels() {
+      return [];
+    },
+    async turn(req) {
+      requests.push({ ...req, messages: structuredClone(req.messages) });
+      if (req.messages.some((m) => m.role === "tool" && m.results.some((r) => r.images?.length)))
+        throw Object.assign(new Error("400 The image data you provided does not represent a valid image."), { status: 400 });
+      step++;
+      const toolCalls = step === 1 ? [{ id: "v1", name: "view", input: {} }] : [];
+      return { stop: toolCalls.length ? "tool_use" : "end", message: { role: "assistant", text: step === 1 ? "" : "ok", toolCalls } };
+    },
+  };
+  const tools: ToolSource = {
+    specs: () => [],
+    has: () => true,
+    execute: async () => ({ output: "Image: a.png", isError: false, images: [{ mediaType: "image/png", data: "AAAA" }] }),
+  };
+  return { provider, tools, requests };
+}
+
+test("a rejected image is dropped from history so the session keeps working", async () => {
+  const { provider, tools, requests } = rejectsImages();
+  const agent = agentWith(provider, { tools });
+  const { log, events } = recorder();
+  await agent.send("look at a.png", new AbortController().signal, events);
+  assert.ok(log.some((l) => /^warn:.*image/i.test(l)), log.join("\n"));
+  const result = agent.messages.find((m) => m.role === "tool");
+  assert.ok(result?.role === "tool");
+  assert.equal(result.results[0]!.images, undefined);
+  assert.match(result.results[0]!.output, /^Image: a\.png\n\[.*rejected.*\]$/);
+
+  // Later turns no longer resend the image.
+  await agent.send("thanks", new AbortController().signal, events);
+  const last = agent.messages.at(-1);
+  assert.equal(last?.role === "assistant" && last.text, "ok");
+  assert.equal(requests.length, 4); // view, rejected, retry without image, thanks
+});
+
+test("other request errors are not retried", async () => {
+  let calls = 0;
+  const provider: Provider = {
+    async listModels() {
+      return [];
+    },
+    async turn() {
+      calls++;
+      throw Object.assign(new Error("400 bad request"), { status: 400 });
+    },
+  };
+  await assert.rejects(agentWith(provider).send("hi", new AbortController().signal, recorder().events), /bad request/);
+  assert.equal(calls, 1);
+});

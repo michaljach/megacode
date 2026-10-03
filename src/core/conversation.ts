@@ -33,6 +33,21 @@ export function closeOpenToolCalls(messages: Message[], output: string): void {
   }
 }
 
+/** Removes every image from tool results, noting it in the result text. Returns whether there were any. */
+export function dropImages(messages: Message[], note: string): boolean {
+  let dropped = false;
+  for (const m of messages) {
+    if (m.role !== "tool") continue;
+    for (const r of m.results) {
+      if (!r.images?.length) continue;
+      delete r.images;
+      r.output += `\n[${note}]`;
+      dropped = true;
+    }
+  }
+  return dropped;
+}
+
 export const failedResults = (calls: ToolCall[], output: string): ToolMessage => ({
   role: "tool",
   results: calls.map((c) => ({ id: c.id, name: c.name, output, isError: true })),
