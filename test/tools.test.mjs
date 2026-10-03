@@ -89,7 +89,7 @@ test('successful edits and writes report the change separately from model output
   const overwritten = await execute('write_file', { path: file, content: 'replacement\n' });
   assert.deepEqual(overwritten.change, { file, before: 'updated\n', after: 'replacement\n' });
   const created = await execute('write_file', { path: file + '.ts', content: 'const x = 1;\n' });
-  assert.deepEqual(created.change, { file: file + '.ts', before: '', after: 'const x = 1;\n' });
+  assert.deepEqual(created.change, { file: file + '.ts', before: '', after: 'const x = 1;\n', created: true });
   const denied = await execute('write_file', { path: file, content: 'denied' }, async () => false);
   assert.equal(denied.change, undefined);
   const failed = await execute('edit_file', { path: file, old_string: 'missing', new_string: 'no' });

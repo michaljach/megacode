@@ -187,7 +187,7 @@ test("rejected credentials point to /login; other errors are shown as they are",
   assert.deepEqual(broken.notices, ["error: socket hang up"]);
 });
 
-test("tool results are added to the transcript with a rendered diff", async () => {
+test("tool results are added to the transcript with their diff and a summary", async () => {
   const { session, items } = setup(async (_, __, ev) => {
     const call = { id: "1", name: "edit_file", input: { path: "a.ts" } };
     ev.onToolStart(call);
@@ -196,7 +196,9 @@ test("tool results are added to the transcript with a rendered diff", async () =
   });
   await session.submit("go");
   const tool = items.find((i) => i.kind === "tool");
-  assert.ok(tool?.kind === "tool" && tool.changePreview?.includes("b"));
+  assert.ok(tool?.kind === "tool" && tool.diff);
+  assert.equal(tool.output, "Added 1 line, removed 1 line");
+  assert.deepEqual(tool.diff.rows.map((r) => r.type), ["remove", "add"]);
   assert.equal(session.state.activeTool, null);
 });
 

@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { Box, Static, Text, renderToString } from 'ink';
 import { ItemView } from '../src/ui/Transcript.tsx';
 import { previewPrompt } from '../src/ui/format.ts';
-import { renderFileChange } from '../src/ui/code.ts';
+import { buildDiff } from '../src/ui/diff.ts';
 import { PromptInput } from '../src/ui/PromptInput.tsx';
 import { Questionnaire } from '../src/ui/Questionnaire.tsx';
 
@@ -135,17 +135,18 @@ for (const columns of [20, 40, 60, 80]) {
   test(`diff continuations stay out of the line-number gutter at ${columns} columns`, () => {
     const code = "  const message = 'a lengthy string which should wrap within the code column';";
     const item = {
-      kind: 'tool', call: { name: 'edit_file', input: { path: 'example.ts' } }, output: 'Edited',
-      changePreview: renderFileChange('example.ts', '', code + '\n'),
+      kind: 'tool', call: { name: 'edit_file', input: { path: 'example.ts' } }, output: 'Added 1 line',
+      diff: buildDiff({ file: 'example.ts', before: '', after: code + '\n' }),
     };
     const lines = renderItem(item, columns);
     assert.ok(lines.every(line => line.length <= columns), lines.join('\n'));
-    const start = lines.findIndex(line => /^ {13}1 \+(?: |$)/.test(line));
+    // The band starts under the output (column 5); the code starts after " 1 +".
+    const start = lines.findIndex(line => /^ {6}1 \+(?: |$)/.test(line));
     assert.ok(start >= 0, lines.join('\n'));
     const codeLines = lines.slice(start);
     assert.ok(codeLines.length > 1);
-    assert.ok(codeLines.slice(1).every(line => line.startsWith(' '.repeat(17))), lines.join('\n'));
-    assert.equal(codeLines.map(line => line.slice(17)).join('').replace(/\s/g, ''), code.replace(/\s/g, ''));
+    assert.ok(codeLines.slice(1).every(line => line.startsWith(' '.repeat(9))), lines.join('\n'));
+    assert.equal(codeLines.map(line => line.slice(9)).join('').replace(/\s/g, ''), code.replace(/\s/g, ''));
   });
 }
 
@@ -186,4 +187,23 @@ test('dialogs share one layout: title, blank line, body, blank line, key hints',
   )).split('\n');
   const inside = lines.slice(lines.findIndex((l) => l.startsWith('╭')) + 1, lines.findIndex((l) => l.startsWith('╰')));
   assert.deepEqual(inside.map((line) => line.replace(/^│ ?|\s*│$/g, '')), ['Title · context', '', 'Body', '', 'esc close']);
+});
+
+const { ApprovalDialog } = await import('../src/ui/ApprovalDialog.tsx');
+
+test('file changes are approved in Claude Code layout: title, path, the diff between dashed rules', () => {
+  const approval = (change) => view(createElement(ApprovalDialog, { request: { tool: 'edit_file', title: 'Edit', change, resolve() {} }, onAnswer() {} }), 60);
+  const edit = approval({ file: `${process.cwd()}/src/a.ts`, before: 'one\ntwo\n', after: 'one\nTWO\n' });
+  assert.match(edit[0], /^─{60}$/);
+  assert.deepEqual(edit.slice(1, 3), [' Edit file', ' src/a.ts']);
+  assert.match(edit[3], /^╌{60}$/);
+  assert.deepEqual(edit.slice(4, 7), [' 1  one', ' 2 -two', ' 2 +TWO']);
+  assert.match(edit[7], /^╌{60}$/);
+  assert.equal(edit[8], ' Do you want to make this edit to a.ts?');
+  assert.match(edit.at(-1), /Esc to cancel/);
+
+  const created = approval({ file: 'b.ts', before: '', after: 'const b = 1;\n', created: true });
+  assert.equal(created[1], ' Create file');
+  assert.ok(created.includes('  1 const b = 1;'), created.join('\n'));
+  assert.ok(created.includes(' Do you want to create b.ts?'));
 });

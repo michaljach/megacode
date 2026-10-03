@@ -2,7 +2,14 @@ import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 import type { NoticeLevel } from "../core/agent.ts";
 import type { ToolCall } from "../core/conversation.ts";
-import { formatCall, previewOutput, previewPrompt, renderMarkdown, tildify } from "./format.ts";
+import type { DiffModel } from "./diff.ts";
+import { DIFF_COLORS } from "./diff.ts";
+import { DiffLines } from "./DiffLines.tsx";
+import { callParts, previewOutput, previewPrompt, renderMarkdown, tildify } from "./format.ts";
+
+/** Claude Code's colors for a finished call and for secondary text. */
+const DONE = "#4eba65";
+const MUTED = DIFF_COLORS.muted;
 import { Blink } from "./Spinner.tsx";
 
 /** One finished entry of the transcript, rendered once into <Static>. */
@@ -10,7 +17,7 @@ export type Item =
   | { kind: "banner" }
   | { kind: "user"; text: string }
   | { kind: "assistant"; text: string; first: boolean }
-  | { kind: "tool"; call: ToolCall; output: string; isError: boolean; changePreview?: string }
+  | { kind: "tool"; call: ToolCall; output: string; isError: boolean; diff?: DiffModel }
   | { kind: "notice"; text: string; level: NoticeLevel; bright?: boolean };
 
 export function ItemView({ item, model }: { item: Item; model: string }) {
@@ -42,16 +49,23 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
     case "tool":
       return (
         <Box flexDirection="column" marginTop={1}>
-          <TranscriptRow prefix={<Text color={item.isError ? "red" : "green"}>⏺ </Text>} width={2}>
-            <Text bold>{formatCall(item.call)}</Text>
+          <TranscriptRow prefix={<Text color={item.isError ? "red" : DONE}>⏺ </Text>} width={2}>
+            <CallHeader call={item.call} />
           </TranscriptRow>
-          <TranscriptRow prefix={<Text dimColor>{"  ⎿  "}</Text>} width={5}>
-            <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
-              {previewOutput(item.output) || "(no output)"}
-            </Text>
+          <TranscriptRow prefix={<Text color={MUTED}>{"  ⎿  "}</Text>} width={5}>
+            {item.diff ? (
+              <Text>{item.output}</Text>
+            ) : (
+              <Text dimColor={!item.isError} color={item.isError ? "red" : undefined}>
+                {previewOutput(item.output) || "(no output)"}
+              </Text>
+            )}
           </TranscriptRow>
-          {!item.isError && item.changePreview && (
-            <Box marginLeft={5} flexDirection="column"><DiffPreview text={item.changePreview} /></Box>
+          {item.diff && (
+            // Claude Code's diff band: from the output column to 7 short of the right edge.
+            <Box marginLeft={5} marginRight={7} flexDirection="column">
+              <DiffLines model={item.diff} />
+            </Box>
           )}
         </Box>
       );
@@ -79,13 +93,24 @@ export function AssistantText({ text, first }: { text: string; first: boolean })
   );
 }
 
-export function RunningTool({ call }: { call: ToolCall }) {
+/** "Update(src/a.ts)" with only the tool name in bold. */
+function CallHeader({ call }: { call: ToolCall }) {
+  const { name, arg } = callParts(call);
+  return (
+    <Text>
+      <Text bold>{name}</Text>({arg})
+    </Text>
+  );
+}
+
+/** The tool call in progress. While it waits for approval, just its header with a gray dot. */
+export function RunningTool({ call, waiting = false }: { call: ToolCall; waiting?: boolean }) {
   return (
     <Box flexDirection="column" marginTop={1}>
       <Text>
-        <Blink /> <Text bold>{formatCall(call)}</Text>
+        {waiting ? <Text color={MUTED}>⏺</Text> : <Blink />} <CallHeader call={call} />
       </Text>
-      <Text dimColor>{"  ⎿  Running…"}</Text>
+      {!waiting && <Text color={MUTED}>{"  ⎿  Running…"}</Text>}
     </Box>
   );
 }
@@ -102,16 +127,3 @@ function TranscriptRow({ prefix, width, children }: { prefix: ReactNode; width: 
   );
 }
 
-function DiffPreview({ text }: { text: string }) {
-  return text.split("\n").map((line, i) => {
-    // renderFileChange emits two padded line numbers and a sign, with an optional
-    // ANSI style around the gutter. Keep its styling separate from highlighted code.
-    const row = line.match(/^((?:\u001b\[[\d;]*m)*[ \d]{4,} [ \d]{4,} [ +\\-](?:\u001b\[[\d;]*m)* )([\s\S]*)$/);
-    if (!row) return <Text key={i}>{line}</Text>;
-    return (
-      <TranscriptRow key={i} prefix={<Text>{row[1]}</Text>} width={row[1]!.replace(/\u001b\[[\d;]*m/g, "").length}>
-        <Text>{row[2]}</Text>
-      </TranscriptRow>
-    );
-  });
-}

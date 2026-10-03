@@ -6,8 +6,8 @@ export type ToolSpec = {
   parameters: { type: "object"; properties: Record<string, unknown>; required?: string[] };
 };
 
-/** A proposed file edit; the UI renders it as a diff. */
-export type FileChange = { file: string; before: string; after: string };
+/** A proposed file edit; the UI renders it as a diff. `created`: the file didn't exist before. */
+export type FileChange = { file: string; before: string; after: string; created?: boolean };
 
 export type ApprovalRequest = { tool: string; title: string; body?: string; change?: FileChange };
 /** Asks the user before a side effect. Resolves true to proceed. */

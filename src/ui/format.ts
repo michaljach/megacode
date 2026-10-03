@@ -1,8 +1,10 @@
 import os from "node:os";
 import { styleText } from "node:util";
+import chalk from "chalk";
 import type { ToolCall } from "../core/conversation.ts";
 import type { ApprovalRequest, FileChange } from "../core/tools.ts";
-import { changeStats, highlightCode, renderFileChange } from "./code.ts";
+import { buildDiff, diffToAnsi, type DiffModel } from "./diff.ts";
+import { highlightCode } from "./syntax.ts";
 
 const TOOL_LABELS: Record<string, string> = {
   ask_questions: "Ask",
@@ -15,19 +17,26 @@ const TOOL_LABELS: Record<string, string> = {
   grep: "Search",
 };
 
-/** "Bash(npm test)", "Read(src/cli.ts)" */
-export function formatCall(c: ToolCall): string {
+/** A tool call's name and its main argument: "Bash" + "npm test", "Read" + "src/cli.ts". */
+export function callParts(c: ToolCall): { name: string; arg: string } {
   const mcp = c.name.match(/^mcp__(.+?)__(.+)$/);
   const firstString = Object.values(c.input ?? {}).find((v) => typeof v === "string");
   const arg = String((mcp ? firstString : (c.input.command ?? c.input.path ?? c.input.pattern)) ?? "").split("\n")[0]!;
-  const label = mcp ? `${mcp[1]} · ${mcp[2]} (MCP)` : (TOOL_LABELS[c.name] ?? c.name);
-  return `${label}(${arg.length > 80 ? arg.slice(0, 80) + "…" : arg})`;
+  return { name: mcp ? `${mcp[1]} · ${mcp[2]} (MCP)` : (TOOL_LABELS[c.name] ?? c.name), arg: arg.length > 80 ? arg.slice(0, 80) + "…" : arg };
 }
 
-export const renderChange = (c: FileChange) => renderFileChange(c.file, c.before, c.after);
+/** "Bash(npm test)", "Read(src/cli.ts)" */
+export function formatCall(c: ToolCall): string {
+  const { name, arg } = callParts(c);
+  return `${name}(${arg})`;
+}
 
-/** The text shown for an approval request: a diff for file changes, else the tool's own description. */
-export const approvalBody = (req: ApprovalRequest) => (req.change ? renderChange(req.change) : (req.body ?? ""));
+/** The text shown for an approval request in plain output: a diff for file changes, else the tool's own description. */
+export function approvalBody(req: ApprovalRequest): string {
+  if (!req.change) return req.body ?? "";
+  const model = buildDiff(req.change);
+  return model ? diffToAnsi(model) : "Diff preview unavailable (file too large).";
+}
 
 /** Shortens paths under the home directory to ~/… for display. */
 export const tildify = (p: string) => p.replace(os.homedir(), "~");
@@ -47,11 +56,13 @@ export function previewOutput(output: string, lines = 3): string {
   return all.length > lines ? `${head}\n${styleText("dim", `… +${plural(all.length - lines, "line")}`)}` : head;
 }
 
-/** "Added 2 lines, removed 1 line" for an applied edit. */
-export function describeChange(change: FileChange): string {
-  const stats = changeStats(change.before, change.after);
-  if (!stats) return "Changed (too large to count)";
-  const parts = [stats.added && `added ${plural(stats.added, "line")}`, stats.removed && `removed ${plural(stats.removed, "line")}`].filter(Boolean);
+const count = (n: number, word: string) => `${chalk.bold(n.toLocaleString("en-US"))} ${word}${n === 1 ? "" : "s"}`;
+
+/** Claude Code's summary of an applied change: "Added 2 lines, removed 1 line", "Wrote 14 lines to a.ts". */
+export function describeChange(change: FileChange, model: DiffModel | null = buildDiff(change, 0)): string {
+  if (!model) return "Changed (too large to compare)";
+  if (model.created) return `Wrote ${count(model.added, "line")} to ${chalk.bold(model.file)}`;
+  const parts = [model.added && `added ${count(model.added, "line")}`, model.removed && `removed ${count(model.removed, "line")}`].filter(Boolean);
   const text = parts.join(", ");
   return text ? text[0]!.toUpperCase() + text.slice(1) : "No changes";
 }
@@ -68,9 +79,9 @@ function describeRead(output: string): string {
  * What the transcript shows for a finished tool call. The model gets the full output; people get
  * a summary where the raw text would only repeat what the diff or the call already says.
  */
-export function displayOutput(call: ToolCall, result: { output: string; isError: boolean; change?: FileChange }): string {
+export function displayOutput(call: ToolCall, result: { output: string; isError: boolean; change?: FileChange }, model?: DiffModel | null): string {
   if (result.isError) return result.output;
-  if (result.change) return describeChange(result.change);
+  if (result.change) return describeChange(result.change, model);
   if (call.name === "read_file") return describeRead(result.output);
   return result.output;
 }

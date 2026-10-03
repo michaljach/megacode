@@ -21,7 +21,7 @@ type Proposal = { tool: string; action: "write" | "edit"; file: string; before: 
  * previewed, so edits made while the dialog was open are never overwritten. Null if denied.
  */
 async function applyChange(ctx: ToolContext, p: Proposal): Promise<FileChange | null> {
-  const change: FileChange = { file: p.file, before: p.before ?? "", after: p.after };
+  const change: FileChange = { file: p.file, before: p.before ?? "", after: p.after, ...(p.before === null ? { created: true } : {}) };
   const title = `${p.action === "write" ? "Write" : "Edit"} ${displayPath(p.file)}`;
   if (!(await ctx.approve({ tool: p.tool, title, change }))) return null;
   if ((await readIfExists(p.file)) !== p.before)

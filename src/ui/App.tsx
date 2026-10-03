@@ -235,7 +235,7 @@ export function App({
 
       {session.streaming.text.trim() && <AssistantText text={session.streaming.text.trimEnd()} first={session.streaming.first} />}
 
-      {session.activeTool && !blocking && <RunningTool call={session.activeTool} />}
+      {session.activeTool && !session.questionnaire && <RunningTool call={session.activeTool} waiting={!!session.approval} />}
 
       {session.questionnaire && (
         <Questionnaire questions={session.questionnaire.questions} onSubmit={session.questionnaire.resolve} onCancel={session.interrupt} />

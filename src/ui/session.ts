@@ -5,7 +5,9 @@ import type { ToolCall } from "../core/conversation.ts";
 import { autoApproved, EDIT_TOOLS, type PermissionMode } from "../core/settings.ts";
 import type { Answer, Approve, AskQuestions, Question } from "../core/tools.ts";
 import type { ApprovalChoice, PendingApproval } from "./ApprovalDialog.tsx";
-import { displayOutput, renderChange } from "./format.ts";
+import { buildDiff } from "./diff.ts";
+import { displayOutput } from "./format.ts";
+import { fileLanguage, loadLanguage } from "./syntax.ts";
 import type { Item } from "./Transcript.tsx";
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
@@ -165,8 +167,10 @@ export class AgentSession {
     else notice((error as Error).message, "error");
   }
 
-  #approve: Approve = (req) => {
-    if (autoApproved(this.#host.mode(), req.tool) || this.#alwaysAllow.has(req.tool)) return Promise.resolve(true);
+  #approve: Approve = async (req) => {
+    if (autoApproved(this.#host.mode(), req.tool) || this.#alwaysAllow.has(req.tool)) return true;
+    // Load the file's grammar first so the diff is highlighted from the first frame.
+    if (req.change) await loadLanguage(fileLanguage(req.change.file));
     return new Promise((resolve) => this.#update({ approval: { ...req, resolve } }));
   };
 
@@ -193,8 +197,9 @@ export class AgentSession {
       onToolStart: (call) => this.#update({ activeTool: call }),
       onToolEnd: (call, r) => {
         this.#update({ activeTool: null });
-        const changePreview = r.change && !r.isError ? renderChange(r.change) : undefined;
-        host.push({ kind: "tool", call, output: displayOutput(call, r), isError: r.isError, changePreview });
+        // The transcript shows the whole edit; a new file shows its first lines, as in Claude Code.
+        const diff = r.change && !r.isError ? buildDiff(r.change, r.change.created ? 10 : 60) : undefined;
+        host.push({ kind: "tool", call, output: displayOutput(call, r, diff), isError: r.isError, diff: diff ?? undefined });
       },
       onNotice: (text, level) => host.notice(text, level),
     };
