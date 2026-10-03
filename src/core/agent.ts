@@ -62,6 +62,8 @@ export class Agent {
   }
 
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
+    // Pick up installed skills and project context between turns, never mid-turn.
+    this.reloadSystemPrompt();
     this.messages.push({ role: "user", text });
     const { provider, model } = this.#deps.resolveModel(this.#model);
     const { maxSteps, effort } = this.#deps.settings();

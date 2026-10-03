@@ -6,6 +6,7 @@ import { mcp } from "./adapters/mcp/manager.ts";
 import { PROVIDERS } from "./adapters/providers/catalog.ts";
 import { defaultModel } from "./adapters/providers/registry.ts";
 import { loadSettings } from "./adapters/settings.ts";
+import { runSkillsCommand } from "./adapters/skills.ts";
 import { parseCliArgs } from "./args.ts";
 import { createAgent } from "./composition.ts";
 import type { Agent } from "./core/agent.ts";
@@ -18,6 +19,8 @@ const HELP = `megacode - minimal multi-provider coding agent
 Usage:
   megacode [options]            interactive TUI
   megacode [options] "prompt"   run one prompt and exit (also used when stdin is piped)
+  megacode skills list          list installed skills
+  megacode skills install <local-directory|owner/repo|GitHub-URL> [--global]
 
 Options:
   -m, --model <provider:model>  default: $MEGACODE_MODEL, else the last model you picked
@@ -78,6 +81,16 @@ async function runInteractive(agent: Agent, mode: PermissionMode, worktree: Work
   await mcp.closeAll();
   if (exitMessage) console.log(exitMessage);
   return 0;
+}
+
+// Skill management doesn't require credentials, a model, MCP, or piped input.
+if (process.argv[2] === "skills") {
+  try {
+    console.log(await runSkillsCommand(process.argv.slice(3)));
+    process.exit(0);
+  } catch (error) {
+    fail((error as Error).message);
+  }
 }
 
 const options = orFail(() => parseCliArgs(process.argv.slice(2)));

@@ -76,6 +76,18 @@ test("runs tool calls until the model stops, keeping display-only data out of hi
   assert.deepEqual(agent.usage, { input: 2, output: 4 });
 });
 
+test("refreshes installed skill context between turns", async () => {
+  const { provider, requests } = scripted([{}, {}]);
+  let context = "No skills";
+  const agent = agentWith(provider, { systemPrompt: () => context });
+  const { events } = recorder();
+  await agent.send("hello", new AbortController().signal, events);
+  context = "New skill installed";
+  await agent.send("use the skill", new AbortController().signal, events);
+  assert.match(requests[0].system, /No skills/);
+  assert.match(requests[1].system, /New skill installed/);
+});
+
 test("truncated tool calls are not run, and history stays valid", async () => {
   const { provider } = scripted([{ stop: "max_tokens", message: { role: "assistant", text: "", toolCalls: [call("1")] } }]);
   const agent = agentWith(provider);

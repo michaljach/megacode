@@ -61,7 +61,7 @@ Successful `edit_file` and `write_file` calls show persistent, syntax-highlighte
 | `ctrl+s`                   | send queued messages now (interrupts the running turn)        |
 | `\` + `enter`, `option+enter` | newline                                                    |
 | `↑` / `↓`                  | prompt history (saved in `~/.megacode/history.json`)          |
-| `/`                        | commands: `/model`, `/effort`, `/config`, `/mcp`, `/worktree`, `/login`, `/logout`, `/clear`, `/usage`, `/help`, `/exit` |
+| `/`                        | commands: `/model`, `/effort`, `/config`, `/mcp`, `/skills`, `/worktree`, `/login`, `/logout`, `/clear`, `/usage`, `/help`, `/exit` |
 | `?`                        | shortcut help                                                 |
 | `esc`                      | interrupt the running turn, or clear the input                |
 | `shift+tab`                | cycle permission mode: ask → accept edits → bypass (default)  |
@@ -87,6 +87,36 @@ Successful `edit_file` and `write_file` calls show persistent, syntax-highlighte
 | Prompt autocomplete       | on        | on · off                                      |
 
 Prompt autocomplete suggests a next prompt based on the current conversation and recent tool results, displayed as dimmed inline text after a turn finishes. **Tab** accepts without sending; **Enter** sends only text you've entered or accepted. Typing a different prompt hides the suggestion. Suggestions use an additional, tool-free request to the selected model (normal provider costs apply, tokens count toward `/usage`); they never execute actions or change conversation history. Failures silently leave the prompt unchanged. Toggle **Prompt autocomplete** in `/config`, or set `"promptAutocomplete": false` in `~/.megacode/settings.json` to disable requests and suggestions. Slash-command completion remains available independently.
+
+## Skills
+
+Skills are reusable instructions in a `SKILL.md` file, optionally accompanied by scripts, references, or other assets. Install from a local directory or a GitHub repository:
+
+```sh
+megacode skills install ./my-skill
+megacode skills install owner/repository
+megacode skills install https://github.com/owner/repository --global
+megacode skills list
+```
+
+In the TUI, use `/skills` to list skills and `/skills install <source> [--global]` to install them. Local paths containing spaces can be quoted. No provider login is required for the standalone CLI commands.
+
+- Installs go to `.megacode/skills/<name>` in the current working directory, or `~/.megacode/skills/<name>` with `--global`. Project skills override global skills with the same name. Worktrees use their own working directory's skills.
+- A source can be a single skill directory or a repository containing multiple skills; all discovered skills are installed. GitHub installs require Git and clone the default branch. Branch/subdirectory URLs and non-GitHub remotes aren't supported. Private repositories require existing Git credentials; installation doesn't prompt for login.
+- Installed metadata is available starting with the next turn. The agent reads a skill's full instructions only when relevant or requested by name. `/skills` also reports invalid installed skills, which are skipped during discovery.
+- Existing installs are never overwritten. To remove or reinstall a skill, remove its installation directory first. Installs are copies, not links; source changes aren't automatically synced.
+- **Only install skills you trust.** Installation copies files but never runs skill scripts. Skills can instruct the agent to run commands later, under the session's normal permissions. Symlinks and special files are rejected; `.git`, `node_modules`, and `.megacode` are excluded. Each skill is limited to 50 MiB and 10,000 entries.
+
+A skill needs YAML frontmatter with a unique lowercase, hyphenated name (up to 64 characters) and a description (up to 1,024 characters):
+
+```markdown
+---
+name: review-tests
+description: Review test coverage and suggest missing regression tests.
+---
+Read the changed code and its tests. Identify missing regression coverage.
+Consult references/checklist.md when needed.
+```
 
 ## MCP servers
 

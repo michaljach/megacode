@@ -1,4 +1,5 @@
 import { savedProviders } from "../adapters/auth/store.ts";
+import { runSkillsCommand } from "../adapters/skills.ts";
 import { mainRoot } from "../adapters/git/worktree.ts";
 import { PROVIDERS, providerInfo } from "../adapters/providers/catalog.ts";
 import { providerOf } from "../adapters/providers/credentials.ts";
@@ -43,6 +44,22 @@ export type Command = {
 };
 
 export const COMMANDS: Command[] = [
+  {
+    name: "/skills",
+    description: "List skills or install <local-directory|owner/repo|GitHub-URL> [--global]",
+    run(ctx, arg) {
+      if (ctx.running) return ctx.notice("Can't manage skills while a turn is running (esc to interrupt).", "warn");
+      // Preserve spaces in a source path; the only supported option is a trailing --global.
+      const match = /^install\s+(.+?)(\s+--global)?$/.exec(arg);
+      const source = match?.[1].replace(/^([\"'])(.*)\1$/, "$2");
+      const args = match ? ["install", source!, ...(match[2] ? ["--global"] : [])] : arg ? [arg] : [];
+      const cwd = process.cwd();
+      if (match) ctx.notice("Installing skills…");
+      runSkillsCommand(args, { cwd }).then(ctx.print, (error: unknown) =>
+        ctx.notice(error instanceof Error ? error.message : String(error), "error"),
+      );
+    },
+  },
   {
     name: "/model",
     description: "Switch model (or /model provider:model)",
