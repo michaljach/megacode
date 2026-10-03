@@ -6,6 +6,7 @@ import { mcp } from "../adapters/mcp/manager.ts";
 import { PROVIDER_INFO, providerInfo } from "../adapters/providers/catalog.ts";
 import { isConfigured, needsLogin, providerOf } from "../adapters/providers/credentials.ts";
 import { loadSettings, updateSettings } from "../adapters/settings.ts";
+import { autoUpdate } from "../adapters/update.ts";
 import type { Agent, NoticeLevel } from "../core/agent.ts";
 import type { Effort } from "../core/provider.ts";
 import { PERMISSION_MODES, type PermissionMode, type Settings } from "../core/settings.ts";
@@ -61,6 +62,15 @@ export function App({
   const [model, setModel] = useState(agent.model);
   const [history, setHistory] = useState(loadHistory);
   const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    void autoUpdate().then((version) => {
+      if (mounted) setUpdateVersion(version);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const push = (...add: Item[]) => setItems((prev) => [...prev, ...add]);
   const notice = (text: string, level: NoticeLevel = "info") => push({ kind: "notice", text, level });
@@ -313,6 +323,11 @@ export function App({
             usage={agent.usage}
             worktree={worktree?.name}
           />
+          {updateVersion && (
+            <Box paddingX={2}>
+              <Text dimColor>Reopen to install update · v{updateVersion}</Text>
+            </Box>
+          )}
           {showHelp && <Help />}
         </Box>
       )}
