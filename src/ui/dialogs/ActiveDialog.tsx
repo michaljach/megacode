@@ -3,12 +3,12 @@ import { loadSettings } from "../../adapters/settings.ts";
 import type { Effort } from "../../core/provider.ts";
 import type { PermissionMode, Settings } from "../../core/settings.ts";
 import type { Dialog } from "../commands.ts";
-import { ConfigMenu } from "./ConfigMenu.tsx";
+import { ConfigMenu } from "./config/ConfigMenu.tsx";
 import { EffortPicker } from "./EffortPicker.tsx";
 import { LoginDialog } from "./login/LoginDialog.tsx";
 import { LogoutDialog } from "./login/LogoutDialog.tsx";
 import { McpMenu } from "./mcp/McpMenu.tsx";
-import { ModelPicker } from "./ModelPicker.tsx";
+import { ModelPicker } from "./model/ModelPicker.tsx";
 import { ExitWorktreeDialog } from "./worktree/ExitWorktreeDialog.tsx";
 import { WorktreeMenu } from "./worktree/WorktreeMenu.tsx";
 

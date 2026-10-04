@@ -40,7 +40,8 @@ Rules that follow from it:
 - Tools return structured results. Display-only data (e.g. `ExecutionResult.change`, the `FileChange` behind a diff)
   never reaches the model; only the UI turns it into colors.
 - Keep logic out of React components. Flows and state machines live in plain `.ts` modules that are unit tested
-  (`ui/session.ts`, `ui/shortcuts.ts`, `ui/dialogs/login/loginFlow.ts`, `ui/prompt/editing.ts`, `ui/text/diff.ts`);
+  (`ui/session.ts`, `ui/shortcuts.ts`, `ui/dialogs/login/loginFlow.ts`, `ui/dialogs/model/modelRows.ts`,
+  `ui/prompt/editing.ts`, `ui/text/diff.ts`);
   components and hooks just bind them.
 - Never block the event loop: use async `fs/promises` and `execFile`, not the `*Sync` variants, in anything the TUI
   can reach (a slow git once froze the UI).

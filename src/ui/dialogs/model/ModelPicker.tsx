@@ -1,19 +1,11 @@
 import { Box, Text, useInput } from "ink";
 import { useEffect, useMemo, useState } from "react";
-import { PROVIDER_INFO } from "../../adapters/providers/catalog.ts";
-import { isConfigured } from "../../adapters/providers/credentials.ts";
-import { listModels } from "../../adapters/providers/registry.ts";
-import { Dialog } from "../components/Dialog.tsx";
-import { TextField } from "../components/TextField.tsx";
-
-type ListState = { status: "loading" } | { status: "ok"; models: string[] } | { status: "error"; error: string };
-
-type Row = {
-  provider: string;
-  label: string;
-  action: { type: "model"; spec: string } | { type: "login"; provider: string } | { type: "none" };
-  dim?: boolean;
-};
+import { PROVIDER_INFO } from "../../../adapters/providers/catalog.ts";
+import { isConfigured } from "../../../adapters/providers/credentials.ts";
+import { listModels } from "../../../adapters/providers/registry.ts";
+import { Dialog } from "../../components/Dialog.tsx";
+import { TextField } from "../../components/TextField.tsx";
+import { modelRows, type ListState } from "./modelRows.ts";
 
 const WINDOW = 12;
 
@@ -47,38 +39,7 @@ export function ModelPicker({
     }
   }, []);
 
-  const rows = useMemo(() => {
-    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    const matches = (s: string) => terms.every((t) => s.toLowerCase().includes(t));
-    const out: Row[] = [];
-    const note = (provider: string, label: string, action: Row["action"]) => out.push({ provider, label, action, dim: true });
-    const seen = new Set<string>();
-    for (const p of PROVIDER_INFO) {
-      const state = lists[p.name];
-      const login = { type: "login", provider: p.name } as const;
-      if (!isConfigured(p.name)) {
-        if (!p.local && !p.keyOptional && matches(`${p.name} ${p.label} login`)) note(p.name, "Log in to see models…", login);
-        continue;
-      }
-      if (!state || state.status === "loading") {
-        if (matches(p.name)) note(p.name, "loading…", { type: "none" });
-      } else if (state.status === "error") {
-        // Local servers that aren't running just don't show up.
-        if (!p.local && matches(p.name)) note(p.name, `couldn't list models: ${state.error}`, login);
-      } else {
-        for (const m of state.models) {
-          const spec = `${p.name}:${m}`;
-          seen.add(spec);
-          if (matches(spec)) out.push({ provider: p.name, label: m, action: { type: "model", spec } });
-        }
-      }
-    }
-    // Anything typed as provider:model can be used even if the provider doesn't list it.
-    const typed = query.trim();
-    if (/^[a-z]+:\S+$/.test(typed) && !seen.has(typed))
-      out.unshift({ provider: typed.split(":")[0]!, label: `use "${typed.slice(typed.indexOf(":") + 1)}"`, action: { type: "model", spec: typed } });
-    return out;
-  }, [lists, query]);
+  const rows = useMemo(() => modelRows({ query, providers: PROVIDER_INFO, lists, configured: isConfigured }), [lists, query]);
 
   // Start on the current model until the user moves; clamp when the list shrinks.
   useEffect(() => {

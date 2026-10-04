@@ -245,9 +245,9 @@ src/
       ActiveDialog.tsx    renders the dialog a command opened
       ApprovalDialog.tsx  tool permission prompt
       Questionnaire.tsx   ask_questions form
-      ModelPicker.tsx     searchable live model list
+      model/              ModelPicker (searchable live model list), modelRows.ts (filtering, login rows)
       EffortPicker.tsx    /effort menu
-      ConfigMenu.tsx      /config settings menu
+      config/             ConfigMenu (/config), entries.ts (each setting and its choices)
       login/              LoginDialog, LogoutDialog, useLogin (the flow), loginFlow.ts (steps, errors)
       mcp/                McpMenu, ServerList, ServerDetails, RemoveServer, AddServerWizard,
                           mcpWizard.ts (steps, validation), status.ts
