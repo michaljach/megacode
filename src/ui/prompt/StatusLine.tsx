@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 import type { ContextUsage } from "../../core/agent.ts";
 import type { PermissionMode } from "../../core/settings.ts";
-import { formatTokens, tildify } from "../text/format.ts";
+import { formatTokens, modelDisplay, tildify } from "../text/format.ts";
 
 const MODE_LABELS: Partial<Record<PermissionMode, { text: string; color: string }>> = {
   "accept-edits": { text: "⏵⏵ accept edits", color: "magenta" },
@@ -61,7 +61,7 @@ export function StatusLine({
       </Box>
       <Box flexShrink={1} minWidth={0}>
         <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"} wrap="truncate-end">
-          {model}
+          {modelDisplay(model)}
           {loggedIn ? "" : " · not logged in (/login)"}
           {worktree ? ` · ⎇ ${worktree}` : ""}
           {tokens ? ` · ${formatTokens(tokens)} tokens` : ""}

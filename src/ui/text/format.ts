@@ -38,6 +38,22 @@ export const tildify = (p: string) => p.replace(os.homedir(), "~");
 /** A token count as "950", "15.4k" or "128k". */
 export const formatTokens = (n: number) => (n < 1000 ? String(n) : `${Number((n / 1000).toFixed(1))}k`);
 
+/**
+ * The model spec shown in the status line and banner. Local servers (LM Studio, Ollama) report
+ * gguf file paths as model ids; reduce an absolute file path to its file name so the path stays
+ * off the row. Cloud ids, ollama tags (qwen3:8b), and OpenRouter's provider/model slugs
+ * (anthropic/claude-3-5-sonnet) contain colons or slashes but are not file paths, so they are
+ * left alone. The provider prefix is kept so the user can still retype the spec into /model.
+ */
+export function modelDisplay(spec: string): string {
+  const i = spec.indexOf(":");
+  if (i === -1) return spec;
+  const model = spec.slice(i + 1);
+  const isFilePath = model.startsWith("/") || /^[A-Za-z]:[\\/]/.test(model);
+  if (!isFilePath) return spec;
+  return `${spec.slice(0, i)}:${model.replace(/\\/g, "/").split("/").at(-1)}`;
+}
+
 /** Display-only prompt preview; queued/sent prompts and history retain the full text. */
 export function previewPrompt(text: string): string {
   const chars = Array.from(text.replace(/\r\n|[\r\n]/g, " ⏎ ").replace(/\t/g, " "));
