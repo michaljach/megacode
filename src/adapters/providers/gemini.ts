@@ -4,13 +4,21 @@ import { explicitEffort, type Effort, type Provider, type StopReason, type TurnR
 import { fallbackCallId, mergeTurns } from "./shared.ts";
 
 export class GeminiProvider implements Provider {
-  client: GoogleGenAI;
   filter: (id: string) => boolean;
+  readonly #apiKey?: string;
+  #client?: GoogleGenAI;
 
-  // Without a key the SDK reads $GEMINI_API_KEY / $GOOGLE_API_KEY.
   constructor(apiKey?: string, filter: (id: string) => boolean = () => true) {
-    this.client = new GoogleGenAI(apiKey ? { apiKey } : {});
+    this.#apiKey = apiKey;
     this.filter = filter;
+  }
+
+  /**
+   * Created on first use: without a key the SDK reads $GEMINI_API_KEY / $GOOGLE_API_KEY, and warns on the console
+   * when neither is set, which would land on top of the TUI before the user has logged in.
+   */
+  get client(): GoogleGenAI {
+    return (this.#client ??= new GoogleGenAI(this.#apiKey ? { apiKey: this.#apiKey } : {}));
   }
 
   async listModels(): Promise<string[]> {

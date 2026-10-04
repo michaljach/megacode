@@ -6,14 +6,20 @@ import { fallbackCallId, imageDataUrl, parseToolArguments } from "./shared.ts";
 // Chat Completions adapter: works for OpenAI and any OpenAI-compatible endpoint
 // (OpenRouter, Ollama, Groq, DeepSeek, LM Studio, vLLM, ...).
 export class OpenAIProvider implements Provider {
-  client: OpenAI;
   filter: (id: string) => boolean;
   /** Models that rejected reasoning_effort; it isn't sent to them again this session. */
   #noEffort = new Set<string>();
+  readonly #options: { apiKey?: string; baseURL?: string };
+  #client?: OpenAI;
 
   constructor(opts: { apiKey?: string; baseURL?: string; filter?: (id: string) => boolean } = {}) {
-    this.client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL });
+    this.#options = { apiKey: opts.apiKey, baseURL: opts.baseURL };
     this.filter = opts.filter ?? (() => true);
+  }
+
+  /** Created on first use: the SDK throws without a key, and a model can be picked before logging in. */
+  get client(): OpenAI {
+    return (this.#client ??= new OpenAI(this.#options));
   }
 
   async listModels(): Promise<string[]> {
