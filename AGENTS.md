@@ -201,4 +201,7 @@ verified (e.g. no credentials for a provider), say so explicitly.
   e.g. "141 tests pass; typecheck clean."
 - Releases are a separate commit, "Release vX.Y.Z", bumping `package.json` and `package-lock.json`.
   `prepublishOnly` runs tests, typecheck and build before `npm publish`.
+- Tag each release `vX.Y.Z` and publish a GitHub release whose description is the changelog since the previous
+  tag: user-facing changes grouped under "Added", "Changed", "Fixed" (and "Internal" for refactors, tests and
+  docs), then a "Full Changelog" compare link. No release goes out with only the generated link.
 - Never commit `dist/`, `.megacode/`, `.bench/`, `.env` files or credentials.
