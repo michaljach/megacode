@@ -38,8 +38,8 @@ async function megacode(t, server, args, { files = {}, settings } = {}) {
 }
 
 /** Starts a fake server and stops it when the test ends. */
-async function fakeModel(t, respond) {
-  const server = await startFakeOpenAI(respond);
+async function fakeModel(t, respond, options) {
+  const server = await startFakeOpenAI(respond, options);
   t.after(server.close);
   return server;
 }
@@ -104,4 +104,37 @@ test('rejected credentials end the run with an error', async (t) => {
   assert.equal(run.code, 1);
   assert.match(run.stderr, /401 Incorrect API key/);
   assert.equal(server.requests.length, 1); // 401s aren't retried
+});
+
+/** The summarizer's request, which carries the compaction prompt as its system message. */
+const isCompaction = (body) => body.messages[0].content.startsWith('You summarize a coding-agent conversation');
+
+test('a conversation too long for the model is compacted and the turn continues', async (t) => {
+  const size = (body) => JSON.stringify(body.messages).length;
+  const server = await fakeModel(t, (body, i) => {
+    if (isCompaction(body)) return { text: 'Printed a long line with bash; next: report done.' };
+    if (size(body) > 8_000)
+      return { status: 400, error: { message: "This model's maximum context length is 8192 tokens.", type: 'invalid_request_error', code: 'context_length_exceeded' } };
+    return i === 0 ? { toolCalls: [{ name: 'bash', args: { command: 'node -e "console.log(\'x\'.repeat(11000))"' } }] } : { text: 'done' };
+  });
+  const run = await megacode(t, server, ['print a long line'], { settings: { maxToolOutput: 30_000 } });
+
+  assert.equal(run.code, 0, run.stderr);
+  assert.match(run.stdout, /Compacting the conversation[\s\S]*Conversation compacted: 3 messages summarized\.[\s\S]*done/);
+  assert.deepEqual(server.requests.map((r) => (isCompaction(r) ? 'summary' : 'turn')), ['turn', 'turn', 'summary', 'turn']);
+  assert.match(lastMessage(server.requests[3]).content, /Printed a long line with bash[\s\S]*Continue the work/);
+});
+
+test('a history near the context window the server reports is compacted before the next request', async (t) => {
+  const server = await fakeModel(t, (body, i) => {
+    if (isCompaction(body)) return { text: 'Ran true.' };
+    return i === 0
+      ? { toolCalls: [{ name: 'bash', args: { command: 'true' } }], usage: { prompt_tokens: 900, completion_tokens: 10 } }
+      : { text: 'done' };
+  }, { contextLength: 1_000 });
+  const run = await megacode(t, server, ['run true']);
+
+  assert.equal(run.code, 0, run.stderr);
+  assert.match(run.stdout, /Conversation compacted[\s\S]*done/);
+  assert.deepEqual(server.requests.map((r) => (isCompaction(r) ? 'summary' : 'turn')), ['turn', 'summary', 'turn']);
 });

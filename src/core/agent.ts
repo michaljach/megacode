@@ -1,5 +1,6 @@
+import { COMPACT_AT, compactHistory } from "./compaction.ts";
 import { closeOpenToolCalls, dropImages, type Message, type ToolCall, type ToolMessage, type ToolResult } from "./conversation.ts";
-import type { ModelResolver, Provider, TurnRequest, TurnResult, Usage } from "./provider.ts";
+import { ContextOverflowError, type ModelResolver, type Provider, type TurnRequest, type TurnResult, type Usage } from "./provider.ts";
 import type { Settings } from "./settings.ts";
 import { canSuggest, suggestNextPrompt } from "./suggestion.ts";
 import type { ExecutionResult, ToolContext, ToolSource } from "./tools.ts";
@@ -37,6 +38,9 @@ export type AgentDeps = {
   settings: () => Pick<Settings, "maxSteps" | "effort">;
 };
 
+/** What one send works with: the resolved model, its context window, and how to reach the user. */
+type SendContext = { provider: Provider; model: string; contextWindow: number | null; signal: AbortSignal; ev: AgentEvents };
+
 const INTERRUPTED = "Interrupted by user.";
 const IMAGE_REJECTED = "Image not sent: the model rejected it.";
 
@@ -46,6 +50,8 @@ export class Agent {
   usage: Usage = { input: 0, output: 0 };
   readonly #deps: AgentDeps;
   #model: string;
+  /** Tokens in the last request plus its reply, roughly the history's size; null until a response reports usage. */
+  #contextTokens: number | null = null;
 
   constructor(model: string, deps: AgentDeps) {
     deps.resolveModel(model); // validate early
@@ -65,23 +71,28 @@ export class Agent {
   clear() {
     this.messages = [];
     this.usage = { input: 0, output: 0 };
+    this.#contextTokens = null;
   }
 
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
     // Pick up installed skills and project context between turns, never mid-turn.
     const system = await this.#deps.systemPrompt();
-    this.messages.push({ role: "user", text });
     const { provider, model } = this.#deps.resolveModel(this.#model);
     const { maxSteps, effort } = this.#deps.settings();
     const { tools } = this.#deps;
+    const ctx: SendContext = { provider, model, contextWindow: (await provider.contextWindow?.(model)) ?? null, signal, ev };
+    // Compacting before the new message keeps it verbatim.
+    if (this.#nearLimit(ctx)) await this.#compact(ctx, false);
+    this.messages.push({ role: "user", text });
 
     try {
       for (let step = 0; step < maxSteps; step++) {
+        if (step > 0 && this.#nearLimit(ctx)) await this.#compact(ctx, true);
         const started = performance.now();
         let firstTextMs: number | null = null;
         let res: TurnResult | undefined;
         try {
-          res = await this.#turn(provider, {
+          res = await this.#turn(ctx, {
             model,
             effort,
             system: [system, tools.instructions?.()].filter(Boolean).join("\n\n"),
@@ -92,7 +103,7 @@ export class Agent {
               if (text && firstTextMs === null) firstTextMs = performance.now() - started;
               ev.onText(text);
             },
-          }, ev);
+          });
         } finally {
           ev.onModelTiming?.({
             step: step + 1, durationMs: performance.now() - started, firstTextMs,
@@ -102,6 +113,7 @@ export class Agent {
           });
         }
         this.#addUsage(res.usage);
+        this.#contextTokens = res.usage ? res.usage.input + res.usage.output : null;
         this.messages.push(res.message);
         ev.onStepEnd();
         if (this.#endsTurn(res, ev)) return;
@@ -126,18 +138,43 @@ export class Agent {
   }
 
   /**
-   * Providers reject images they can't take: a model without vision, an unsupported file. Left in
-   * history, the image would fail every later request too, so on a 400 drop images and retry once.
-   * (A 400 for another reason just costs the images and one extra request before it surfaces.)
+   * One model request, retried once after fixing what a rejection points at. A history that no longer fits the context
+   * window is compacted. Providers reject images they can't take (a model without vision, an unsupported file); left in
+   * history, the image would fail every later request too, so on a 400 images are dropped. (A 400 for another reason
+   * just costs the images and one extra request before it surfaces.)
    */
-  async #turn(provider: Provider, req: TurnRequest, ev: AgentEvents): Promise<TurnResult> {
+  async #turn(ctx: SendContext, req: TurnRequest): Promise<TurnResult> {
     try {
-      return await provider.turn(req);
+      return await ctx.provider.turn(req);
     } catch (e) {
-      if (req.signal.aborted || (e as { status?: number }).status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
-      ev.onNotice("The model rejected an image, so it was removed from the conversation.", "warn");
-      return provider.turn({ ...req, messages: this.messages });
+      if (req.signal.aborted) throw e;
+      if (e instanceof ContextOverflowError) {
+        await this.#compact(ctx, true);
+        return ctx.provider.turn({ ...req, messages: this.messages }).catch((again: unknown) => {
+          if (!(again instanceof ContextOverflowError)) throw again;
+          throw new ContextOverflowError("The conversation is still too long for the model after compacting. Run /clear to start over.");
+        });
+      }
+      if ((e as { status?: number }).status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
+      ctx.ev.onNotice("The model rejected an image, so it was removed from the conversation.", "warn");
+      return ctx.provider.turn({ ...req, messages: this.messages });
     }
+  }
+
+  #nearLimit({ contextWindow }: SendContext): boolean {
+    return contextWindow !== null && this.#contextTokens !== null && this.#contextTokens >= contextWindow * COMPACT_AT;
+  }
+
+  /** Replaces the history with the model's summary of it. `continuing`: mid-turn, so the model carries on after. */
+  async #compact(ctx: SendContext, continuing: boolean) {
+    const count = this.messages.length;
+    ctx.ev.onNotice("Compacting the conversation to fit the model's context window…", "info");
+    const { model, contextWindow, signal } = ctx;
+    const { messages, usage } = await compactHistory(ctx.provider, { model, contextWindow, signal, messages: this.messages, continuing });
+    this.#addUsage(usage);
+    this.messages = messages;
+    this.#contextTokens = null;
+    ctx.ev.onNotice(`Conversation compacted: ${count} message${count === 1 ? "" : "s"} summarized.`, "info");
   }
 
   /** True when this response finishes the turn (reporting why, if it's unusual). */

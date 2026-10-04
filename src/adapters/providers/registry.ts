@@ -6,8 +6,12 @@ import { ChatGPTProvider } from "./chatgpt.ts";
 import { credentials, isConfigured, needsLogin, providerOf, type Credentials } from "./credentials.ts";
 import { GeminiProvider } from "./gemini.ts";
 import { OpenAIProvider } from "./openai.ts";
+import { withOverflowErrors } from "./shared.ts";
 
-export function createProvider(name: string, creds: Credentials = credentials(name)): Provider {
+export const createProvider = (name: string, creds: Credentials = credentials(name)): Provider =>
+  withOverflowErrors(adapterFor(name, creds));
+
+function adapterFor(name: string, creds: Credentials): Provider {
   const info = providerInfo(name);
   if (creds.source === "chatgpt") return new ChatGPTProvider();
   switch (info.adapter) {

@@ -23,6 +23,10 @@ export class AnthropicProvider implements Provider {
     return info;
   }
 
+  async contextWindow(model: string): Promise<number | null> {
+    return (await this.#modelInfo(model))?.max_input_tokens ?? null;
+  }
+
   async listModels(): Promise<string[]> {
     const ids: string[] = [];
     for await (const m of this.client.models.list()) ids.push(m.id);

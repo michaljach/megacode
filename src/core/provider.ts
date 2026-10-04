@@ -34,11 +34,16 @@ export type TurnResult = {
   responseModel?: string;
 };
 
+/** The conversation no longer fits the model's context window. Adapters throw it for their API's "too long" errors. */
+export class ContextOverflowError extends Error {}
+
 /** Port implemented by every model backend (Anthropic, OpenAI, Gemini, …). */
 export interface Provider {
   turn(req: TurnRequest): Promise<TurnResult>;
   /** Model ids available to the current credentials. */
   listModels(): Promise<string[]>;
+  /** The model's context window in tokens, or null when the API doesn't say. */
+  contextWindow?(model: string): Promise<number | null>;
 }
 
 /** Resolves a "provider:model" spec to a provider instance and the provider's model id. Throws if invalid. */

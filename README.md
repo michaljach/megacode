@@ -162,7 +162,16 @@ File reads default to 200 lines and a 12,000-character budget, with an exact con
 
 Long shell, search, listing and MCP results show the first and last halves of the "Max tool output" budget (12,000 characters by default, so 6,000 each; see `/config`). Full output is saved in a private `megacode-output-*` directory under the OS temporary directory, with a path the agent can read/search. Exit status stays visible, and a non-zero exit marks the result as an error. These logs may contain sensitive command output; remove them when no longer needed (they are not automatically deleted by megacode). Listings capped at 1,000 entries explicitly request a narrower glob.
 
-Conversation history, project instructions, and provider-native reasoning/signatures are retained; there is no lossy automatic history summarization. Existing provider prompt caching remains enabled where supported.
+Conversation history, project instructions, and provider-native reasoning/signatures are retained until the conversation nears the model's context window. Existing provider prompt caching remains enabled where supported.
+
+### Automatic compaction
+
+When the conversation no longer fits the model's context window, megacode compacts it: the model writes a summary of the conversation so far (requests, decisions, files and commands, errors, current state, next steps), the summary replaces the history, and the work continues. Two things trigger it:
+
+- **Before a request,** when the previous request used 80% of the model's context window. This needs the window size, which comes from the Anthropic and Gemini model APIs, the ChatGPT backend, and servers that report it in their model list (OpenRouter's `context_length`, vLLM's `max_model_len`). At the start of a turn it runs before your new message is added, so your message is sent word for word.
+- **When the provider rejects a request as too long** (any provider, including plain OpenAI keys, which don't publish window sizes): megacode compacts and retries that request once.
+
+The summary is written from a plain-text transcript that keeps the first message and as much of the latest history as fits (long text and tool output are shortened in the middle); if even that is too long for the model, it tries again with less. Compaction shows as two notices in the transcript, and its tokens count toward usage. Compaction loses detail: anything the summary leaves out is gone from the model's context (your terminal scrollback keeps everything). If the history still doesn't fit after compacting, the turn ends with an error; run `/clear` to start over.
 
 ## Layout
 
@@ -179,7 +188,9 @@ src/
     provider.ts       Provider port, turn request/result, effort, "provider:model" specs
     tools.ts          Tool and ToolSource ports, approvals, questionnaires
     settings.ts       settings, defaults, permission modes
-    prompts.ts        system prompt composition
+    prompts.ts        system prompt composition, compaction and suggestion prompts
+    compaction.ts     summarizing the history when it nears the context window
+    elide.ts          shortening long text in the middle
     suggestion.ts     next-prompt suggestions
   adapters/
     storage.ts        JSON files in the config folder (~/.megacode or $MEGACODE_CONFIG_DIR)

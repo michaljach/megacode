@@ -1,15 +1,25 @@
 import { randomUUID } from "node:crypto";
 import OpenAI from "openai";
 import type { Message, ToolCall } from "../../core/conversation.ts";
-import { explicitEffort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
+import {
+  ContextOverflowError,
+  explicitEffort,
+  type Provider,
+  type StopReason,
+  type TurnRequest,
+  type TurnResult,
+} from "../../core/provider.ts";
 import { CHATGPT_BASE_URL, chatGPTFetchHeaders, chatGPTHeaders, chatGPTTokens } from "../auth/chatgpt.ts";
-import { imageDataUrl, parseToolArguments } from "./shared.ts";
+import { imageDataUrl, parseToolArguments, saysTooLong } from "./shared.ts";
 
 const FALLBACK_MODELS = ["gpt-5", "gpt-5-codex"];
+
+type ListedModel = { id: string; contextWindow: number | null };
 
 /** OpenAI models through a ChatGPT subscription, via the Responses API. */
 export class ChatGPTProvider implements Provider {
   sessionId = randomUUID();
+  #models?: Promise<ListedModel[]>;
 
   async #client(forceRefresh = false) {
     const t = await chatGPTTokens(forceRefresh);
@@ -21,15 +31,32 @@ export class ChatGPTProvider implements Provider {
   }
 
   async listModels(): Promise<string[]> {
+    const ids = (await this.#listed()).map((m) => m.id);
+    return ids.length ? ids : FALLBACK_MODELS;
+  }
+
+  async contextWindow(model: string): Promise<number | null> {
+    return (await this.#listed()).find((m) => m.id === model)?.contextWindow ?? null;
+  }
+
+  /** The visible models and their context windows, fetched once; empty if the backend doesn't answer. */
+  #listed(): Promise<ListedModel[]> {
+    return (this.#models ??= this.#fetchModels());
+  }
+
+  async #fetchModels(): Promise<ListedModel[]> {
     const t = await chatGPTTokens();
     try {
       const res = await fetch(`${CHATGPT_BASE_URL}/models?client_version=1.0.0`, { headers: chatGPTFetchHeaders(t) });
       if (!res.ok) throw new Error(String(res.status));
-      const body = (await res.json()) as { models?: { slug?: string; id?: string; visibility?: string }[] };
-      const ids = (body.models ?? []).filter((m) => m.visibility !== "hide").map((m) => m.slug ?? m.id).filter((id) => id !== undefined);
-      return ids.length ? ids : FALLBACK_MODELS;
+      type Listed = { slug?: string; id?: string; visibility?: string; context_window?: number };
+      const body = (await res.json()) as { models?: Listed[] };
+      return (body.models ?? []).flatMap((m) => {
+        const id = m.slug ?? m.id;
+        return m.visibility === "hide" || !id ? [] : [{ id, contextWindow: m.context_window ?? null }];
+      });
     } catch {
-      return FALLBACK_MODELS;
+      return [];
     }
   }
 
@@ -80,8 +107,10 @@ export class ChatGPTProvider implements Provider {
             stop = ev.response.incomplete_details?.reason === "content_filter" ? "refusal" : "max_tokens";
           break;
         }
-        case "response.failed":
-          throw new Error(ev.response.error?.message ?? "Response failed");
+        case "response.failed": {
+          const message = ev.response.error?.message ?? "Response failed";
+          throw saysTooLong(message) ? new ContextOverflowError(message) : new Error(message);
+        }
         case "error":
           throw new Error(ev.message);
       }

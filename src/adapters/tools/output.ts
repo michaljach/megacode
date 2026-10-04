@@ -1,19 +1,12 @@
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { elideMiddle } from "../../core/elide.ts";
 import { loadSettings } from "../settings.ts";
 
 /** Character budgets are provider-neutral bounds, not token estimates. */
 export const OUTPUT_CHARS = 12_000;
 const READ_LINES = 200;
-
-/** Keep both setup/errors at the start and summaries/failures at the end. */
-export function elideMiddle(text: string, budget = OUTPUT_CHARS): string {
-  if (text.length <= budget) return text;
-  const head = Math.ceil(budget / 2);
-  const tail = Math.floor(budget / 2);
-  return `${text.slice(0, head)}\n... [${text.length - budget} chars omitted]\n${text.slice(-tail)}`;
-}
 
 /**
  * Fits output into the "Max tool output" budget (see /config), keeping both ends. The full text goes to a

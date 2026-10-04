@@ -7,6 +7,7 @@ export class GeminiProvider implements Provider {
   filter: (id: string) => boolean;
   readonly #apiKey?: string;
   #client?: GoogleGenAI;
+  #windows = new Map<string, Promise<number | null>>();
 
   constructor(apiKey?: string, filter: (id: string) => boolean = () => true) {
     this.#apiKey = apiKey;
@@ -19,6 +20,12 @@ export class GeminiProvider implements Provider {
    */
   get client(): GoogleGenAI {
     return (this.#client ??= new GoogleGenAI(this.#apiKey ? { apiKey: this.#apiKey } : {}));
+  }
+
+  contextWindow(model: string): Promise<number | null> {
+    let window = this.#windows.get(model);
+    if (!window) this.#windows.set(model, (window = this.client.models.get({ model }).then((m) => m.inputTokenLimit ?? null, () => null)));
+    return window;
   }
 
   async listModels(): Promise<string[]> {

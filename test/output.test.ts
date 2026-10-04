@@ -3,12 +3,13 @@ import { test } from "node:test";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { builtinTools } from "../src/adapters/tools/index.ts";
-import { elideMiddle, filePage, OUTPUT_CHARS } from "../src/adapters/tools/output.ts";
+import { elideMiddle } from "../src/core/elide.ts";
+import { filePage, OUTPUT_CHARS } from "../src/adapters/tools/output.ts";
 
 test("small outputs remain intact; long outputs retain both ends", () => {
-  assert.equal(elideMiddle("hello"), "hello");
+  assert.equal(elideMiddle("hello", OUTPUT_CHARS), "hello");
   const text = "start" + "x".repeat(30_000) + "failure at end";
-  const preview = elideMiddle(text);
+  const preview = elideMiddle(text, OUTPUT_CHARS);
   assert.ok(preview.startsWith("start"));
   assert.ok(preview.endsWith("failure at end"));
   assert.ok(preview.length < OUTPUT_CHARS + 100);

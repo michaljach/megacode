@@ -6,14 +6,16 @@ import { createServer } from "node:http";
  *   { text }                       a plain reply
  *   { toolCalls: [{ name, args }] } tool calls (args is an object)
  *   { status, error }              an HTTP error with an OpenAI-style error body
- * Every request body is recorded in `requests`.
+ * A reply may add `usage: { prompt_tokens, completion_tokens }`. `contextLength` is reported in the model list, as
+ * OpenRouter does. Every request body is recorded in `requests`.
  */
-export async function startFakeOpenAI(respond) {
+export async function startFakeOpenAI(respond, { contextLength } = {}) {
   const requests = [];
   const server = createServer((req, res) => {
     let raw = "";
     req.on("data", (d) => (raw += d)).on("end", () => {
-      if (req.url.endsWith("/models")) return res.end(JSON.stringify({ object: "list", data: [{ id: "fake", object: "model", created: 0 }] }));
+      if (req.url.endsWith("/models"))
+        return res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ object: "list", data: [{ id: "fake", object: "model", created: 0, context_length: contextLength }] }));
       const body = JSON.parse(raw);
       requests.push(body);
       const step = respond(body, requests.length - 1);
@@ -25,6 +27,7 @@ export async function startFakeOpenAI(respond) {
       const chunks = step.toolCalls
         ? [chunk({ tool_calls: step.toolCalls.map((c, index) => ({ index, id: `call_${requests.length}_${index}`, type: "function", function: { name: c.name, arguments: JSON.stringify(c.args) } })) }, "tool_calls")]
         : [chunk({ content: step.text }, "stop")];
+      if (step.usage) chunks.push({ ...chunk({}), choices: [], usage: { ...step.usage, total_tokens: step.usage.prompt_tokens + step.usage.completion_tokens } });
       res.writeHead(200, { "content-type": "text/event-stream" });
       for (const c of chunks) res.write(`data: ${JSON.stringify(c)}\n\n`);
       res.end("data: [DONE]\n\n");

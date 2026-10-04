@@ -53,7 +53,9 @@ Extension points:
 
 - Provider: implement `Provider` (`core/provider.ts`) in `src/adapters/providers/`, add it to `catalog.ts`, construct
   it in `registry.ts`. Prefer catalog data (`keyOptional`, `usesEndpoint`, …) over provider-name special cases.
-  Shared helpers (tool-argument parsing, call ids, data URLs, effort) live in `providers/shared.ts`.
+  Shared helpers (tool-argument parsing, call ids, data URLs, effort) live in `providers/shared.ts`. Implement
+  `contextWindow` when the API reports it, so compaction can run before the history overflows; a new wording of
+  "too long" goes in `saysTooLong` there, so the agent can compact and retry.
 - Built-in tool: a `Tool` object (name, description, JSON-schema `parameters`, `run`) registered in
   `adapters/tools/index.ts`. Arguments are validated against the schema before `run`. Side effects go through
   `ctx.approve`; respect `ctx.signal`. Large output goes through the budgets in `tools/output.ts`.

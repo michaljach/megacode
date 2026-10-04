@@ -11,6 +11,7 @@ export class OpenAIProvider implements Provider {
   #noEffort = new Set<string>();
   readonly #options: { apiKey?: string; baseURL?: string };
   #client?: OpenAI;
+  #windows?: Promise<Map<string, number>>;
 
   constructor(opts: { apiKey?: string; baseURL?: string; filter?: (id: string) => boolean } = {}) {
     this.#options = { apiKey: opts.apiKey, baseURL: opts.baseURL };
@@ -23,13 +24,27 @@ export class OpenAIProvider implements Provider {
   }
 
   async listModels(): Promise<string[]> {
-    const models: OpenAI.Model[] = [];
-    // No retries: an offline local server should just drop out of the picker quickly.
-    for await (const m of this.client.models.list({ maxRetries: 0, timeout: 10_000 })) models.push(m);
+    const models = await this.#fetchModels();
     return models
       .sort((a, b) => (b.created ?? 0) - (a.created ?? 0) || a.id.localeCompare(b.id))
       .map((m) => m.id)
       .filter(this.filter);
+  }
+
+  /** From the model list, when the server includes it there (OpenRouter, vLLM); plain OpenAI doesn't. Fetched once. */
+  async contextWindow(model: string): Promise<number | null> {
+    this.#windows ??= this.#fetchModels().then(
+      (models) => new Map(models.flatMap((m) => [[m.id, reportedWindow(m)] as const]).filter((e): e is [string, number] => e[1] !== null)),
+      () => new Map(),
+    );
+    return (await this.#windows).get(model) ?? null;
+  }
+
+  async #fetchModels(): Promise<OpenAI.Model[]> {
+    const models: OpenAI.Model[] = [];
+    // No retries: an offline local server should just drop out of the picker quickly.
+    for await (const m of this.client.models.list({ maxRetries: 0, timeout: 10_000 })) models.push(m);
+    return models;
   }
 
   #stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
@@ -85,6 +100,12 @@ export class OpenAIProvider implements Provider {
       .map((c, i) => ({ id: c.id || fallbackCallId(i), name: c.name, input: parseToolArguments(c.args) }));
     return { message: { role: "assistant", text, toolCalls }, stop: mapStop(finish, toolCalls.length > 0), usage };
   }
+}
+
+/** OpenRouter's context_length or vLLM's max_model_len, extra fields of a listed model. */
+function reportedWindow(m: object): number | null {
+  const value: unknown = Reflect.get(m, "context_length") ?? Reflect.get(m, "max_model_len");
+  return typeof value === "number" ? value : null;
 }
 
 const rejectsEffort = (e: unknown) =>
