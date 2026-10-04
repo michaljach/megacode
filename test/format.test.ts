@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { stripVTControlCharacters as plain } from "node:util";
-import { previewPrompt } from "../src/ui/text/format.ts";
+import { formatTokens, previewPrompt } from "../src/ui/text/format.ts";
 
 test("prompt previews preserve short text and flatten line breaks", () => {
   assert.equal(previewPrompt(""), "");
@@ -27,4 +27,8 @@ test("the transcript summarizes reads and edits; errors show as they are", async
   assert.equal(plain(describeChange({ file: "a", before: "", after: "one\n" })), "Added 1 line");
   assert.equal(plain(describeChange({ file: "a", before: "same", after: "same" })), "No changes");
   assert.equal(plain(displayOutput({ id: "3", name: "bash", input: {} }, { output: "built", isError: false })), "built");
+});
+
+test("token counts read as plain numbers, then thousands without a trailing .0", () => {
+  assert.deepEqual([950, 1000, 15_400, 131_072].map(formatTokens), ["950", "1k", "15.4k", "131.1k"]);
 });

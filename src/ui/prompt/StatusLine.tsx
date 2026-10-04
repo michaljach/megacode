@@ -1,13 +1,20 @@
 import { Box, Text } from "ink";
+import type { ContextUsage } from "../../core/agent.ts";
 import type { PermissionMode } from "../../core/settings.ts";
-import { tildify } from "../text/format.ts";
+import { formatTokens, tildify } from "../text/format.ts";
 
 const MODE_LABELS: Partial<Record<PermissionMode, { text: string; color: string }>> = {
   "accept-edits": { text: "⏵⏵ accept edits", color: "magenta" },
   ask: { text: "ask mode", color: "cyan" },
 };
 
-/** Row under the prompt: permission mode and cwd on the left; model, worktree and tokens on the right. */
+const contextLabel = ({ tokens, window }: ContextUsage) =>
+  window ? `${formatTokens(tokens)}/${formatTokens(window)} context (${Math.round((tokens / window) * 100)}%)` : `${formatTokens(tokens)} context`;
+
+/**
+ * Row under the prompt: permission mode and cwd on the left; model, worktree, tokens and, when turned on in /config,
+ * context use and output speed on the right.
+ */
 export function StatusLine({
   mode,
   model,
@@ -15,6 +22,8 @@ export function StatusLine({
   exitArmed,
   usage,
   worktree,
+  context,
+  speed,
 }: {
   mode: PermissionMode;
   model: string;
@@ -22,6 +31,9 @@ export function StatusLine({
   exitArmed: boolean;
   usage: { input: number; output: number };
   worktree?: string;
+  /** Left out when the setting is off; null until a response reports usage. */
+  context?: ContextUsage | null;
+  speed?: number | null;
 }) {
   // Give exit confirmation the whole row instead of competing with model/worktree metadata.
   if (exitArmed)
@@ -52,7 +64,9 @@ export function StatusLine({
           {model}
           {loggedIn ? "" : " · not logged in (/login)"}
           {worktree ? ` · ⎇ ${worktree}` : ""}
-          {tokens ? ` · ${tokens < 1000 ? tokens : `${(tokens / 1000).toFixed(1)}k`} tokens` : ""}
+          {tokens ? ` · ${formatTokens(tokens)} tokens` : ""}
+          {context ? ` · ${contextLabel(context)}` : ""}
+          {speed ? ` · ${speed.toFixed(1)} tok/s` : ""}
         </Text>
       </Box>
     </Box>

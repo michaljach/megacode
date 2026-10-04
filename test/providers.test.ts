@@ -61,6 +61,12 @@ test("context windows come from each API's model info; a failed lookup means unk
   await gemini.contextWindow("gemini-2.5-pro");
   assert.equal(lookups, 1, "looked up once per model");
 
+  const { OpenAIProvider } = await import("../src/adapters/providers/openai.ts");
+  const compatible = new OpenAIProvider({ apiKey: "test" });
+  const listed = [{ id: "openrouter", context_length: 64_000 }, { id: "vllm", max_model_len: 32_768 }, { id: "llama", meta: { n_ctx: 131_072 } }];
+  compatible.client.models.list = (() => listed.values()) as any;
+  assert.deepEqual(await Promise.all(listed.map((m) => compatible.contextWindow(m.id))), [64_000, 32_768, 131_072]);
+
   const failing = withOverflowErrors({ turn: async () => ({}) as any, listModels: async () => [], contextWindow: async () => { throw new Error("offline"); } });
   assert.equal(await failing.contextWindow!("m"), null);
   const silent = withOverflowErrors({ turn: async () => ({}) as any, listModels: async () => [] });

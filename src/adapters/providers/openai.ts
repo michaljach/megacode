@@ -102,9 +102,11 @@ export class OpenAIProvider implements Provider {
   }
 }
 
-/** OpenRouter's context_length or vLLM's max_model_len, extra fields of a listed model. */
+/** OpenRouter's context_length, vLLM's max_model_len or llama.cpp's meta.n_ctx, extra fields of a listed model. */
 function reportedWindow(m: object): number | null {
-  const value: unknown = Reflect.get(m, "context_length") ?? Reflect.get(m, "max_model_len");
+  const meta: unknown = Reflect.get(m, "meta");
+  const llamaCpp: unknown = typeof meta === "object" && meta !== null ? Reflect.get(meta, "n_ctx") : undefined;
+  const value: unknown = Reflect.get(m, "context_length") ?? Reflect.get(m, "max_model_len") ?? llamaCpp;
   return typeof value === "number" ? value : null;
 }
 

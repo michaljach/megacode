@@ -180,6 +180,14 @@ test('status line keeps the mode whole and gives up the path before the details'
   }
 });
 
+test('status line shows context use and speed only when given', () => {
+  const props = { mode: 'yolo', model: 'compat:bonsai', loggedIn: true, exitArmed: false, usage: { input: 12000, output: 3400 } };
+  const line = (extra) => view(createElement(StatusLine, { ...props, ...extra }), 140)[0];
+  assert.match(line({}), /compat:bonsai · 15\.4k tokens$/);
+  assert.match(line({ context: { tokens: 13100, window: 131072 }, speed: 82.84 }), / · 13\.1k\/131\.1k context \(10%\) · 82\.8 tok\/s$/);
+  assert.match(line({ context: { tokens: 950, window: null }, speed: null }), / · 15\.4k tokens · 950 context$/);
+});
+
 test('long options and help descriptions wrap under their own column', () => {
   const options = view(createElement(Select, { options: [{ label: 'No, and tell megacode what to do differently', value: 1 }], onSelect() {} }), 30);
   assert.ok(options.length > 1);
