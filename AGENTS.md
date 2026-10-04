@@ -40,7 +40,8 @@ Rules that follow from it:
 - Tools return structured results. Display-only data (e.g. `ExecutionResult.change`, the `FileChange` behind a diff)
   never reaches the model; only the UI turns it into colors.
 - Keep logic out of React components. Flows and state machines live in plain `.ts` modules that are unit tested
-  (`ui/session.ts`, `ui/loginFlow.ts`, `ui/mcpWizard.ts`, `ui/diff.ts`); components and hooks just bind them.
+  (`ui/session.ts`, `ui/shortcuts.ts`, `ui/dialogs/login/loginFlow.ts`, `ui/prompt/editing.ts`, `ui/text/diff.ts`);
+  components and hooks just bind them.
 - Never block the event loop: use async `fs/promises` and `execFile`, not the `*Sync` variants, in anything the TUI
   can reach (a slow git once froze the UI).
 - Everything megacode saves goes through `adapters/storage.ts` under the config folder (`~/.megacode` or
@@ -56,7 +57,8 @@ Extension points:
   `adapters/tools/index.ts`. Arguments are validated against the schema before `run`. Side effects go through
   `ctx.approve`; respect `ctx.signal`. Large output goes through the budgets in `tools/output.ts`.
 - Tool source: implement `ToolSource` (`core/tools.ts`) and combine it in `composition.ts` with `combineToolSources`.
-- Slash command: add it to the registry in `ui/commands.ts`; new dialogs use the shared `Dialog` frame.
+- Slash command: add it to the registry in `ui/commands.ts`; a new dialog goes in `ui/dialogs/`, uses the shared
+  `Dialog` frame, and gets a case in `ActiveDialog`.
 
 ## Code style
 
@@ -72,7 +74,7 @@ its place; nothing is there for show.
 - Pure logic, side effects at the edges. Compute data in plain functions, then do I/O or rendering with the
   result. Pure code is tested directly, without fakes.
 - DRY, with judgment. When logic shows up a second time, extract it into the module that owns the concept
-  (`providers/shared.ts`, `tools/output.ts`, `ui/format.ts`, `ui/Dialog.tsx`). Search for an existing helper
+  (`providers/shared.ts`, `tools/output.ts`, `ui/text/format.ts`, `ui/components/Dialog.tsx`). Search for an existing helper
   before writing one. Don't abstract a single use, and don't merge code that only looks alike.
 - Data over branches: tables and catalogs (`catalog.ts`, `DIFF_COLORS`, the command registry) instead of
   `if (name === "…")` chains and per-case special handling.
@@ -84,7 +86,10 @@ its place; nothing is there for show.
 - One concept per file, and the file name says which. Aim for under ~200 lines; past ~300, split by
   responsibility (logic into a `.ts` module, pieces into their own components).
 - Folders follow the layers first (`core/`, `adapters/`, `ui/`), then the area (`adapters/providers/`,
-  `adapters/tools/`, `ui/hooks/`). Give an area a folder once it has several files; a lone file stays flat.
+  `adapters/tools/`, `ui/dialogs/mcp/`). Give an area a folder once it has several files; a lone file stays flat.
+  In `ui/`: shared building blocks in `components/`, then one folder per screen area (`transcript/`, `prompt/`,
+  `dialogs/`, with a subfolder per multi-screen dialog), `hooks/` for app-level hooks, and `text/` for rendering
+  shared with plain output. A dialog's own hook or rules live next to it (`dialogs/login/useLogin.ts`).
 - No `utils.ts`, `helpers.ts` or `common/` dumping grounds. A helper lives with the concept it serves, or in
   `lib/` if it's truly generic (`withTimeout`).
 - No barrel files that only re-export; import from the module that defines the thing.
@@ -157,7 +162,7 @@ ESM, strict mode, run directly by tsx and compiled by `tsc`.
 
 ## UI conventions
 
-- Every dialog uses `ui/Dialog.tsx`: title · subtitle, body, dim key-hint footer ("… · esc cancel").
+- Every dialog uses `ui/components/Dialog.tsx`: title · subtitle, body, dim key-hint footer ("… · esc cancel").
 - Layouts must hold at narrow widths: check roughly 40–120 columns. Truncate or wrap under the column; never
   push the permission mode off the status line.
 - Wording is short and lowercase in hints, sentence case in messages; pluralize correctly ("1 line", "3 lines");

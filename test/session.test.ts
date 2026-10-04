@@ -4,7 +4,7 @@ import { stripVTControlCharacters as plain } from "node:util";
 import type { AgentEvents } from "../src/core/agent.ts";
 import type { PermissionMode } from "../src/core/settings.ts";
 import { AgentSession, type SessionAgent, type SessionHost } from "../src/ui/session.ts";
-import type { Item } from "../src/ui/Transcript.tsx";
+import type { Item } from "../src/ui/transcript/ItemView.tsx";
 
 type Send = (text: string, signal: AbortSignal, ev: AgentEvents) => Promise<void>;
 

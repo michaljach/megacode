@@ -4,10 +4,10 @@ import type { Agent, AgentEvents, NoticeLevel } from "../core/agent.ts";
 import type { ToolCall } from "../core/conversation.ts";
 import { autoApproved, EDIT_TOOLS, type PermissionMode } from "../core/settings.ts";
 import type { Answer, Approve, AskQuestions, Question } from "../core/tools.ts";
-import type { ApprovalChoice, PendingApproval } from "./ApprovalDialog.tsx";
-import { buildDiff } from "./diff.ts";
-import { displayOutput } from "./format.ts";
-import type { Item } from "./Transcript.tsx";
+import type { ApprovalChoice, PendingApproval } from "./dialogs/ApprovalDialog.tsx";
+import { buildDiff } from "./text/diff.ts";
+import { displayOutput } from "./text/format.ts";
+import type { Item } from "./transcript/ItemView.tsx";
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
 

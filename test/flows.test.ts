@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { providerInfo } from "../src/adapters/providers/catalog.ts";
-import { firstStep, friendlyError, stepAfterFailure, stepBack } from "../src/ui/loginFlow.ts";
-import { previousAddStep, serverNameError, targetError } from "../src/ui/mcpWizard.ts";
+import { firstStep, friendlyError, stepAfterFailure, stepBack } from "../src/ui/dialogs/login/loginFlow.ts";
+import { previousAddStep, serverNameError, targetError } from "../src/ui/dialogs/mcp/mcpWizard.ts";
 
 const openai = providerInfo("openai"); // ChatGPT sign-in or a key
 const groq = providerInfo("groq"); // key only

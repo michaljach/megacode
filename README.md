@@ -223,34 +223,39 @@ src/
   lib/plural.ts       "1 line", "3 lines"
   lib/cycle.ts        wrap-around list index
   ui/                 Ink (React) TUI and plain output
-    App.tsx           layout, dialogs, keyboard shortcuts, command context
+    App.tsx           layout and wiring: session, dialogs, prompt, command context
     commands.ts       slash command registry (name, description, handler)
     session.ts        AgentSession: turns, queue, interrupts, approvals, questionnaires (no React)
-    hooks/
-      useAgentSession.ts   React binding for AgentSession
-      useWorktree.ts       entering and leaving worktrees
-      useStreamedText.ts   streamed-text buffering
-      usePromptSuggestion.ts
-      useLoaded.ts         run a promise once on mount
+    shortcuts.ts      app-level keyboard shortcuts as data (ctrl+c, esc, ctrl+s, shift+tab, …)
     plain.ts          one-shot / piped output
-    Transcript.tsx    transcript items, streamed text, diff previews
-    PromptInput.tsx   multi-line editor, history, slash menu
-    StatusLine.tsx    mode, cwd, model, tokens
-    ApprovalDialog.tsx  tool permission prompt
-    ModelPicker.tsx   searchable live model list
-    LoginDialog.tsx   provider login / logout
-    loginFlow.ts      /login steps, back navigation, error messages
-    ConfigMenu.tsx    /config settings menu
-    EffortPicker.tsx  /effort menu
-    WorktreeMenu.tsx  /worktree menu, exit prompt
-    McpMenu.tsx       /mcp server list, add wizard, details
-    mcpWizard.ts      /mcp add wizard steps and validation
-    Questionnaire.tsx ask_questions form
-    Dialog.tsx        the frame every dialog uses
-    Select.tsx, TextField.tsx, KeyList.tsx, Spinner.tsx, Help.tsx   small building blocks
-    diff.ts           diff model: rows, word-level changes, plain-text rendering
-    DiffLines.tsx     diff rows in the TUI
-    format.ts         Markdown rendering, tool labels, previews
+    hooks/
+      useAgentSession.ts     React binding for AgentSession
+      useTranscript.ts       finished transcript items, notices, /clear
+      useSettingsActions.ts  model, effort, settings and login/logout changes
+      useStreamedText.ts     streamed-text buffering
+      usePromptSuggestion.ts next-prompt suggestions
+      useWorktree.ts         entering and leaving worktrees
+      useLoaded.ts           run a promise once on mount
+    components/       Dialog (the frame every dialog uses), Select, TextField, KeyList, Spinner, Waiting
+    transcript/       ItemView (one finished entry), ToolResult, AssistantText, RunningTool, CallHeader,
+                      TranscriptRow, DiffLines
+    prompt/           PromptArea (input, status line, help), PromptInput, PromptText, StatusLine,
+                      QueuedMessages, Help; editing.ts (cursor moves), history.ts, autocomplete.ts
+    dialogs/
+      ActiveDialog.tsx    renders the dialog a command opened
+      ApprovalDialog.tsx  tool permission prompt
+      Questionnaire.tsx   ask_questions form
+      ModelPicker.tsx     searchable live model list
+      EffortPicker.tsx    /effort menu
+      ConfigMenu.tsx      /config settings menu
+      login/              LoginDialog, LogoutDialog, useLogin (the flow), loginFlow.ts (steps, errors)
+      mcp/                McpMenu, ServerList, ServerDetails, RemoveServer, AddServerWizard,
+                          mcpWizard.ts (steps, validation), status.ts
+      worktree/           WorktreeMenu, ExitWorktreeDialog
+    text/             shared by the TUI and plain output
+      diff.ts         diff model: rows, word-level changes, plain-text rendering
+      markdown.ts     Markdown → ANSI, safe flush points for streamed text
+      format.ts       tool labels, previews, change summaries
 test/                 node:test suites (npm test); e2e.test.mjs runs the CLI against a fake model server
 bench/
   run.ts, tasks.ts     task runner, fixtures, and independent grading

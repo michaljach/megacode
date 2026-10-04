@@ -1,9 +1,9 @@
 import { savedProviders } from "../adapters/auth/store.ts";
-import { runSkillsCommand } from "../adapters/skills.ts";
 import { mainRoot } from "../adapters/git/worktree.ts";
 import { PROVIDERS, providerInfo } from "../adapters/providers/catalog.ts";
 import { providerOf } from "../adapters/providers/credentials.ts";
 import { providerUsage } from "../adapters/providers/usage.ts";
+import { runSkillsCommand } from "../adapters/skills.ts";
 import type { NoticeLevel } from "../core/agent.ts";
 import { EFFORTS, type Effort } from "../core/provider.ts";
 

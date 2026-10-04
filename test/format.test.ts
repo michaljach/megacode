@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { stripVTControlCharacters as plain } from "node:util";
-import { previewPrompt } from "../src/ui/format.ts";
+import { previewPrompt } from "../src/ui/text/format.ts";
 
 test("prompt previews preserve short text and flatten line breaks", () => {
   assert.equal(previewPrompt(""), "");
@@ -17,7 +17,7 @@ test("long prompt previews are capped with an ellipsis", () => {
 });
 
 test("the transcript summarizes reads and edits; errors show as they are", async () => {
-  const { displayOutput, describeChange } = await import("../src/ui/format.ts");
+  const { displayOutput, describeChange } = await import("../src/ui/text/format.ts");
   const read = { id: "1", name: "read_file", input: { path: "a" } };
   assert.equal(plain(displayOutput(read, { output: "1\talpha\n2\tbeta", isError: false })), "Read 2 lines");
   assert.equal(plain(displayOutput(read, { output: "1\ta\n[1450 lines total; continue with offset=2]", isError: false })), "Read 1 of 1,450 lines");

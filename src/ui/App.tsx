@@ -1,37 +1,31 @@
-import { Box, Static, Text, useApp, useInput } from "ink";
+import { Box, Static, useApp, useInput } from "ink";
 import { useEffect, useState } from "react";
-import { logout as removeLogin } from "../adapters/accounts.ts";
 import type { Worktree } from "../adapters/git/worktree.ts";
 import { mcp } from "../adapters/mcp/manager.ts";
 import { PROVIDER_INFO, providerInfo } from "../adapters/providers/catalog.ts";
 import { isConfigured, needsLogin, providerOf } from "../adapters/providers/credentials.ts";
-import { loadSettings, updateSettings } from "../adapters/settings.ts";
 import { autoUpdate } from "../adapters/update.ts";
-import type { Agent, NoticeLevel } from "../core/agent.ts";
-import type { Effort } from "../core/provider.ts";
-import { PERMISSION_MODES, type PermissionMode, type Settings } from "../core/settings.ts";
-import { ApprovalDialog } from "./ApprovalDialog.tsx";
-import { busyMessage, COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
-import { ConfigMenu } from "./ConfigMenu.tsx";
-import { EffortPicker } from "./EffortPicker.tsx";
+import type { Agent } from "../core/agent.ts";
+import { PERMISSION_MODES, type PermissionMode } from "../core/settings.ts";
 import { cycle } from "../lib/cycle.ts";
-import { plural } from "../lib/plural.ts";
-import { previewPrompt } from "./format.ts";
-import { Help } from "./Help.tsx";
-import { loadHistory, saveHistory } from "./history.ts";
+import { busyMessage, COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
+import { Spinner } from "./components/Spinner.tsx";
+import { ActiveDialog, type DialogActions } from "./dialogs/ActiveDialog.tsx";
+import { ApprovalDialog } from "./dialogs/ApprovalDialog.tsx";
+import { Questionnaire } from "./dialogs/Questionnaire.tsx";
 import { useAgentSession } from "./hooks/useAgentSession.ts";
 import { useLoaded } from "./hooks/useLoaded.ts";
 import { usePromptSuggestion } from "./hooks/usePromptSuggestion.ts";
+import { useSettingsActions } from "./hooks/useSettingsActions.ts";
+import { useTranscript } from "./hooks/useTranscript.ts";
 import { useWorktree } from "./hooks/useWorktree.ts";
-import { LoginDialog, LogoutDialog } from "./LoginDialog.tsx";
-import { McpMenu } from "./McpMenu.tsx";
-import { ModelPicker } from "./ModelPicker.tsx";
-import { PromptInput } from "./PromptInput.tsx";
-import { Questionnaire } from "./Questionnaire.tsx";
-import { Spinner } from "./Spinner.tsx";
-import { StatusLine } from "./StatusLine.tsx";
-import { AssistantText, ItemView, RunningTool, type Item } from "./Transcript.tsx";
-import { ExitWorktreeDialog, WorktreeMenu } from "./WorktreeMenu.tsx";
+import { usePromptHistory } from "./prompt/history.ts";
+import { PromptArea } from "./prompt/PromptArea.tsx";
+import { QueuedMessages } from "./prompt/QueuedMessages.tsx";
+import { globalShortcut } from "./shortcuts.ts";
+import { AssistantText } from "./transcript/AssistantText.tsx";
+import { ItemView } from "./transcript/ItemView.tsx";
+import { RunningTool } from "./transcript/RunningTool.tsx";
 
 export function App({
   agent,
@@ -50,8 +44,8 @@ export function App({
   onExitMessage?: (message: string) => void;
 }) {
   const { exit } = useApp();
-  const [items, setItems] = useState<Item[]>([{ kind: "banner" }]);
-  const [epoch, setEpoch] = useState(0); // bump to remount <Static> after /clear
+  const transcript = useTranscript();
+  const { push, notice } = transcript;
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
     PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name)) ? null : { type: "login", welcome: true },
@@ -60,13 +54,9 @@ export function App({
   const [mode, setMode] = useState(initialMode);
   const [value, setValue] = useState("");
   const [exitArmed, setExitArmed] = useState(false);
-  const [model, setModel] = useState(agent.model);
-  const [history, setHistory] = useState(loadHistory);
-  const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
+  const { history, remember } = usePromptHistory();
   const updateVersion = useLoaded(autoUpdate);
 
-  const push = (...add: Item[]) => setItems((prev) => [...prev, ...add]);
-  const notice = (text: string, level: NoticeLevel = "info") => push({ kind: "notice", text, level });
   const closeDialog = () => setDialog(null);
   /** Puts text back in the input, ahead of anything typed since. */
   const restoreInput = (text: string) => setValue((current) => (current.trim() ? `${text}\n${current}` : text));
@@ -86,12 +76,14 @@ export function App({
     onAllowEdits: () => setMode("accept-edits"),
     restoreInput,
   });
+  const settings = useSettingsActions(agent, { notice, setDialog, setMode });
+  const { model, autocomplete, selectModel, selectEffort, logout } = settings;
   const { worktree, enter, leave } = useWorktree(initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {
     enabled: autocomplete,
     running: session.running,
     completedTurn: session.completedTurns,
-    epoch,
+    epoch: transcript.epoch,
     model,
   });
 
@@ -110,50 +102,9 @@ export function App({
   };
   const switchWorktree = (name?: string) => whenIdle("switch worktrees", () => enter(name));
 
-  function selectModel(spec: string) {
-    setDialog(null);
-    try {
-      agent.setModel(spec);
-    } catch (e) {
-      return notice((e as Error).message, "error");
-    }
-    setModel(spec);
-    updateSettings({ model: spec });
-    const provider = providerOf(spec);
-    if (isConfigured(provider)) return notice(`Model set to ${spec}`);
-    notice(`Model set to ${spec}. Log in to ${providerInfo(provider).label} to use it.`, "warn");
-    setDialog({ type: "login", provider });
-  }
-
-  function selectEffort(effort: Effort) {
-    setDialog(null);
-    updateSettings({ effort });
-    notice(`Model effort set to ${effort}. Applies to the next turn; support depends on the model.`);
-  }
-
-  function changeSettings(patch: Partial<Settings>) {
-    updateSettings(patch);
-    if (patch.promptAutocomplete !== undefined) setAutocomplete(patch.promptAutocomplete);
-    if (patch.permissionMode) setMode(patch.permissionMode);
-  }
-
-  function loggedIn(provider: string, count: number) {
-    notice(`✔ Logged in to ${providerInfo(provider).label} · ${plural(count, "model")} available`);
-    // Show that provider's models so picking one is the next step.
-    setDialog({ type: "model", query: `${provider}:` });
-  }
-
-  function logout(provider: string) {
-    setDialog(null);
-    const { ok, message } = removeLogin(provider);
-    notice(message, ok ? "info" : "warn");
-  }
-
   function clear() {
     agent.clear();
-    process.stdout.write("\x1b[2J\x1b[3J\x1b[H");
-    setItems([{ kind: "banner" }]);
-    setEpoch((e) => e + 1);
+    transcript.reset();
   }
 
   // Leaving a worktree asks whether to keep it, like Claude Code.
@@ -172,7 +123,7 @@ export function App({
     model,
     running: session.running,
     notice,
-    print: (text) => push({ kind: "notice", text, level: "info", bright: true }),
+    print: transcript.print,
     open: setDialog,
     showHelp: () => setShowHelp(true),
     clear,
@@ -188,9 +139,7 @@ export function App({
     if (!trimmed) return;
     setValue("");
     setShowHelp(false);
-    const nextHistory = [...history.filter((h) => h !== trimmed), trimmed];
-    setHistory(nextHistory);
-    saveHistory(nextHistory);
+    remember(trimmed);
     if (isCommand(trimmed)) runCommand(trimmed, commands);
     else session.submit(trimmed);
   }
@@ -207,32 +156,46 @@ export function App({
   const blocking = !!(session.approval || session.questionnaire);
   const dialogOpen = dialog !== null;
 
-  // Global shortcuts.
+  const dialogActions: DialogActions = {
+    open: setDialog,
+    close: closeDialog,
+    selectModel,
+    selectEffort,
+    changeSettings: settings.changeSettings,
+    loggedIn: settings.loggedIn,
+    logout,
+    enterWorktree: switchWorktree,
+    leaveWorktree: (remove) => whenIdle("leave the worktree", () => leave(remove)),
+    exitWorktree,
+  };
+
   useInput((input, key) => {
-    if (key.ctrl && input === "c") {
-      if (session.running) return session.interrupt();
-      if (dialogOpen) return setDialog(null);
-      if (value) return setValue("");
-      if (exitArmed) return quit();
-      setExitArmed(true);
-      setTimeout(() => setExitArmed(false), 1500);
-      return;
+    const shortcut = globalShortcut(input, key, { running: session.running, dialogOpen, blocking, hasInput: !!value, exitArmed });
+    switch (shortcut?.type) {
+      case "interrupt":
+        return session.interrupt();
+      case "close-dialog":
+        return closeDialog();
+      case "clear-input":
+        setShowHelp(false);
+        return setValue("");
+      case "arm-exit":
+        setExitArmed(true);
+        return setTimeout(() => setExitArmed(false), 1500);
+      case "quit":
+        return quit();
+      case "send-queue":
+        return sendQueuedNow();
+      case "send-queued":
+        return session.sendQueued(shortcut.index);
+      case "cycle-mode":
+        return setMode((m) => PERMISSION_MODES[cycle(PERMISSION_MODES.indexOf(m), 1, PERMISSION_MODES.length)]!);
     }
-    if (key.ctrl && input === "d" && !value && !session.running) return quit();
-    if (blocking || dialogOpen) return; // those dialogs handle their own keys
-    if (key.ctrl && input === "s") return sendQueuedNow();
-    if (key.ctrl && /^[1-9]$/.test(input)) return session.sendQueued(Number(input) - 1);
-    if (key.escape) {
-      if (session.running) return session.interrupt();
-      setShowHelp(false);
-      return setValue("");
-    }
-    if (key.shift && key.tab) setMode((m) => PERMISSION_MODES[cycle(PERMISSION_MODES.indexOf(m), 1, PERMISSION_MODES.length)]!);
   });
 
   return (
     <Box flexDirection="column">
-      <Static key={epoch} items={items} style={{ width: "100%" }}>
+      <Static key={transcript.epoch} items={transcript.items} style={{ width: "100%" }}>
         {(item, i) => <ItemView key={i} item={item} model={model} />}
       </Static>
 
@@ -246,83 +209,30 @@ export function App({
 
       {session.approval && <ApprovalDialog request={session.approval} onAnswer={session.answerApproval} />}
 
-      {dialog?.type === "model" && (
-        <ModelPicker
-          current={model}
-          initialQuery={dialog.query}
-          onSelect={selectModel}
-          onLogin={(provider) => setDialog({ type: "login", provider })}
-          onCancel={closeDialog}
-        />
-      )}
-      {dialog?.type === "login" && (
-        <LoginDialog initialProvider={dialog.provider} welcome={dialog.welcome} onDone={loggedIn} onCancel={closeDialog} />
-      )}
-      {dialog?.type === "logout" && <LogoutDialog onSelect={logout} onCancel={closeDialog} />}
-      {dialog?.type === "effort" && <EffortPicker current={loadSettings().effort} onSelect={selectEffort} onCancel={closeDialog} />}
-      {dialog?.type === "config" && (
-        <ConfigMenu model={model} mode={mode} onChange={changeSettings} onModel={() => setDialog({ type: "model" })} onClose={closeDialog} />
-      )}
-      {dialog?.type === "worktree" && (
-        <WorktreeMenu
-          current={worktree}
-          onCreate={switchWorktree}
-          onOpen={(wt) => switchWorktree(wt.name)}
-          onLeave={(remove) => whenIdle("leave the worktree", () => leave(remove))}
-          onCancel={closeDialog}
-        />
-      )}
-      {dialog?.type === "mcp" && <McpMenu onClose={closeDialog} />}
-      {dialog?.type === "exit-worktree" && worktree && (
-        <ExitWorktreeDialog worktree={worktree} onSelect={exitWorktree} onCancel={closeDialog} />
-      )}
+      {dialog && <ActiveDialog dialog={dialog} model={model} mode={mode} worktree={worktree} actions={dialogActions} />}
 
       {session.running && !blocking && <Spinner verb={session.verb} />}
 
-      {session.queued.length > 0 && (
-        <Box flexDirection="column" marginTop={1} paddingX={2} backgroundColor="#262626">
-          {session.queued.map((q, i) => (
-            <Text key={i} dimColor wrap="wrap">
-              {"⏳ "}
-              {previewPrompt(q)}
-              {i < 9 && ` (ctrl+${i + 1} to send now)`}
-            </Text>
-          ))}
-        </Box>
-      )}
+      <QueuedMessages queued={session.queued} />
 
       {!dialogOpen && !blocking && (
-        <Box marginTop={1} flexDirection="column">
-          <PromptInput
-            value={value}
-            onChange={(v) => {
-              setValue(v);
-              setShowHelp(false);
-            }}
-            onSubmit={submit}
-            onHelp={() => setShowHelp((s) => !s)}
-            isActive
-            history={history}
-            autocomplete={autocomplete && !session.running}
-            suggestion={suggestion}
-            commands={COMMANDS}
-            placeholder={session.running ? "queue another message…" : "tiny moon vibes"}
-          />
-          <StatusLine
-            mode={mode}
-            model={model}
-            loggedIn={!needsLogin(model)}
-            exitArmed={exitArmed}
-            usage={agent.usage}
-            worktree={worktree?.name}
-          />
-          {updateVersion && (
-            <Box paddingX={2}>
-              <Text dimColor>Reopen to install update · v{updateVersion}</Text>
-            </Box>
-          )}
-          {showHelp && <Help />}
-        </Box>
+        <PromptArea
+          value={value}
+          onChange={(v) => {
+            setValue(v);
+            setShowHelp(false);
+          }}
+          onSubmit={submit}
+          onToggleHelp={() => setShowHelp((s) => !s)}
+          showHelp={showHelp}
+          history={history}
+          commands={COMMANDS}
+          suggestion={suggestion}
+          autocomplete={autocomplete}
+          running={session.running}
+          status={{ mode, model, loggedIn: !needsLogin(model), exitArmed, usage: agent.usage, worktree: worktree?.name }}
+          updateVersion={updateVersion}
+        />
       )}
     </Box>
   );

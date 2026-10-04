@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { lastSafeBreak } from "../format.ts";
+import { lastSafeBreak } from "../text/markdown.ts";
 
 /**
  * Buffers streamed assistant text. Finished paragraphs go to `commit` (into <Static>) so the

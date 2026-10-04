@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { stripVTControlCharacters as plain } from "node:util";
-import { lastSafeBreak, renderMarkdown } from "../src/ui/format.ts";
+import { lastSafeBreak, renderMarkdown } from "../src/ui/text/markdown.ts";
 
 test("Markdown highlights whole fences, including unfinished and tilde fences", () => {
   assert.equal(plain(renderMarkdown('Before\n```ts\nconst x = 1;\n```\nAfter')), "Before\n  const x = 1;\nAfter");

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { stripVTControlCharacters as plain } from "node:util";
 import chalk from "chalk";
-import { buildDiff, diffToAnsi, gutter, pieces, type LineRow } from "../src/ui/diff.ts";
+import { buildDiff, diffToAnsi, gutter, pieces, type LineRow } from "../src/ui/text/diff.ts";
 
 // Layouts here were measured from Claude Code 2.1.288's own rendering of the same edits.
 

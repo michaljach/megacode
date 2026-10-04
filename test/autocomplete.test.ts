@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { promptCompletion } from "../src/ui/autocomplete.ts";
+import { promptCompletion } from "../src/ui/prompt/autocomplete.ts";
 
 test("contextual suggestions display on an empty prompt and complete matching prefixes", () => {
   assert.equal(promptCompletion("", 0, "Run the tests", true), "Run the tests");

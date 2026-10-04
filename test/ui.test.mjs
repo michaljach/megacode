@@ -6,11 +6,11 @@ import { test } from 'node:test';
 import { stripVTControlCharacters } from 'node:util';
 import { createElement } from 'react';
 import { Box, Static, Text, renderToString } from 'ink';
-import { ItemView } from '../src/ui/Transcript.tsx';
-import { previewPrompt } from '../src/ui/format.ts';
-import { buildDiff } from '../src/ui/diff.ts';
-import { PromptInput } from '../src/ui/PromptInput.tsx';
-import { Questionnaire } from '../src/ui/Questionnaire.tsx';
+import { ItemView } from '../src/ui/transcript/ItemView.tsx';
+import { previewPrompt } from '../src/ui/text/format.ts';
+import { buildDiff } from '../src/ui/text/diff.ts';
+import { PromptInput } from '../src/ui/prompt/PromptInput.tsx';
+import { Questionnaire } from '../src/ui/dialogs/Questionnaire.tsx';
 
 test('questionnaire renders choices, custom answers, and progress', () => {
   const view = (questions) => stripVTControlCharacters(renderToString(createElement(Questionnaire, {
@@ -153,10 +153,10 @@ for (const columns of [20, 40, 60, 80]) {
   });
 }
 
-const { StatusLine } = await import('../src/ui/StatusLine.tsx');
-const { Select } = await import('../src/ui/Select.tsx');
-const { Help } = await import('../src/ui/Help.tsx');
-const { Dialog } = await import('../src/ui/Dialog.tsx');
+const { StatusLine } = await import('../src/ui/prompt/StatusLine.tsx');
+const { Select } = await import('../src/ui/components/Select.tsx');
+const { Help } = await import('../src/ui/prompt/Help.tsx');
+const { Dialog } = await import('../src/ui/components/Dialog.tsx');
 // Trailing spaces are trimmed: with color on, colored bands keep their padding.
 const view = (element, columns) => stripVTControlCharacters(renderToString(element, { columns })).split('\n').map((line) => line.trimEnd()).filter(Boolean);
 
@@ -200,7 +200,7 @@ test('dialogs share one layout: title, blank line, body, blank line, key hints',
   assert.deepEqual(inside.map((line) => line.replace(/^│ ?|\s*│$/g, '')), ['Title · context', '', 'Body', '', 'esc close']);
 });
 
-const { ApprovalDialog } = await import('../src/ui/ApprovalDialog.tsx');
+const { ApprovalDialog } = await import('../src/ui/dialogs/ApprovalDialog.tsx');
 
 test('file changes are approved in Claude Code layout: title, path, the diff between dashed rules', () => {
   const approval = (change) => view(createElement(ApprovalDialog, { request: { tool: 'edit_file', title: 'Edit', change, resolve() {} }, onAnswer() {} }), 60);
