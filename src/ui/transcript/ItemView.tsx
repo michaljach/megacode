@@ -2,7 +2,7 @@ import { Box, Text } from "ink";
 import type { NoticeLevel } from "../../core/agent.ts";
 import type { ToolCall } from "../../core/conversation.ts";
 import type { DiffModel } from "../text/diff.ts";
-import { previewPrompt, tildify } from "../text/format.ts";
+import { modelDisplay, previewPrompt, tildify } from "../text/format.ts";
 import { AssistantText } from "./AssistantText.tsx";
 import { ToolResult } from "./ToolResult.tsx";
 import { TranscriptRow } from "./TranscriptRow.tsx";
@@ -27,7 +27,7 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
           </Text>
           <Text dimColor>/help for commands · ? for shortcuts</Text>
           <Text dimColor>
-            model: {model}
+            model: {modelDisplay(model)}
             {"\n"}cwd: {tildify(process.cwd())}
           </Text>
         </Box>
