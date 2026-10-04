@@ -9,7 +9,7 @@ export class OpenAIProvider implements Provider {
   client: OpenAI;
   filter?: (id: string) => boolean;
   /** Models that rejected reasoning_effort; it isn't sent to them again this session. */
-  private noEffort = new Set<string>();
+  #noEffort = new Set<string>();
 
   constructor(opts: { apiKey?: string; baseURL?: string; filter?: (id: string) => boolean } = {}) {
     this.client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL });
@@ -26,7 +26,7 @@ export class OpenAIProvider implements Provider {
       .filter((id) => !this.filter || this.filter(id));
   }
 
-  private stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
+  #stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
     return this.client.chat.completions.create(
       {
         model: req.model,
@@ -41,15 +41,15 @@ export class OpenAIProvider implements Provider {
   }
 
   async turn(req: TurnRequest): Promise<TurnResult> {
-    const effort = this.noEffort.has(req.model) ? undefined : explicitEffort(req.effort);
+    const effort = this.#noEffort.has(req.model) ? undefined : explicitEffort(req.effort);
     let stream;
     try {
-      stream = await this.stream(req, effort);
+      stream = await this.#stream(req, effort);
     } catch (e) {
       // Models without reasoning (and some compatible servers) reject the parameter instead of ignoring it.
       if (!effort || !rejectsEffort(e)) throw e;
-      this.noEffort.add(req.model);
-      stream = await this.stream(req, undefined);
+      this.#noEffort.add(req.model);
+      stream = await this.#stream(req, undefined);
     }
 
     let text = "";

@@ -32,7 +32,8 @@ export type AgentEvents = Pick<ToolContext, "approve" | "askQuestions"> & {
 export type AgentDeps = {
   resolveModel: ModelResolver;
   tools: ToolSource;
-  systemPrompt: () => string;
+  /** Rebuilt at the start of every send, so new skills, settings and the working directory apply to the next turn. */
+  systemPrompt: () => Promise<string>;
   settings: () => Pick<Settings, "maxSteps" | "effort">;
 };
 
@@ -45,13 +46,11 @@ export class Agent {
   usage: Usage = { input: 0, output: 0 };
   readonly #deps: AgentDeps;
   #model: string;
-  #system: string;
 
   constructor(model: string, deps: AgentDeps) {
     deps.resolveModel(model); // validate early
     this.#deps = deps;
     this.#model = model;
-    this.#system = deps.systemPrompt();
   }
 
   get model() {
@@ -63,11 +62,6 @@ export class Agent {
     this.#model = spec;
   }
 
-  /** Rebuild the system prompt, e.g. after the working directory or project-instructions setting changes. */
-  reloadSystemPrompt() {
-    this.#system = this.#deps.systemPrompt();
-  }
-
   clear() {
     this.messages = [];
     this.usage = { input: 0, output: 0 };
@@ -75,7 +69,7 @@ export class Agent {
 
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
     // Pick up installed skills and project context between turns, never mid-turn.
-    this.reloadSystemPrompt();
+    const system = await this.#deps.systemPrompt();
     this.messages.push({ role: "user", text });
     const { provider, model } = this.#deps.resolveModel(this.#model);
     const { maxSteps, effort } = this.#deps.settings();
@@ -90,7 +84,7 @@ export class Agent {
           res = await this.#turn(provider, {
             model,
             effort,
-            system: [this.#system, tools.instructions?.()].filter(Boolean).join("\n\n"),
+            system: [system, tools.instructions?.()].filter(Boolean).join("\n\n"),
             messages: this.messages,
             tools: tools.specs(),
             signal,

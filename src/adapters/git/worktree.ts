@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
 import { mkdir, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { pathExists } from "../../lib/fs.ts";
 import { loadSettings } from "../settings.ts";
 
 /** A git worktree megacode manages: <repo>/.megacode/worktrees/<name>, on branch worktree-<name>. */
@@ -42,8 +42,8 @@ const worktree = (root: string, name: string): Worktree => ({
 export async function listWorktrees(cwd = process.cwd()): Promise<Worktree[]> {
   const root = await mainRoot(cwd);
   const dir = worktreesDir(root);
-  if (!existsSync(dir)) return [];
-  const real = await realpath(dir);
+  const real = await realpath(dir).catch(() => null);
+  if (!real) return [];
   return (await git(root, "worktree", "list", "--porcelain"))
     .split("\n")
     .filter((l) => l.startsWith("worktree "))
@@ -56,10 +56,10 @@ const ADJECTIVES = ["brisk", "calm", "clever", "eager", "gentle", "happy", "keen
 const NOUNS = ["badger", "comet", "falcon", "harbor", "lantern", "maple", "otter", "pebble", "river", "sparrow", "tiger", "willow"];
 const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]!;
 
-function randomName(root: string): string {
+async function randomName(root: string): Promise<string> {
   for (;;) {
     const name = `${pick(ADJECTIVES)}-${pick(NOUNS)}-${Math.floor(Math.random() * 1000)}`;
-    if (!existsSync(worktree(root, name).path)) return name;
+    if (!(await pathExists(worktree(root, name).path))) return name;
   }
 }
 
@@ -76,14 +76,14 @@ export async function openWorktree(name?: string, cwd = process.cwd()): Promise<
   const root = await mainRoot(cwd);
   if (name !== undefined && !WORKTREE_NAME.test(name))
     throw new Error(`Invalid worktree name "${name}": use letters, digits, - and _ (max 64).`);
-  const wt = worktree(root, name ?? randomName(root));
+  const wt = worktree(root, name ?? (await randomName(root)));
   if ((await listWorktrees(root)).some((w) => w.name === wt.name)) return { ...wt, created: false };
-  if (existsSync(wt.path)) throw new Error(`${wt.path} exists but isn't a git worktree; remove it or pick another name.`);
+  if (await pathExists(wt.path)) throw new Error(`${wt.path} exists but isn't a git worktree; remove it or pick another name.`);
 
   // Keep worktrees out of the main checkout's `git status`.
   await mkdir(worktreesDir(root), { recursive: true });
   const ignore = path.join(worktreesDir(root), ".gitignore");
-  if (!existsSync(ignore)) await writeFile(ignore, "*\n");
+  if (!(await pathExists(ignore))) await writeFile(ignore, "*\n");
 
   // Reuse a branch left behind by an earlier worktree of the same name rather than resetting it.
   const branchExists = await tryGit(root, "rev-parse", "--verify", "--quiet", `refs/heads/${wt.branch}`);

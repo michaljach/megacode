@@ -9,17 +9,17 @@ export function pkce() {
   return { verifier, challenge: b64url(createHash("sha256").update(verifier).digest()), state: b64url(randomBytes(16)) };
 }
 
+/** The command that opens a URL. $BROWSER is the usual override (and lets headless setups print or handle the URL). */
+function browserCommand(url: string): [command: string, args: string[]] {
+  if (process.env.BROWSER) return [process.env.BROWSER, [url]];
+  if (process.platform === "darwin") return ["open", [url]];
+  if (process.platform === "win32") return ["cmd", ["/c", "start", '""', url.replace(/&/g, "^&")]];
+  return ["xdg-open", [url]];
+}
+
 export function openBrowser(url: string) {
-  // $BROWSER is the usual override (and lets headless setups print or handle the URL).
-  const [cmd, args] = process.env.BROWSER
-    ? [process.env.BROWSER, [url]]
-    : process.platform === "darwin"
-      ? ["open", [url]]
-      : process.platform === "win32"
-        ? ["cmd", ["/c", "start", '""', url.replace(/&/g, "^&")]]
-        : ["xdg-open", [url]];
   try {
-    spawn(cmd, args as string[], { stdio: "ignore", detached: true }).on("error", () => {}).unref();
+    spawn(...browserCommand(url), { stdio: "ignore", detached: true }).on("error", () => {}).unref();
   } catch {
     // the URL is also shown in the UI, so the user can open it by hand
   }

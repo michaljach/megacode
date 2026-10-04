@@ -8,17 +8,17 @@ const MAX_OUTPUT = 64_000;
 export class AnthropicProvider implements Provider {
   client: Anthropic;
   /** Model limits and capabilities from the Models API, fetched once per model. Null if unavailable. */
-  private models = new Map<string, Promise<Anthropic.ModelInfo | null>>();
+  #models = new Map<string, Promise<Anthropic.ModelInfo | null>>();
 
   // Without a key the SDK falls back to $ANTHROPIC_API_KEY or an `ant auth login` profile.
   constructor(apiKey?: string) {
     this.client = new Anthropic(apiKey ? { apiKey } : {});
   }
 
-  private modelInfo(model: string): Promise<Anthropic.ModelInfo | null> {
-    let info = this.models.get(model);
+  #modelInfo(model: string): Promise<Anthropic.ModelInfo | null> {
+    let info = this.#models.get(model);
     // Without the lookup (e.g. a proxy that lacks the endpoint) fall back to the defaults.
-    if (!info) this.models.set(model, (info = this.client.models.retrieve(model).catch(() => null)));
+    if (!info) this.#models.set(model, (info = this.client.models.retrieve(model).catch(() => null)));
     return info;
   }
 
@@ -29,7 +29,7 @@ export class AnthropicProvider implements Provider {
   }
 
   async turn(req: TurnRequest): Promise<TurnResult> {
-    const info = await this.modelInfo(req.model);
+    const info = await this.#modelInfo(req.model);
     const effort = supportedEffort(explicitEffort(req.effort), info);
     const stream = this.client.messages.stream(
       {

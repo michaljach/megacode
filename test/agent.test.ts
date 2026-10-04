@@ -33,7 +33,7 @@ function agentWith(provider: Provider, deps: Partial<AgentDeps> = {}) {
   return new Agent("fake:model", {
     resolveModel: () => ({ provider, model: "model" }),
     tools: echoTools,
-    systemPrompt: () => "SYSTEM",
+    systemPrompt: async () => "SYSTEM",
     settings: () => ({ maxSteps: 5 }),
     ...deps,
   });
@@ -79,7 +79,7 @@ test("runs tool calls until the model stops, keeping display-only data out of hi
 test("refreshes installed skill context between turns", async () => {
   const { provider, requests } = scripted([{}, {}]);
   let context = "No skills";
-  const agent = agentWith(provider, { systemPrompt: () => context });
+  const agent = agentWith(provider, { systemPrompt: async () => context });
   const { events } = recorder();
   await agent.send("hello", new AbortController().signal, events);
   context = "New skill installed";

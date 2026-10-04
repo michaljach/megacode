@@ -219,6 +219,7 @@ src/
       results.ts      tool results as text
     git/worktree.ts   git worktree create / list / status / remove
   lib/async.ts        withTimeout
+  lib/fs.ts           pathExists, the async existsSync
   ui/                 Ink (React) TUI and plain output
     App.tsx           layout, dialogs, keyboard shortcuts, command context
     commands.ts       slash command registry (name, description, handler)

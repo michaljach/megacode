@@ -1,9 +1,10 @@
 import { execFile } from "node:child_process";
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { cp, lstat, mkdir, mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { parse } from "yaml";
+import { pathExists } from "../lib/fs.ts";
 import { configDir } from "./storage.ts";
 
 export type Skill = { name: string; description: string; file: string };
@@ -12,11 +13,11 @@ const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ignored = new Set([".git", "node_modules", ".megacode"]);
 const exec = promisify(execFile);
 
-function readSkill(directory: string): Skill {
+async function readSkill(directory: string): Promise<Skill> {
   const file = path.join(directory, "SKILL.md");
-  const stat = lstatSync(file);
+  const stat = await lstat(file);
   if (!stat.isFile() || stat.size > 128 * 1024) throw new Error(`Invalid or oversized SKILL.md: ${file}`);
-  const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+  const text = (await readFile(file, "utf8")).replace(/^\uFEFF/, "");
   const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(text);
   if (!match) throw new Error(`Missing YAML frontmatter: ${file}`);
   const metadata = parse(match[1], { maxAliasCount: 0 });
@@ -33,16 +34,16 @@ function roots({ cwd = process.cwd(), home }: SkillOptions) {
 }
 
 /** Project skills override global skills with the same name. Broken skills don't prevent startup. */
-export function discoverSkills(options: SkillOptions = {}): { skills: Skill[]; warnings: string[] } {
+export async function discoverSkills(options: SkillOptions = {}): Promise<{ skills: Skill[]; warnings: string[] }> {
   const skills = new Map<string, Skill>();
   const warnings: string[] = [];
   for (const root of roots(options)) {
-    if (!existsSync(root)) continue;
+    if (!(await pathExists(root))) continue;
     try {
-      for (const entry of readdirSync(root, { withFileTypes: true })) {
+      for (const entry of await readdir(root, { withFileTypes: true })) {
         if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
         try {
-          const skill = readSkill(path.join(root, entry.name));
+          const skill = await readSkill(path.join(root, entry.name));
           skills.set(skill.name, skill);
         } catch (error) { warnings.push(String(error)); }
       }
@@ -59,73 +60,73 @@ function githubUrl(source: string): string {
   return `https://github.com/${match[1]}/${match[2]}.git`;
 }
 
-function findSkills(directory: string): string[] {
+async function findSkills(directory: string): Promise<string[]> {
   const found: string[] = [];
   let visited = 0;
-  function walk(dir: string, depth: number) {
+  async function walk(dir: string, depth: number) {
     if (++visited > 10000 || depth > 20) throw new Error("Skill source is too large or deeply nested.");
-    if (!lstatSync(dir).isDirectory()) throw new Error(`Expected a real directory: ${dir}`);
-    if (existsSync(path.join(dir, "SKILL.md"))) { found.push(dir); return; }
-    for (const entry of readdirSync(dir, { withFileTypes: true }))
-      if (entry.isDirectory() && !ignored.has(entry.name)) walk(path.join(dir, entry.name), depth + 1);
+    if (!(await lstat(dir)).isDirectory()) throw new Error(`Expected a real directory: ${dir}`);
+    if (await pathExists(path.join(dir, "SKILL.md"))) { found.push(dir); return; }
+    for (const entry of await readdir(dir, { withFileTypes: true }))
+      if (entry.isDirectory() && !ignored.has(entry.name)) await walk(path.join(dir, entry.name), depth + 1);
   }
-  walk(directory, 0);
+  await walk(directory, 0);
   if (!found.length) throw new Error("No SKILL.md files found in the source.");
   return found;
 }
 
-function validateTree(directory: string) {
+async function validateTree(directory: string) {
   let bytes = 0;
   let files = 0;
-  function walk(file: string, depth: number) {
-    const stat = lstatSync(file);
+  async function walk(file: string, depth: number) {
+    const stat = await lstat(file);
     if (++files > 10000 || depth > 30 || (bytes += stat.size) > 50 * 1024 * 1024)
       throw new Error("Skill exceeds installation limits (50 MiB / 10000 entries / 30 levels).");
     if (stat.isDirectory()) {
-      for (const name of readdirSync(file)) if (!ignored.has(name)) walk(path.join(file, name), depth + 1);
+      for (const name of await readdir(file)) if (!ignored.has(name)) await walk(path.join(file, name), depth + 1);
     } else if (!stat.isFile()) throw new Error(`Symlinks and special files are not supported: ${file}`);
   }
-  walk(directory, 0);
+  await walk(directory, 0);
 }
 
 export async function installSkills(source: string, options: SkillOptions & { global?: boolean } = {}): Promise<Skill[]> {
   let temporary: string | undefined;
   try {
     let directory = path.resolve(source);
-    if (!existsSync(directory)) {
+    if (!(await pathExists(directory))) {
       const url = githubUrl(source);
-      temporary = mkdtempSync(path.join(os.tmpdir(), "megacode-skills-"));
+      temporary = await mkdtemp(path.join(os.tmpdir(), "megacode-skills-"));
       directory = path.join(temporary, "repo");
       await exec("git", ["-c", "core.hooksPath=/dev/null", "clone", "--depth", "1", "--", url, directory], {
         timeout: 120000, maxBuffer: 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
       });
     }
-    const sources = findSkills(directory);
-    const skills = sources.map(readSkill);
+    const sources = await findSkills(directory);
+    const skills = await Promise.all(sources.map(readSkill));
     const root = roots(options)[options.global ? 0 : 1];
     const names = new Set<string>();
     for (const [i, skill] of skills.entries()) {
       if (names.has(skill.name)) throw new Error(`Duplicate skill name: ${skill.name}`);
       names.add(skill.name);
-      if (existsSync(path.join(root, skill.name))) throw new Error(`Skill already installed: ${skill.name}. Remove its directory before reinstalling.`);
-      validateTree(sources[i]);
+      if (await pathExists(path.join(root, skill.name))) throw new Error(`Skill already installed: ${skill.name}. Remove its directory before reinstalling.`);
+      await validateTree(sources[i]);
     }
-    mkdirSync(root, { recursive: true });
+    await mkdir(root, { recursive: true });
     const created: string[] = [];
     try {
       for (const [i, skill] of skills.entries()) {
         const target = path.join(root, skill.name);
-        mkdirSync(target); // Exclusive reservation: never overwrite another installation.
+        await mkdir(target); // Exclusive reservation: never overwrite another installation.
         created.push(target);
-        cpSync(sources[i], target, { recursive: true, filter: (file) => !ignored.has(path.basename(file)) });
+        await cp(sources[i], target, { recursive: true, filter: (file) => !ignored.has(path.basename(file)) });
       }
     } catch (error) {
-      for (const target of created) rmSync(target, { recursive: true, force: true });
+      for (const target of created) await rm(target, { recursive: true, force: true });
       throw error;
     }
     return skills.map((skill) => ({ ...skill, file: path.join(root, skill.name, "SKILL.md") }));
   } finally {
-    if (temporary) rmSync(temporary, { recursive: true, force: true });
+    if (temporary) await rm(temporary, { recursive: true, force: true });
   }
 }
 
@@ -134,7 +135,7 @@ export const SKILLS_HELP = "Usage: skills [list | install <local-directory|owner
 /** Shared by the standalone CLI and /skills. */
 export async function runSkillsCommand(args: string[], options: SkillOptions = {}): Promise<string> {
   if (!args.length || (args.length === 1 && args[0] === "list")) {
-    const { skills, warnings } = discoverSkills(options);
+    const { skills, warnings } = await discoverSkills(options);
     return [skills.length ? skills.map((s) => `${s.name}: ${s.description}\n  ${s.file}`).join("\n") : "No skills installed.", ...warnings, SKILLS_HELP].join("\n");
   }
   if (args[0] !== "install") throw new Error(SKILLS_HELP);

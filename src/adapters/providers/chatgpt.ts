@@ -11,7 +11,7 @@ const FALLBACK_MODELS = ["gpt-5", "gpt-5-codex"];
 export class ChatGPTProvider implements Provider {
   sessionId = randomUUID();
 
-  private async client(forceRefresh = false) {
+  async #client(forceRefresh = false) {
     const t = await chatGPTTokens(forceRefresh);
     return new OpenAI({
       apiKey: t.access,
@@ -51,10 +51,10 @@ export class ChatGPTProvider implements Provider {
     };
     let stream;
     try {
-      stream = await (await this.client()).responses.create(params, { signal: req.signal });
+      stream = await (await this.#client()).responses.create(params, { signal: req.signal });
     } catch (e) {
       if ((e as { status?: number }).status !== 401) throw e;
-      stream = await (await this.client(true)).responses.create(params, { signal: req.signal }); // token revoked early
+      stream = await (await this.#client(true)).responses.create(params, { signal: req.signal }); // token revoked early
     }
 
     let text = "";

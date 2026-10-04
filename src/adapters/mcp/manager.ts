@@ -28,70 +28,71 @@ type Connection = { client: Client; stderr: () => string };
 
 /** Connections to the servers in ~/.megacode/mcp.json, offered to the agent as a ToolSource. */
 export class McpManager implements ToolSource {
-  private status = new Map<string, McpStatus>();
-  private connections = new Map<string, Connection>();
-  private generation = new Map<string, number>(); // ignore events from superseded connections
-  private listeners = new Set<() => void>();
+  #status = new Map<string, McpStatus>();
+  #connections = new Map<string, Connection>();
+  #generation = new Map<string, number>(); // ignore events from superseded connections
+  #listeners = new Set<() => void>();
 
   /** Re-render hook for the UI. Returns an unsubscribe function. */
   subscribe(listener: () => void) {
-    this.listeners.add(listener);
-    return () => void this.listeners.delete(listener);
+    this.#listeners.add(listener);
+    return () => void this.#listeners.delete(listener);
   }
 
-  private set(name: string, status: McpStatus | null) {
-    if (status) this.status.set(name, status);
-    else this.status.delete(name);
-    for (const l of this.listeners) l();
+  #set(name: string, status: McpStatus | null) {
+    if (status) this.#status.set(name, status);
+    else this.#status.delete(name);
+    for (const l of this.#listeners) l();
   }
 
   servers(): McpServer[] {
     return Object.entries(loadServers()).map(([name, config]) => ({
       name,
       config,
-      status: config.disabled ? { state: "disabled" } : (this.status.get(name) ?? { state: "connecting" }),
+      status: config.disabled ? { state: "disabled" } : (this.#status.get(name) ?? { state: "connecting" }),
     }));
   }
 
-  /** Connects every enabled server. Resolves once each has connected or failed. */
-  start() {
-    return Promise.all(this.servers().filter((s) => !s.config.disabled).map((s) => this.connect(s.name)));
+  /** Connects every enabled server. Resolves once each has connected or failed, with a message per failure. */
+  async start(): Promise<string[]> {
+    await Promise.all(this.servers().filter((s) => !s.config.disabled).map((s) => this.connect(s.name)));
+    return this.servers().flatMap((s) => (s.status.state === "failed" ? [`MCP server ${s.name} failed to connect: ${s.status.error}`] : []));
   }
 
   async connect(name: string): Promise<McpStatus> {
     const config = loadServers()[name];
-    await this.disconnect(name);
+    await this.#disconnect(name);
     if (!config) return { state: "failed", error: "not configured" };
     if (config.disabled) return { state: "disabled" };
-    const gen = this.bumpGeneration(name);
-    const current = () => this.generation.get(name) === gen;
-    this.set(name, { state: "connecting" });
+    const gen = this.#bumpGeneration(name);
+    const current = () => this.#generation.get(name) === gen;
+    this.#set(name, { state: "connecting" });
 
     const { transport, stderr } = createTransport(config);
     const conn: Connection = { client: new Client({ name: "megacode", version: "1.0.0" }), stderr };
-    this.connections.set(name, conn);
+    this.#connections.set(name, conn);
     try {
       await withTimeout(
-        conn.client.connect(transport).then(() => this.refreshTools(name, conn, gen)),
+        conn.client.connect(transport).then(() => this.#refreshTools(name, conn, gen)),
         CONNECT_TIMEOUT,
         "timed out connecting",
       );
-      conn.client.setNotificationHandler(ToolListChangedNotificationSchema, () => this.refreshTools(name, conn, gen).catch(() => {}));
+      conn.client.setNotificationHandler(ToolListChangedNotificationSchema, () => this.#refreshTools(name, conn, gen).catch(() => {}));
       conn.client.onclose = () => {
         if (!current()) return;
-        this.connections.delete(name);
-        this.set(name, { state: "failed", error: lastLine(stderr()) || "connection closed" });
+        this.#connections.delete(name);
+        this.#set(name, { state: "failed", error: lastLine(stderr()) || "connection closed" });
       };
     } catch (e) {
       if (current()) {
-        await this.disconnect(name);
-        this.set(name, { state: "failed", error: [(e as Error).message, lastLine(stderr())].filter(Boolean).join(" · ") });
+        await this.#disconnect(name);
+        this.#set(name, { state: "failed", error: [(e as Error).message, lastLine(stderr())].filter(Boolean).join(" · ") });
       }
     }
-    return this.status.get(name)!;
+    return this.#status.get(name)!;
   }
 
-  private async refreshTools(name: string, conn: Connection, gen: number) {
+  async #refreshTools(name: string, conn: Connection, gen: number) {
     const tools: McpTool[] = [];
     let cursor: string | undefined;
     do {
@@ -106,19 +107,19 @@ export class McpManager implements ToolSource {
         });
       cursor = page.nextCursor;
     } while (cursor);
-    if (this.generation.get(name) === gen) this.set(name, { state: "connected", tools, instructions: conn.client.getInstructions() });
+    if (this.#generation.get(name) === gen) this.#set(name, { state: "connected", tools, instructions: conn.client.getInstructions() });
   }
 
-  private bumpGeneration(name: string) {
-    const gen = (this.generation.get(name) ?? 0) + 1;
-    this.generation.set(name, gen);
+  #bumpGeneration(name: string) {
+    const gen = (this.#generation.get(name) ?? 0) + 1;
+    this.#generation.set(name, gen);
     return gen;
   }
 
-  private async disconnect(name: string) {
-    const conn = this.connections.get(name);
-    this.connections.delete(name);
-    this.bumpGeneration(name);
+  async #disconnect(name: string) {
+    const conn = this.#connections.get(name);
+    this.#connections.delete(name);
+    this.#bumpGeneration(name);
     await conn?.client.close().catch(() => {});
   }
 
@@ -130,8 +131,8 @@ export class McpManager implements ToolSource {
   async remove(name: string) {
     const { [name]: _, ...rest } = loadServers();
     saveServers(rest);
-    await this.disconnect(name);
-    this.set(name, null);
+    await this.#disconnect(name);
+    this.#set(name, null);
   }
 
   async setEnabled(name: string, enabled: boolean) {
@@ -140,38 +141,38 @@ export class McpManager implements ToolSource {
     const { disabled: _, ...config } = servers[name];
     saveServers({ ...servers, [name]: enabled ? config : { ...config, disabled: true } });
     if (enabled) return void (await this.connect(name));
-    await this.disconnect(name);
-    this.set(name, { state: "disabled" });
+    await this.#disconnect(name);
+    this.#set(name, { state: "disabled" });
   }
 
   closeAll() {
-    return Promise.all([...this.connections.keys()].map((n) => this.disconnect(n)));
+    return Promise.all([...this.#connections.keys()].map((n) => this.#disconnect(n)));
   }
 
-  private connectedTools(): McpTool[] {
-    return [...this.status.values()].flatMap((s) => (s.state === "connected" ? s.tools : []));
+  #connectedTools(): McpTool[] {
+    return [...this.#status.values()].flatMap((s) => (s.state === "connected" ? s.tools : []));
   }
 
   // ToolSource
 
   specs(): ToolSpec[] {
-    return this.connectedTools().map(({ name, description, parameters }) => ({ name, description, parameters }));
+    return this.#connectedTools().map(({ name, description, parameters }) => ({ name, description, parameters }));
   }
 
   has(name: string) {
-    return this.connectedTools().some((t) => t.name === name);
+    return this.#connectedTools().some((t) => t.name === name);
   }
 
   /** Server instructions for the system prompt. */
   instructions(): string {
-    return [...this.status.entries()]
+    return [...this.#status.entries()]
       .flatMap(([name, s]) => (s.state === "connected" && s.instructions ? [`Instructions from the ${name} MCP server:\n${s.instructions}`] : []))
       .join("\n\n");
   }
 
   async execute(call: ToolCall, { approve, signal }: ToolContext): Promise<ExecutionResult> {
-    const tool = this.connectedTools().find((t) => t.name === call.name);
-    const conn = tool && this.connections.get(tool.server);
+    const tool = this.#connectedTools().find((t) => t.name === call.name);
+    const conn = tool && this.#connections.get(tool.server);
     if (!tool || !conn) return { output: `MCP tool ${call.name} is no longer available.`, isError: true };
     const args = call.input ?? {};
     const body = Object.keys(args).length ? JSON.stringify(args, null, 2) : "(no arguments)";

@@ -11,7 +11,7 @@ import type { Agent, NoticeLevel } from "../core/agent.ts";
 import type { Effort } from "../core/provider.ts";
 import { PERMISSION_MODES, type PermissionMode, type Settings } from "../core/settings.ts";
 import { ApprovalDialog } from "./ApprovalDialog.tsx";
-import { COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
+import { busyMessage, COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
 import { EffortPicker } from "./EffortPicker.tsx";
 import { plural, previewPrompt } from "./format.ts";
@@ -30,8 +30,6 @@ import { Spinner } from "./Spinner.tsx";
 import { StatusLine } from "./StatusLine.tsx";
 import { AssistantText, ItemView, RunningTool, type Item } from "./Transcript.tsx";
 import { ExitWorktreeDialog, WorktreeMenu } from "./WorktreeMenu.tsx";
-
-const BUSY = "while a turn is running (esc to interrupt)";
 
 export function App({
   agent,
@@ -86,7 +84,7 @@ export function App({
     onAllowEdits: () => setMode("accept-edits"),
     restoreInput,
   });
-  const { worktree, enter, leave } = useWorktree(agent, initialWorktree, home);
+  const { worktree, enter, leave } = useWorktree(initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {
     enabled: autocomplete,
     running: session.running,
@@ -97,16 +95,15 @@ export function App({
 
   // Connect MCP servers in the background; their tools join the next turn once ready.
   useEffect(() => {
-    mcp.start().then(() => {
-      for (const s of mcp.servers())
-        if (s.status.state === "failed") notice(`MCP server ${s.name} failed to connect: ${s.status.error} (/mcp to manage)`, "warn");
+    mcp.start().then((failures) => {
+      for (const failure of failures) notice(`${failure} (/mcp to manage)`, "warn");
     });
   }, []);
 
   /** Runs `action` unless a turn is running, reporting its message or error. */
   const whenIdle = (what: string, action: () => Promise<string>) => {
     setDialog(null);
-    if (session.running) return notice(`Can't ${what} ${BUSY}.`, "warn");
+    if (session.running) return notice(busyMessage(what), "warn");
     action().then(notice, (e: Error) => notice(e.message, "error"));
   };
   const switchWorktree = (name?: string) => whenIdle("switch worktrees", () => enter(name));
@@ -136,7 +133,6 @@ export function App({
     updateSettings(patch);
     if (patch.promptAutocomplete !== undefined) setAutocomplete(patch.promptAutocomplete);
     if (patch.permissionMode) setMode(patch.permissionMode);
-    if (patch.projectInstructions !== undefined) agent.reloadSystemPrompt();
   }
 
   function loggedIn(provider: string, count: number) {

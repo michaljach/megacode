@@ -57,9 +57,7 @@ async function withPipedInput(prompt: string): Promise<string> {
 }
 
 async function runOnce(agent: Agent, prompt: string, mode: PermissionMode, worktree: (Worktree & { created: boolean }) | null, home: string) {
-  await mcp.start();
-  for (const s of mcp.servers())
-    if (s.status.state === "failed") console.error(`MCP server ${s.name} failed to connect: ${s.status.error}`);
+  for (const failure of await mcp.start()) console.error(failure);
   const code = await runPlain(agent, prompt, mode);
   await mcp.closeAll();
   if (worktree) {

@@ -9,7 +9,7 @@ function setup(turn: Provider["turn"]) {
   const agent = new Agent("test:model", {
     resolveModel: () => ({ model: "model", provider: { turn, listModels: async () => [] } }),
     tools: { specs: () => [], has: () => true, execute: async () => ({ output: "ok", isError: false }) },
-    systemPrompt: () => "", settings: () => ({ maxSteps: 3, effort: "low" }),
+    systemPrompt: async () => "", settings: () => ({ maxSteps: 3, effort: "low" }),
   });
   const events: AgentEvents = {
     approve: async () => true, onText: t => text.push(t), onStepEnd() {},

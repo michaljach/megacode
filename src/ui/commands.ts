@@ -35,6 +35,9 @@ export type CommandContext = {
   logout(provider: string): void;
 };
 
+/** Why a command that needs an idle session didn't run. */
+export const busyMessage = (what: string) => `Can't ${what} while a turn is running (esc to interrupt).`;
+
 export type Command = {
   name: string;
   description: string;
@@ -48,7 +51,7 @@ export const COMMANDS: Command[] = [
     name: "/skills",
     description: "List skills or install <local-directory|owner/repo|GitHub-URL> [--global]",
     run(ctx, arg) {
-      if (ctx.running) return ctx.notice("Can't manage skills while a turn is running (esc to interrupt).", "warn");
+      if (ctx.running) return ctx.notice(busyMessage("manage skills"), "warn");
       // Preserve spaces in a source path; the only supported option is a trailing --global.
       const match = /^install\s+(.+?)(\s+--global)?$/.exec(arg);
       const source = match?.[1].replace(/^([\"'])(.*)\1$/, "$2");
@@ -116,7 +119,7 @@ export const COMMANDS: Command[] = [
     name: "/clear",
     description: "Clear conversation history and screen",
     run(ctx) {
-      if (ctx.running) return ctx.notice("Can't clear while a turn is running (esc to interrupt).", "warn");
+      if (ctx.running) return ctx.notice(busyMessage("clear"), "warn");
       ctx.clear();
     },
   },

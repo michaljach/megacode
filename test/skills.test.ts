@@ -29,7 +29,7 @@ test("install local skills with support files, refuse overwrites, and discover m
   const [installed] = await installSkills(source, options);
   assert.equal(installed.description, "Test projects carefully");
   assert.equal(readFileSync(path.join(path.dirname(installed.file), "references/guide.md"), "utf8"), "Support file");
-  assert.deepEqual(discoverSkills(options).skills, [installed]);
+  assert.deepEqual((await discoverSkills(options)).skills, [installed]);
   await assert.rejects(installSkills(source, options), /already installed/);
   const prompt = buildSystemPrompt({ cwd: options.cwd, platform: "test", instructions: [], skills: [installed] });
   assert.match(prompt, /read its SKILL.md/);
@@ -42,12 +42,12 @@ test("project skills override global skills and malformed skills are reported", 
   const { root, options } = fixture(t);
   await installSkills(skill(path.join(root, "global")), { ...options, global: true });
   const [local] = await installSkills(skill(path.join(root, "local"), "testing", "Local instructions"), options);
-  assert.deepEqual(discoverSkills(options).skills, [local]);
+  assert.deepEqual((await discoverSkills(options)).skills, [local]);
   const broken = path.join(options.cwd, ".megacode/skills/broken");
   mkdirSync(broken);
   writeFileSync(path.join(broken, "SKILL.md"), "no metadata");
-  assert.equal(discoverSkills(options).warnings.length, 1);
-  assert.deepEqual(discoverSkills(options).skills, [local]);
+  assert.equal((await discoverSkills(options)).warnings.length, 1);
+  assert.deepEqual((await discoverSkills(options)).skills, [local]);
 });
 
 test("repository installs validate every skill before writing", async (t) => {
@@ -56,7 +56,7 @@ test("repository installs validate every skill before writing", async (t) => {
   skill(path.join(repo, "skills/first"), "first");
   skill(path.join(repo, "skills/second"), "../escape");
   await assert.rejects(installSkills(repo, options), /Skill name/);
-  assert.equal(discoverSkills(options).skills.length, 0);
+  assert.equal((await discoverSkills(options)).skills.length, 0);
   assert.ok(!existsSync(path.join(options.cwd, ".megacode")));
 });
 
@@ -69,7 +69,7 @@ test("symlinks are rejected and duplicate names cannot partially install", async
   skill(path.join(repo, "a"));
   skill(path.join(repo, "b"));
   await assert.rejects(installSkills(repo, options), /Duplicate skill name/);
-  assert.equal(discoverSkills(options).skills.length, 0);
+  assert.equal((await discoverSkills(options)).skills.length, 0);
 });
 
 test("GitHub install clones a repository and copies its skills (offline URL rewrite)", async (t) => {
@@ -89,7 +89,7 @@ test("GitHub install clones a repository and copies its skills (offline URL rewr
     const result = await runSkillsCommand(["install", "https://github.com/example/skills", "--global"], options);
     assert.match(result, /Installed one/);
     assert.match(result, /Installed two/);
-    assert.equal(discoverSkills(options).skills.length, 2);
+    assert.equal((await discoverSkills(options)).skills.length, 2);
     assert.ok(!existsSync(path.join(options.cwd, ".megacode")));
   } finally {
     if (previous === undefined) delete process.env.GIT_CONFIG_GLOBAL;
