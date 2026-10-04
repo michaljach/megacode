@@ -5,7 +5,7 @@ import { needsLogin, providerOf } from "../adapters/providers/credentials.ts";
 import type { Agent } from "../core/agent.ts";
 import { autoApproved, type PermissionMode } from "../core/settings.ts";
 import type { Approve } from "../core/tools.ts";
-import { approvalBody, displayOutput, formatCall, previewOutput } from "./format.ts";
+import { approvalBody, callParts, displayOutput, previewOutput } from "./format.ts";
 
 /** Non-interactive mode for one-shot prompts and pipes: prints the transcript as plain text. */
 export async function runPlain(agent: Agent, prompt: string, mode: PermissionMode): Promise<number> {
@@ -43,7 +43,10 @@ export async function runPlain(agent: Agent, prompt: string, mode: PermissionMod
         if (midLine) process.stdout.write("\n");
         midLine = false;
       },
-      onToolStart: (call) => console.log(styleText("cyan", `⏺ ${formatCall(call)}`)),
+      onToolStart(call) {
+        const { name, arg } = callParts(call);
+        console.log(styleText("cyan", `⏺ ${name}(${arg})`));
+      },
       onToolEnd: (call, r) =>
         console.log(styleText(r.isError ? "red" : "dim", `  ⎿  ${previewOutput(displayOutput(call, r)).replace(/\n/g, "\n     ")}`)),
       onNotice: (text, level) => console.log(styleText(level === "error" ? "red" : "yellow", text)),

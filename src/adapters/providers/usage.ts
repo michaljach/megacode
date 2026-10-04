@@ -10,12 +10,12 @@ export function formatChatGPTUsage(value: unknown): string[] {
   const data = object(value);
   const lines: string[] = [];
   if (typeof data.plan_type === "string") lines.push(`Plan: ${data.plan_type}`);
-  for (const [key, label] of [["rate_limit", "Usage"], ["code_review_rate_limit", "Code review"]]) {
+  for (const [key, label] of [["rate_limit", "Usage"], ["code_review_rate_limit", "Code review"]] as const) {
     const limit = object(data[key]);
     if (typeof limit.allowed === "boolean") lines.push(`${label}: ${limit.allowed ? "available" : "limit reached"}`);
-    for (const [key, fallback] of [["primary_window", "Primary window"], ["secondary_window", "Secondary window"]]) {
+    for (const [key, fallback] of [["primary_window", "Primary window"], ["secondary_window", "Secondary window"]] as const) {
       const window = object(limit[key]);
-      if (number(window.used_percent)) lines.push(formatWindow(label!, fallback!, window as Record<string, unknown> & { used_percent: number }));
+      if (number(window.used_percent)) lines.push(formatWindow(label, fallback, window as Record<string, unknown> & { used_percent: number }));
     }
   }
   const credits = object(data.credits);

@@ -8,7 +8,7 @@ import { loadServers, saveServers, type McpServerConfig } from "./config.ts";
 import { formatResult } from "./results.ts";
 import { createTransport } from "./transport.ts";
 
-export type McpTool = ToolSpec & { server: string; tool: string };
+type McpTool = ToolSpec & { server: string; tool: string };
 export type McpStatus =
   | { state: "disabled" }
   | { state: "connecting" }

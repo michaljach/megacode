@@ -15,7 +15,7 @@ import { previousAddStep, serverNameError, targetError, type AddStep } from "./m
 import { plural } from "../lib/plural.ts";
 import { tildify } from "./format.ts";
 import { Dialog } from "./Dialog.tsx";
-import { Select } from "./Select.tsx";
+import { Select, type Option } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
 
 type Draft = ServerDraft & { name: string };
@@ -26,6 +26,11 @@ type Screen =
   | { type: "add"; step: AddStep; draft: Draft };
 
 const MAX_TOOLS_SHOWN = 15;
+const TRANSPORTS: Option<McpTransport>[] = [
+  { label: "stdio", value: "stdio", hint: "run a local command (npx, uvx, docker, a binary…)" },
+  { label: "http", value: "http", hint: "remote server, streamable HTTP" },
+  { label: "sse", value: "sse", hint: "remote server, legacy SSE" },
+];
 
 function statusText(s: McpStatus): string {
   switch (s.state) {
@@ -188,11 +193,7 @@ export function McpMenu({ onClose }: { onClose: () => void }) {
         <>
           <Text>How does megacode reach {draft.name}?</Text>
           <Select
-            options={[
-              { label: "stdio", value: "stdio" as McpTransport, hint: "run a local command (npx, uvx, docker, a binary…)" },
-              { label: "http", value: "http" as McpTransport, hint: "remote server, streamable HTTP" },
-              { label: "sse", value: "sse" as McpTransport, hint: "remote server, legacy SSE" },
-            ]}
+            options={TRANSPORTS}
             onSelect={(type) => go({ type: "add", step: "target", draft: { ...draft, type, extras: {} } })}
             onCancel={back}
           />

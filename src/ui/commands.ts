@@ -54,10 +54,9 @@ export const COMMANDS: Command[] = [
       if (ctx.running) return ctx.notice(busyMessage("manage skills"), "warn");
       // Preserve spaces in a source path; the only supported option is a trailing --global.
       const match = /^install\s+(.+?)(\s+--global)?$/.exec(arg);
-      const source = match?.[1].replace(/^([\"'])(.*)\1$/, "$2");
-      const args = match ? ["install", source!, ...(match[2] ? ["--global"] : [])] : arg ? [arg] : [];
-      if (match) ctx.notice("Installing skills…");
-      runSkillsCommand(args, { cwd: process.cwd() }).then(ctx.print, (error: unknown) =>
+      const install = match && ["install", match[1].replace(/^(["'])(.*)\1$/, "$2"), ...(match[2] ? ["--global"] : [])];
+      if (install) ctx.notice("Installing skills…");
+      runSkillsCommand(install || arg.split(/\s+/).filter(Boolean), { cwd: process.cwd() }).then(ctx.print, (error: unknown) =>
         ctx.notice(error instanceof Error ? error.message : String(error), "error"),
       );
     },
@@ -72,8 +71,9 @@ export const COMMANDS: Command[] = [
     description: "Change model effort (default, low, medium, high)",
     run(ctx, arg) {
       if (!arg) return ctx.open({ type: "effort" });
-      if (!EFFORTS.includes(arg as Effort)) return ctx.notice(`Unknown effort "${arg}". Available: ${EFFORTS.join(", ")}`, "warn");
-      ctx.selectEffort(arg as Effort);
+      const effort = EFFORTS.find((e) => e === arg);
+      if (!effort) return ctx.notice(`Unknown effort "${arg}". Available: ${EFFORTS.join(", ")}`, "warn");
+      ctx.selectEffort(effort);
     },
   },
   {

@@ -25,12 +25,6 @@ export function callParts(c: ToolCall): { name: string; arg: string } {
   return { name: mcp ? `${mcp[1]} · ${mcp[2]} (MCP)` : (TOOL_LABELS[c.name] ?? c.name), arg: arg.length > 80 ? arg.slice(0, 80) + "…" : arg };
 }
 
-/** "Bash(npm test)", "Read(src/cli.ts)" */
-export function formatCall(c: ToolCall): string {
-  const { name, arg } = callParts(c);
-  return `${name}(${arg})`;
-}
-
 /** The text shown for an approval request in plain output: a diff for file changes, else the tool's own description. */
 export function approvalBody(req: ApprovalRequest): string {
   if (!req.change) return req.body ?? "";

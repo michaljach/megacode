@@ -7,7 +7,7 @@ export type ImageContent = { mediaType: ImageMediaType; data: string };
 
 export type ToolResult = { id: string; name: string; output: string; isError?: boolean; images?: ImageContent[] };
 
-export type UserMessage = { role: "user"; text: string };
+type UserMessage = { role: "user"; text: string };
 export type AssistantMessage = {
   role: "assistant";
   text: string;

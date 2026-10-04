@@ -8,7 +8,7 @@ import { pathExists } from "../lib/fs.ts";
 import { configDir } from "./storage.ts";
 
 export type Skill = { name: string; description: string; file: string };
-export type SkillOptions = { cwd?: string; home?: string };
+type SkillOptions = { cwd?: string; home?: string };
 const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ignored = new Set([".git", "node_modules", ".megacode"]);
 const exec = promisify(execFile);
@@ -55,7 +55,7 @@ export async function discoverSkills(options: SkillOptions = {}): Promise<{ skil
 /** Only HTTPS GitHub repositories (or owner/repo shorthand), never arbitrary git transports. */
 function githubUrl(source: string): string {
   const match = /^(?:https:\/\/github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(source);
-  if (!match || match[1] === "." || match[1] === ".." || match[2] === "." || match[2] === "..")
+  if (!match || [match[1], match[2]].some((part) => part === "." || part === ".."))
     throw new Error("Expected an existing local directory, owner/repo, or https://github.com/owner/repo (no branch/subdirectory URLs).");
   return `https://github.com/${match[1]}/${match[2]}.git`;
 }
@@ -130,7 +130,7 @@ export async function installSkills(source: string, options: SkillOptions & { gl
   }
 }
 
-export const SKILLS_HELP = "Usage: skills [list | install <local-directory|owner/repo|GitHub-URL> [--global]]";
+const SKILLS_HELP = "Usage: skills [list | install <local-directory|owner/repo|GitHub-URL> [--global]]";
 
 /** Shared by the standalone CLI and /skills. */
 export async function runSkillsCommand(args: string[], options: SkillOptions = {}): Promise<string> {

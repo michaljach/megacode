@@ -37,9 +37,7 @@ const PAGE = (title: string, body: string) =>
  * Call `close()` when done; `code` rejects on error, state mismatch or abort.
  */
 export async function callbackServer(opts: { port: number; path: string; state?: string; signal: AbortSignal }) {
-  let resolveCode!: (code: string) => void;
-  let rejectCode!: (e: Error) => void;
-  const code = new Promise<string>((res, rej) => ((resolveCode = res), (rejectCode = rej)));
+  const { promise: code, resolve: resolveCode, reject: rejectCode } = Promise.withResolvers<string>();
   code.catch(() => {}); // handled by the caller
 
   const server: Server = createServer((req, res) => {

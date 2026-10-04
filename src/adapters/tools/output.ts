@@ -5,7 +5,7 @@ import { loadSettings } from "../settings.ts";
 
 /** Character budgets are provider-neutral bounds, not token estimates. */
 export const OUTPUT_CHARS = 12_000;
-export const READ_LINES = 200;
+const READ_LINES = 200;
 
 /** Keep both setup/errors at the start and summaries/failures at the end. */
 export function elideMiddle(text: string, budget = OUTPUT_CHARS): string {

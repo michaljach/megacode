@@ -20,7 +20,7 @@ export const DIFF_COLORS = {
 /** A numbered line: added, removed, unchanged context, or a line of a new file. `marks`: changed words. */
 export type LineRow = { type: "add" | "remove" | "context" | "line"; number: number; text: string; marks?: [number, number][] };
 /** `gap` separates hunks. */
-export type DiffRow = LineRow | { type: "gap" };
+type DiffRow = LineRow | { type: "gap" };
 
 export type DiffModel = {
   file: string;
@@ -35,6 +35,14 @@ export type DiffModel = {
 };
 
 const MAX_COMPARE = 1_000_000; // characters; larger files aren't diffed
+
+const SIGNS: Record<LineRow["type"], string> = { add: "+", remove: "-", context: " ", line: "" };
+
+/** Text color (line number, sign and code), band and changed-word background per kind of row; context rows are plain. */
+const ROW_STYLES: Partial<Record<LineRow["type"], { color: string; background: string; word: string }>> = {
+  add: { color: DIFF_COLORS.addedNumber, background: DIFF_COLORS.added, word: DIFF_COLORS.addedWord },
+  remove: { color: DIFF_COLORS.removedNumber, background: DIFF_COLORS.removed, word: DIFF_COLORS.removedWord },
+};
 
 /** Marks the words that changed between a replaced line and its replacement, unless they're mostly different. */
 function markChangedWords(removed: LineRow, added: LineRow) {
@@ -100,16 +108,10 @@ export function buildDiff(change: FileChange, maxRows = 60): DiffModel | null {
 /** The gutter for a row: a space, the line number, a space, and the sign (none for new files). */
 export function gutter(row: DiffRow, model: DiffModel): string {
   if (row.type === "gap") return " ".repeat(model.numberWidth + (model.created ? 2 : 3));
-  const sign = model.created ? "" : row.type === "add" ? "+" : row.type === "remove" ? "-" : " ";
-  return ` ${String(row.number).padStart(model.numberWidth)} ${sign}`;
+  return ` ${String(row.number).padStart(model.numberWidth)} ${model.created ? "" : SIGNS[row.type]}`;
 }
 
-/** Text color (line number, sign and code), band and changed-word background for each kind of row. */
-export function rowStyle(row: LineRow): { color?: string; background?: string; word?: string } {
-  if (row.type === "add") return { color: DIFF_COLORS.addedNumber, background: DIFF_COLORS.added, word: DIFF_COLORS.addedWord };
-  if (row.type === "remove") return { color: DIFF_COLORS.removedNumber, background: DIFF_COLORS.removed, word: DIFF_COLORS.removedWord };
-  return {};
-}
+export const rowStyle = (row: LineRow): { color?: string; background?: string; word?: string } => ROW_STYLES[row.type] ?? {};
 
 /** A row's text in pieces, each marked if it's a changed word. */
 export function pieces(row: LineRow): { text: string; changed: boolean }[] {

@@ -1,7 +1,7 @@
 import { parseArgs } from "node:util";
 import { WORKTREE_NAME } from "./adapters/git/worktree.ts";
 
-export type CliOptions = {
+type CliOptions = {
   model?: string;
   ask: boolean;
   help: boolean;

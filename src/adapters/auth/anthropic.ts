@@ -3,12 +3,7 @@ import { existsSync, readdirSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-/** Thrown by loginAnthropicCLI when the `ant` binary isn't on PATH. */
-export class AntNotInstalledError extends Error {
-  constructor() {
-    super("The Anthropic CLI isn't installed. Install it with `brew install anthropics/tap/ant`, or paste an API key.");
-  }
-}
+const NOT_INSTALLED = "The Anthropic CLI isn't installed. Install it with `brew install anthropics/tap/ant`, or paste an API key.";
 
 const antConfigDir = () =>
   process.env.ANTHROPIC_CONFIG_DIR ??
@@ -34,9 +29,10 @@ export function loginAnthropicCLI(onOutput: (line: string) => void, signal: Abor
     const onData = (d: Buffer) => d.toString().split("\n").filter(Boolean).forEach(onOutput);
     child.stdout.on("data", onData);
     child.stderr.on("data", onData);
-    child.on("error", (e: NodeJS.ErrnoException) =>
-      reject(e.code === "ENOENT" ? new AntNotInstalledError() : e.name === "AbortError" ? new Error("Sign-in cancelled") : e),
-    );
+    child.on("error", (e: NodeJS.ErrnoException) => {
+      if (e.code === "ENOENT") return reject(new Error(NOT_INSTALLED));
+      reject(e.name === "AbortError" ? new Error("Sign-in cancelled") : e);
+    });
     child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`ant auth login exited with code ${code}`))));
   });
 }

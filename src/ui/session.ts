@@ -11,7 +11,7 @@ import type { Item } from "./Transcript.tsx";
 
 const VERBS = ["Thinking", "Pondering", "Working", "Crafting", "Computing", "Tinkering"];
 
-export type PendingQuestionnaire = { questions: Question[]; resolve: (answers: Answer[] | null) => void };
+type PendingQuestionnaire = { questions: Question[]; resolve: (answers: Answer[] | null) => void };
 
 export type SessionState = {
   running: boolean;

@@ -10,6 +10,7 @@ import { Blink } from "./Spinner.tsx";
 /** Claude Code's colors for a finished call and for secondary text. */
 const DONE = "#4eba65";
 const MUTED = DIFF_COLORS.muted;
+const NOTICE_COLORS: Record<NoticeLevel, string | undefined> = { info: undefined, warn: "yellow", error: "red" };
 
 /** One finished entry of the transcript, rendered once into <Static>. */
 export type Item =
@@ -71,7 +72,7 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
       return (
         <Box marginTop={1}>
           <TranscriptRow prefix={<Text dimColor>{"  ⎿  "}</Text>} width={5}>
-            <Text color={item.level === "error" ? "red" : item.level === "warn" ? "yellow" : undefined} dimColor={item.level === "info" && !item.bright}>
+            <Text color={NOTICE_COLORS[item.level]} dimColor={item.level === "info" && !item.bright}>
               {item.text}
             </Text>
           </TranscriptRow>

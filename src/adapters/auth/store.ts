@@ -3,7 +3,7 @@ import { readJson, writeJson } from "../storage.ts";
 /** OAuth tokens from "Sign in with ChatGPT". */
 export type ChatGPTTokens = { access: string; refresh: string; expires: number; accountId: string; email?: string; plan?: string };
 
-export type SavedCredentials = { apiKey?: string; baseURL?: string; chatgpt?: ChatGPTTokens };
+type SavedCredentials = { apiKey?: string; baseURL?: string; chatgpt?: ChatGPTTokens };
 
 /** Saved credentials per provider in ~/.megacode/auth.json. Environment variables take precedence. */
 type AuthFile = Record<string, SavedCredentials>;

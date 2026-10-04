@@ -2,7 +2,7 @@ import { isHttpUrl, SERVER_NAME, splitCommand, type McpTransport } from "../adap
 
 // Steps and checks for the /mcp "Add server" wizard, kept apart from rendering so they can be tested.
 
-export const ADD_STEPS = ["name", "type", "target", "extras"] as const;
+const ADD_STEPS = ["name", "type", "target", "extras"] as const;
 export type AddStep = (typeof ADD_STEPS)[number];
 
 /** The step before `step`, or null to leave the wizard. */

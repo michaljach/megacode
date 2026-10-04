@@ -26,7 +26,7 @@ export class ChatGPTProvider implements Provider {
       const res = await fetch(`${CHATGPT_BASE_URL}/models?client_version=1.0.0`, { headers: chatGPTFetchHeaders(t) });
       if (!res.ok) throw new Error(String(res.status));
       const body = (await res.json()) as { models?: { slug?: string; id?: string; visibility?: string }[] };
-      const ids = (body.models ?? []).filter((m) => m.visibility !== "hide").map((m) => m.slug ?? m.id).filter(Boolean) as string[];
+      const ids = (body.models ?? []).filter((m) => m.visibility !== "hide").map((m) => m.slug ?? m.id).filter((id) => id !== undefined);
       return ids.length ? ids : FALLBACK_MODELS;
     } catch {
       return FALLBACK_MODELS;
