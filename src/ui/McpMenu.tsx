@@ -12,7 +12,7 @@ import {
 import { mcp, type McpStatus } from "../adapters/mcp/manager.ts";
 import { configDir } from "../adapters/storage.ts";
 import { previousAddStep, serverNameError, targetError, type AddStep } from "./mcpWizard.ts";
-import { tildify } from "./format.ts";
+import { plural, tildify } from "./format.ts";
 import { Dialog } from "./Dialog.tsx";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";
@@ -29,7 +29,7 @@ const MAX_TOOLS_SHOWN = 15;
 function statusText(s: McpStatus): string {
   switch (s.state) {
     case "connected":
-      return `✔ connected · ${s.tools.length} tool${s.tools.length === 1 ? "" : "s"}`;
+      return `✔ connected · ${plural(s.tools.length, "tool")}`;
     case "connecting":
       return "… connecting";
     case "failed":

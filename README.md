@@ -228,6 +228,7 @@ src/
       useWorktree.ts       entering and leaving worktrees
       useStreamedText.ts   streamed-text buffering
       usePromptSuggestion.ts
+      useLoaded.ts         run a promise once on mount
     plain.ts          one-shot / piped output
     Transcript.tsx    transcript items, streamed text, diff previews
     PromptInput.tsx   multi-line editor, history, slash menu

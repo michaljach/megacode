@@ -29,15 +29,7 @@ export class GeminiProvider implements Provider {
         abortSignal: req.signal,
         ...(thinkingConfig ? { thinkingConfig } : {}),
         systemInstruction: req.system,
-        tools: [
-          {
-            functionDeclarations: req.tools.map((t) => ({
-              name: t.name,
-              description: t.description,
-              parametersJsonSchema: t.parameters,
-            })),
-          },
-        ],
+        tools: [{ functionDeclarations: req.tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.parameters })) }],
       },
     });
 
@@ -49,11 +41,8 @@ export class GeminiProvider implements Provider {
 
     for await (const chunk of stream) {
       const cand = chunk.candidates?.[0];
-      if (chunk.usageMetadata)
-        usage = {
-          input: chunk.usageMetadata.promptTokenCount ?? 0,
-          output: chunk.usageMetadata.candidatesTokenCount ?? 0,
-        };
+      const u = chunk.usageMetadata;
+      if (u) usage = { input: u.promptTokenCount ?? 0, output: u.candidatesTokenCount ?? 0 };
       if (cand?.finishReason) finish = cand.finishReason;
       for (const part of cand?.content?.parts ?? []) {
         parts.push(part); // keep everything (incl. thought signatures) for replay
@@ -62,12 +51,8 @@ export class GeminiProvider implements Provider {
           text += part.text;
           req.onText(part.text);
         }
-        if (part.functionCall?.name)
-          toolCalls.push({
-            id: part.functionCall.id ?? fallbackCallId(toolCalls.length),
-            name: part.functionCall.name,
-            input: part.functionCall.args ?? {},
-          });
+        const call = part.functionCall;
+        if (call?.name) toolCalls.push({ id: call.id ?? fallbackCallId(toolCalls.length), name: call.name, input: call.args ?? {} });
       }
     }
 
@@ -91,8 +76,7 @@ function mapStop(r: FinishReason | undefined, hasTools: boolean): StopReason {
   if (r === FinishReason.MAX_TOKENS) return "max_tokens";
   if (hasTools) return "tool_use";
   if (r === FinishReason.STOP) return "end";
-  if (r === FinishReason.SAFETY || r === FinishReason.PROHIBITED_CONTENT || r === FinishReason.BLOCKLIST)
-    return "refusal";
+  if (r === FinishReason.SAFETY || r === FinishReason.PROHIBITED_CONTENT || r === FinishReason.BLOCKLIST) return "refusal";
   return "other";
 }
 

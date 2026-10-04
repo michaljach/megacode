@@ -68,8 +68,7 @@ export function LoginDialog({
   function chooseMethod(m: LoginMethod) {
     setMethod(m);
     setError("");
-    if (m === "key") return setStep("key");
-    if (m === "url") return setStep("url");
+    if (m === "key" || m === "url") return setStep(m);
     browserLogin(m);
   }
 
@@ -180,11 +179,7 @@ export function LoginDialog({
           {method === "ant-cli" ? "Running `ant auth login`. Finish signing in in your browser." : "Finish signing in in your browser. If it didn't open, visit:"}
         </Text>
         {browserUrl && <Text color="cyan">{browserUrl}</Text>}
-        {output.map((line, i) => (
-          <Text key={i} dimColor>
-            {line}
-          </Text>
-        ))}
+        {output.map((line, i) => <Text key={i} dimColor>{line}</Text>)}
         <Box marginTop={1}>
           <Waiting text="Waiting for sign-in…" />
         </Box>

@@ -89,12 +89,8 @@ if (process.env.MEGACODE_CONFIG_DIR) setConfigDir(process.env.MEGACODE_CONFIG_DI
 
 // Skill management doesn't require credentials, a model, MCP, or piped input.
 if (process.argv[2] === "skills") {
-  try {
-    console.log(await runSkillsCommand(process.argv.slice(3)));
-    process.exit(0);
-  } catch (error) {
-    fail((error as Error).message);
-  }
+  console.log(await runSkillsCommand(process.argv.slice(3)).catch((e: Error) => fail(e.message)));
+  process.exit(0);
 }
 
 const options = orFail(() => parseCliArgs(process.argv.slice(2)));

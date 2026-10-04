@@ -50,25 +50,20 @@ export function ModelPicker({
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
     const matches = (s: string) => terms.every((t) => s.toLowerCase().includes(t));
     const out: Row[] = [];
+    const note = (provider: string, label: string, action: Row["action"]) => out.push({ provider, label, action, dim: true });
     const seen = new Set<string>();
     for (const p of PROVIDER_INFO) {
       const state = lists[p.name];
+      const login = { type: "login", provider: p.name } as const;
       if (!isConfigured(p.name)) {
-        if (!p.local && !p.keyOptional && matches(`${p.name} ${p.label} login`))
-          out.push({ provider: p.name, label: "Log in to see models…", action: { type: "login", provider: p.name }, dim: true });
+        if (!p.local && !p.keyOptional && matches(`${p.name} ${p.label} login`)) note(p.name, "Log in to see models…", login);
         continue;
       }
       if (!state || state.status === "loading") {
-        if (matches(p.name)) out.push({ provider: p.name, label: "loading…", action: { type: "none" }, dim: true });
+        if (matches(p.name)) note(p.name, "loading…", { type: "none" });
       } else if (state.status === "error") {
         // Local servers that aren't running just don't show up.
-        if (!p.local && matches(p.name))
-          out.push({
-            provider: p.name,
-            label: `couldn't list models: ${state.error}`,
-            action: { type: "login", provider: p.name },
-            dim: true,
-          });
+        if (!p.local && matches(p.name)) note(p.name, `couldn't list models: ${state.error}`, login);
       } else {
         for (const m of state.models) {
           const spec = `${p.name}:${m}`;

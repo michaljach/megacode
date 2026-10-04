@@ -53,9 +53,8 @@ export const COMMANDS: Command[] = [
       const match = /^install\s+(.+?)(\s+--global)?$/.exec(arg);
       const source = match?.[1].replace(/^([\"'])(.*)\1$/, "$2");
       const args = match ? ["install", source!, ...(match[2] ? ["--global"] : [])] : arg ? [arg] : [];
-      const cwd = process.cwd();
       if (match) ctx.notice("Installing skills…");
-      runSkillsCommand(args, { cwd }).then(ctx.print, (error: unknown) =>
+      runSkillsCommand(args, { cwd: process.cwd() }).then(ctx.print, (error: unknown) =>
         ctx.notice(error instanceof Error ? error.message : String(error), "error"),
       );
     },

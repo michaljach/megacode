@@ -105,14 +105,11 @@ export const listFiles: Tool<{ pattern?: string }> = {
   },
   async run({ pattern = "**/*" }) {
     const files: string[] = [];
-    let truncated = false;
     for await (const f of glob(pattern, { cwd: process.cwd(), exclude: IGNORE })) {
-      if (files.length >= MAX_LISTED) {
-        truncated = true;
-        break;
-      }
       files.push(f);
+      if (files.length > MAX_LISTED) break;
     }
+    const truncated = files.splice(MAX_LISTED).length > 0;
     const output = files.length ? await compactOutput(files.sort().join("\n")) : "No files found.";
     return output + (truncated ? `\n[Only ${MAX_LISTED} entries listed; narrow the glob pattern]` : "");
   },

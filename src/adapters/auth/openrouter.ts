@@ -5,12 +5,10 @@ export async function loginOpenRouter(onUrl: (url: string) => void, signal: Abor
   const { verifier, challenge } = pkce();
   const server = await callbackServer({ port: 0, path: "/callback", signal });
   try {
-    const url = new URL("https://openrouter.ai/auth");
-    url.searchParams.set("callback_url", `http://localhost:${server.port}/callback`);
-    url.searchParams.set("code_challenge", challenge);
-    url.searchParams.set("code_challenge_method", "S256");
-    onUrl(url.toString());
-    openBrowser(url.toString());
+    const params = { callback_url: `http://localhost:${server.port}/callback`, code_challenge: challenge, code_challenge_method: "S256" };
+    const url = `https://openrouter.ai/auth?${new URLSearchParams(params)}`;
+    onUrl(url);
+    openBrowser(url);
     const code = await server.code;
     const res = await fetch("https://openrouter.ai/api/v1/auth/keys", {
       method: "POST",

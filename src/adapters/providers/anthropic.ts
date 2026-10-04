@@ -17,11 +17,8 @@ export class AnthropicProvider implements Provider {
 
   private modelInfo(model: string): Promise<Anthropic.ModelInfo | null> {
     let info = this.models.get(model);
-    if (!info) {
-      // Without the lookup (e.g. a proxy that lacks the endpoint) fall back to the defaults.
-      info = this.client.models.retrieve(model).catch(() => null);
-      this.models.set(model, info);
-    }
+    // Without the lookup (e.g. a proxy that lacks the endpoint) fall back to the defaults.
+    if (!info) this.models.set(model, (info = this.client.models.retrieve(model).catch(() => null)));
     return info;
   }
 
@@ -54,19 +51,14 @@ export class AnthropicProvider implements Provider {
     const toolCalls: ToolCall[] = msg.content.flatMap((b) =>
       b.type === "tool_use" ? [{ id: b.id, name: b.name, input: b.input as Record<string, unknown> }] : [],
     );
+    const uncached = msg.usage.input_tokens;
+    const cacheRead = msg.usage.cache_read_input_tokens ?? 0;
+    const cacheCreation = msg.usage.cache_creation_input_tokens ?? 0;
     return {
       message: { role: "assistant", text, toolCalls, raw: { provider: "anthropic", content: msg.content } },
       stop: mapStop(msg.stop_reason),
       responseModel: msg.model,
-      usage: {
-        input: msg.usage.input_tokens + (msg.usage.cache_read_input_tokens ?? 0) + (msg.usage.cache_creation_input_tokens ?? 0),
-        output: msg.usage.output_tokens,
-        inputBreakdown: {
-          uncached: msg.usage.input_tokens,
-          cacheRead: msg.usage.cache_read_input_tokens ?? 0,
-          cacheCreation: msg.usage.cache_creation_input_tokens ?? 0,
-        },
-      },
+      usage: { input: uncached + cacheRead + cacheCreation, output: msg.usage.output_tokens, inputBreakdown: { uncached, cacheRead, cacheCreation } },
     };
   }
 }

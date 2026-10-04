@@ -42,8 +42,7 @@ async function tokenRequest(body: Record<string, string>, format: "json" | "form
 }
 
 function authorizeUrl(challenge: string, state: string): string {
-  const url = new URL(`${ISSUER}/oauth/authorize`);
-  const params = {
+  const params = new URLSearchParams({
     response_type: "code",
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT_URI,
@@ -54,9 +53,8 @@ function authorizeUrl(challenge: string, state: string): string {
     id_token_add_organizations: "true",
     codex_cli_simplified_flow: "true",
     originator: ORIGINATOR,
-  };
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  return url.toString();
+  });
+  return `${ISSUER}/oauth/authorize?${params}`;
 }
 
 /** Browser sign-in with a ChatGPT account. `onUrl` gets the URL in case the browser doesn't open. */
@@ -68,12 +66,8 @@ export async function loginChatGPT(onUrl: (url: string) => void, signal: AbortSi
     onUrl(url);
     openBrowser(url);
     const code = await server.code;
-    const tokens = toTokens(
-      await tokenRequest(
-        { grant_type: "authorization_code", client_id: CLIENT_ID, code, redirect_uri: REDIRECT_URI, code_verifier: verifier },
-        "form",
-      ),
-    );
+    const body = { grant_type: "authorization_code", client_id: CLIENT_ID, code, redirect_uri: REDIRECT_URI, code_verifier: verifier };
+    const tokens = toTokens(await tokenRequest(body, "form"));
     if (!tokens.accountId) throw new Error("This account has no ChatGPT workspace. Use an API key instead.");
     return tokens;
   } finally {

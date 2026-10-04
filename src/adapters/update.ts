@@ -15,9 +15,7 @@ export function isNewerRelease(latest: string, current: string): boolean {
   if (!stable.test(latest) || !stable.test(current)) return false;
   const a = latest.split(".").map(BigInt);
   const b = current.split(".").map(BigInt);
-  for (let i = 0; i < 3; i++) {
-    if (a[i] !== b[i]) return a[i] > b[i];
-  }
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i];
   return false;
 }
 

@@ -34,10 +34,7 @@ export class OpenAIProvider implements Provider {
         stream: true,
         stream_options: { include_usage: true },
         messages: [{ role: "system", content: req.system }, ...toOpenAI(req.messages)],
-        tools: req.tools.map((t) => ({
-          type: "function" as const,
-          function: { name: t.name, description: t.description, parameters: t.parameters },
-        })),
+        tools: req.tools.map((t) => ({ type: "function" as const, function: { name: t.name, description: t.description, parameters: t.parameters } })),
       },
       { signal: req.signal },
     );
@@ -77,11 +74,7 @@ export class OpenAIProvider implements Provider {
       if (choice.finish_reason) finish = choice.finish_reason;
     }
 
-    const toolCalls: ToolCall[] = calls.filter(Boolean).map((c, i) => ({
-      id: c.id || fallbackCallId(i),
-      name: c.name,
-      input: parseToolArguments(c.args),
-    }));
+    const toolCalls: ToolCall[] = calls.filter(Boolean).map((c, i) => ({ id: c.id || fallbackCallId(i), name: c.name, input: parseToolArguments(c.args) }));
     return { message: { role: "assistant", text, toolCalls }, stop: mapStop(finish, toolCalls.length > 0), usage };
   }
 }
@@ -112,18 +105,7 @@ export function toOpenAI(messages: Message[]): OpenAI.ChatCompletionMessageParam
     }
     // An assistant message needs content or tool calls; leave out empty replies.
     if (!m.text && !m.toolCalls.length) return [];
-    return [
-      {
-        role: "assistant",
-        content: m.text || null,
-        ...(m.toolCalls.length && {
-          tool_calls: m.toolCalls.map((c) => ({
-            id: c.id,
-            type: "function" as const,
-            function: { name: c.name, arguments: JSON.stringify(c.input) },
-          })),
-        }),
-      },
-    ];
+    const toolCalls = m.toolCalls.map((c) => ({ id: c.id, type: "function" as const, function: { name: c.name, arguments: JSON.stringify(c.input) } }));
+    return [{ role: "assistant", content: m.text || null, ...(toolCalls.length && { tool_calls: toolCalls }) }];
   });
 }

@@ -14,10 +14,11 @@ import { ApprovalDialog } from "./ApprovalDialog.tsx";
 import { COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
 import { EffortPicker } from "./EffortPicker.tsx";
-import { previewPrompt } from "./format.ts";
+import { plural, previewPrompt } from "./format.ts";
 import { Help } from "./Help.tsx";
 import { loadHistory, saveHistory } from "./history.ts";
 import { useAgentSession } from "./hooks/useAgentSession.ts";
+import { useLoaded } from "./hooks/useLoaded.ts";
 import { usePromptSuggestion } from "./hooks/usePromptSuggestion.ts";
 import { useWorktree } from "./hooks/useWorktree.ts";
 import { LoginDialog, LogoutDialog } from "./LoginDialog.tsx";
@@ -62,15 +63,7 @@ export function App({
   const [model, setModel] = useState(agent.model);
   const [history, setHistory] = useState(loadHistory);
   const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
-  const [updateVersion, setUpdateVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    void autoUpdate().then((version) => {
-      if (mounted) setUpdateVersion(version);
-    });
-    return () => { mounted = false; };
-  }, []);
+  const updateVersion = useLoaded(autoUpdate);
 
   const push = (...add: Item[]) => setItems((prev) => [...prev, ...add]);
   const notice = (text: string, level: NoticeLevel = "info") => push({ kind: "notice", text, level });
@@ -116,6 +109,7 @@ export function App({
     if (session.running) return notice(`Can't ${what} ${BUSY}.`, "warn");
     action().then(notice, (e: Error) => notice(e.message, "error"));
   };
+  const switchWorktree = (name?: string) => whenIdle("switch worktrees", () => enter(name));
 
   function selectModel(spec: string) {
     setDialog(null);
@@ -146,7 +140,7 @@ export function App({
   }
 
   function loggedIn(provider: string, count: number) {
-    notice(`✔ Logged in to ${providerInfo(provider).label} · ${count} model${count === 1 ? "" : "s"} available`);
+    notice(`✔ Logged in to ${providerInfo(provider).label} · ${plural(count, "model")} available`);
     // Show that provider's models so picking one is the next step.
     setDialog({ type: "model", query: `${provider}:` });
   }
@@ -187,7 +181,7 @@ export function App({
     quit,
     selectModel,
     selectEffort,
-    enterWorktree: (name) => whenIdle("switch worktrees", () => enter(name)),
+    enterWorktree: switchWorktree,
     logout,
   };
 
@@ -274,8 +268,8 @@ export function App({
       {dialog?.type === "worktree" && (
         <WorktreeMenu
           current={worktree}
-          onCreate={(name) => whenIdle("switch worktrees", () => enter(name))}
-          onOpen={(wt) => whenIdle("switch worktrees", () => enter(wt.name))}
+          onCreate={switchWorktree}
+          onOpen={(wt) => switchWorktree(wt.name)}
           onLeave={(remove) => whenIdle("leave the worktree", () => leave(remove))}
           onCancel={closeDialog}
         />

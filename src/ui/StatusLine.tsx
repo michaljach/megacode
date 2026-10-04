@@ -24,13 +24,12 @@ export function StatusLine({
   worktree?: string;
 }) {
   // Give exit confirmation the whole row instead of competing with model/worktree metadata.
-  if (exitArmed) {
+  if (exitArmed)
     return (
       <Box paddingX={2}>
         <Text color="yellow">Press Ctrl-C again to exit</Text>
       </Box>
     );
-  }
   // Bypass is the default, so only the other modes get a label.
   const modeLabel = MODE_LABELS[mode];
   const tokens = usage.input + usage.output;
@@ -45,9 +44,7 @@ export function StatusLine({
           </Box>
         )}
         <Box flexShrink={1} minWidth={0}>
-          <Text dimColor wrap="truncate-start">
-            {tildify(process.cwd())}
-          </Text>
+          <Text dimColor wrap="truncate-start">{tildify(process.cwd())}</Text>
         </Box>
       </Box>
       <Box flexShrink={1} minWidth={0}>

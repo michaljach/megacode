@@ -2,15 +2,14 @@ import { Box, Text } from "ink";
 import type { ReactNode } from "react";
 import type { NoticeLevel } from "../core/agent.ts";
 import type { ToolCall } from "../core/conversation.ts";
-import type { DiffModel } from "./diff.ts";
-import { DIFF_COLORS } from "./diff.ts";
+import { DIFF_COLORS, type DiffModel } from "./diff.ts";
 import { DiffLines } from "./DiffLines.tsx";
 import { callParts, previewOutput, previewPrompt, renderMarkdown, tildify } from "./format.ts";
+import { Blink } from "./Spinner.tsx";
 
 /** Claude Code's colors for a finished call and for secondary text. */
 const DONE = "#4eba65";
 const MUTED = DIFF_COLORS.muted;
-import { Blink } from "./Spinner.tsx";
 
 /** One finished entry of the transcript, rendered once into <Static>. */
 export type Item =

@@ -1,25 +1,15 @@
 import { Box, Text } from "ink";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { baseRef, describeChanges, listWorktrees, WORKTREE_NAME, worktreeChanges, type Worktree, type WorktreeChanges } from "../adapters/git/worktree.ts";
 import { Dialog } from "./Dialog.tsx";
 import { tildify } from "./format.ts";
+import { useLoaded } from "./hooks/useLoaded.ts";
 import { Select, type Option } from "./Select.tsx";
 import { Waiting } from "./Spinner.tsx";
 import { TextField } from "./TextField.tsx";
 
 type Action = { type: "new" } | { type: "open"; wt: Worktree } | { type: "leave"; remove: boolean };
 type MenuData = { worktrees: { wt: Worktree; changes: string }[]; base: string; currentChanges: string };
-
-/** Runs `load` once on mount; undefined until it resolves. */
-function useLoaded<T>(load: () => Promise<T>): T | undefined {
-  const [value, setValue] = useState<T>();
-  useEffect(() => {
-    let live = true;
-    load().then((v) => live && setValue(v));
-    return () => void (live = false);
-  }, []);
-  return value;
-}
 
 async function loadMenu(current: Worktree | null): Promise<MenuData> {
   const [worktrees, base, currentChanges] = await Promise.all([

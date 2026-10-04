@@ -23,7 +23,7 @@ export type Message = UserMessage | AssistantMessage | ToolMessage;
 export function closeOpenToolCalls(messages: Message[], output: string): void {
   const last = messages.at(-1);
   if (last?.role === "assistant" && last.toolCalls.length) {
-    messages.push(failedResults(last.toolCalls, output));
+    messages.push({ role: "tool", results: last.toolCalls.map((c) => ({ id: c.id, name: c.name, output, isError: true })) });
   } else if (last?.role === "tool") {
     const prev = messages.at(-2);
     if (prev?.role !== "assistant") return;
@@ -47,8 +47,3 @@ export function dropImages(messages: Message[], note: string): boolean {
   }
   return dropped;
 }
-
-export const failedResults = (calls: ToolCall[], output: string): ToolMessage => ({
-  role: "tool",
-  results: calls.map((c) => ({ id: c.id, name: c.name, output, isError: true })),
-});
