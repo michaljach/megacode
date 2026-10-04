@@ -55,3 +55,24 @@ for (const abort of [false, true]) test(`timing retains ${abort ? "aborted" : "f
   assert.equal(timings[0]!.firstTextMs, null);
   assert.equal(timings[0]!.usage, undefined);
 });
+
+test("speed and context use come from the last response, and clear resets them", async () => {
+  const usages = [{ input: 100, output: 50 }, undefined];
+  const { agent, events } = setup(async () => ({ stop: "end", usage: usages.shift(), message: { role: "assistant", text: "ok", toolCalls: [] } }));
+  assert.equal(agent.speed, null);
+  assert.equal(agent.context, null);
+
+  await agent.send("go", new AbortController().signal, events);
+  assert.ok(agent.speed! > 0 && Number.isFinite(agent.speed), String(agent.speed));
+  assert.deepEqual(agent.context, { tokens: 150, window: null }, "the test provider reports no window");
+
+  await agent.send("again", new AbortController().signal, events);
+  assert.equal(agent.speed, null, "a response without usage has no speed");
+  assert.equal(agent.context, null);
+
+  usages.push({ input: 10, output: 5 });
+  await agent.send("once more", new AbortController().signal, events);
+  agent.clear();
+  assert.equal(agent.speed, null);
+  assert.equal(agent.context, null);
+});

@@ -38,6 +38,9 @@ export type AgentDeps = {
   settings: () => Pick<Settings, "maxSteps" | "effort">;
 };
 
+/** How full the context window is: the last request plus its reply, and the window when the provider reports it. */
+export type ContextUsage = { tokens: number; window: number | null };
+
 /** What one send works with: the resolved model, its context window, and how to reach the user. */
 type SendContext = { provider: Provider; model: string; contextWindow: number | null; signal: AbortSignal; ev: AgentEvents };
 
@@ -52,6 +55,8 @@ export class Agent {
   #model: string;
   /** Tokens in the last request plus its reply, roughly the history's size; null until a response reports usage. */
   #contextTokens: number | null = null;
+  #contextWindow: number | null = null;
+  #speed: number | null = null;
 
   constructor(model: string, deps: AgentDeps) {
     deps.resolveModel(model); // validate early
@@ -63,6 +68,15 @@ export class Agent {
     return this.#model;
   }
 
+  /** Output tokens per second of the last model response, counting from the request; null until one reports usage. */
+  get speed(): number | null {
+    return this.#speed;
+  }
+
+  get context(): ContextUsage | null {
+    return this.#contextTokens === null ? null : { tokens: this.#contextTokens, window: this.#contextWindow };
+  }
+
   setModel(spec: string) {
     this.#deps.resolveModel(spec);
     this.#model = spec;
@@ -72,6 +86,7 @@ export class Agent {
     this.messages = [];
     this.usage = { input: 0, output: 0 };
     this.#contextTokens = null;
+    this.#speed = null;
   }
 
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
@@ -81,6 +96,7 @@ export class Agent {
     const { maxSteps, effort } = this.#deps.settings();
     const { tools } = this.#deps;
     const ctx: SendContext = { provider, model, contextWindow: (await provider.contextWindow?.(model)) ?? null, signal, ev };
+    this.#contextWindow = ctx.contextWindow;
     // Compacting before the new message keeps it verbatim.
     if (this.#nearLimit(ctx)) await this.#compact(ctx, false);
     this.messages.push({ role: "user", text });
@@ -114,6 +130,7 @@ export class Agent {
         }
         this.#addUsage(res.usage);
         this.#contextTokens = res.usage ? res.usage.input + res.usage.output : null;
+        this.#speed = res.usage?.output ? res.usage.output / ((performance.now() - started) / 1000) : null;
         this.messages.push(res.message);
         ev.onStepEnd();
         if (this.#endsTurn(res, ev)) return;

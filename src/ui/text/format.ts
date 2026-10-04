@@ -35,6 +35,9 @@ export function approvalBody(req: ApprovalRequest): string {
 /** Shortens paths under the home directory to ~/… for display. */
 export const tildify = (p: string) => p.replace(os.homedir(), "~");
 
+/** A token count as "950", "15.4k" or "128k". */
+export const formatTokens = (n: number) => (n < 1000 ? String(n) : `${Number((n / 1000).toFixed(1))}k`);
+
 /** Display-only prompt preview; queued/sent prompts and history retain the full text. */
 export function previewPrompt(text: string): string {
   const chars = Array.from(text.replace(/\r\n|[\r\n]/g, " ⏎ ").replace(/\t/g, " "));

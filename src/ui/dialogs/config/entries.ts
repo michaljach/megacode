@@ -63,6 +63,18 @@ export const ENTRIES: Entry[] = [
     choices: onOff,
   },
   {
+    key: "showContext",
+    label: "Show context usage",
+    description: "Show on the status line how much of the model's context window the conversation fills, as of the last response",
+    choices: onOff,
+  },
+  {
+    key: "showSpeed",
+    label: "Show tokens per second",
+    description: "Show on the status line how fast the last response was generated, in output tokens per second from sending the request",
+    choices: onOff,
+  },
+  {
     key: "saveHistory",
     label: "Save prompt history",
     description: "Keep ↑/↓ history across sessions in history.json",

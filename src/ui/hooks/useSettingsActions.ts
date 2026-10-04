@@ -10,8 +10,8 @@ import { plural } from "../../lib/plural.ts";
 import type { Dialog } from "../commands.ts";
 
 /**
- * Model, effort, settings and credential changes made from commands and dialogs. Owns the current model and the
- * prompt-autocomplete toggle; reports through `notice` and opens the dialog that comes next (e.g. login after picking
+ * Model, effort, settings and credential changes made from commands and dialogs. Owns the current model, the
+ * prompt-autocomplete toggle and which details the status line shows; reports through `notice` and opens the dialog that comes next (e.g. login after picking
  * a model whose provider isn't set up).
  */
 export function useSettingsActions(
@@ -24,6 +24,10 @@ export function useSettingsActions(
 ) {
   const [model, setModel] = useState(agent.model);
   const [autocomplete, setAutocomplete] = useState(() => loadSettings().promptAutocomplete);
+  const [statusDetails, setStatusDetails] = useState(() => {
+    const { showSpeed, showContext } = loadSettings();
+    return { showSpeed, showContext };
+  });
 
   function selectModel(spec: string) {
     setDialog(null);
@@ -50,6 +54,9 @@ export function useSettingsActions(
     updateSettings(patch);
     if (patch.promptAutocomplete !== undefined) setAutocomplete(patch.promptAutocomplete);
     if (patch.permissionMode) setMode(patch.permissionMode);
+    const { showSpeed, showContext } = patch;
+    if (showSpeed !== undefined) setStatusDetails((d) => ({ ...d, showSpeed }));
+    if (showContext !== undefined) setStatusDetails((d) => ({ ...d, showContext }));
   }
 
   function loggedIn(provider: string, count: number) {
@@ -64,5 +71,5 @@ export function useSettingsActions(
     notice(message, ok ? "info" : "warn");
   }
 
-  return { model, autocomplete, selectModel, selectEffort, changeSettings, loggedIn, logout };
+  return { model, autocomplete, statusDetails, selectModel, selectEffort, changeSettings, loggedIn, logout };
 }

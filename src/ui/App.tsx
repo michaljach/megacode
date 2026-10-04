@@ -77,7 +77,7 @@ export function App({
     restoreInput,
   });
   const settings = useSettingsActions(agent, { notice, setDialog, setMode });
-  const { model, autocomplete, selectModel, selectEffort, logout } = settings;
+  const { model, autocomplete, statusDetails, selectModel, selectEffort, logout } = settings;
   const { worktree, enter, leave } = useWorktree(initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {
     enabled: autocomplete,
@@ -230,7 +230,11 @@ export function App({
           suggestion={suggestion}
           autocomplete={autocomplete}
           running={session.running}
-          status={{ mode, model, loggedIn: !needsLogin(model), exitArmed, usage: agent.usage, worktree: worktree?.name }}
+          status={{
+            mode, model, loggedIn: !needsLogin(model), exitArmed, usage: agent.usage, worktree: worktree?.name,
+            context: statusDetails.showContext ? agent.context : undefined,
+            speed: statusDetails.showSpeed ? agent.speed : undefined,
+          }}
           updateVersion={updateVersion}
         />
       )}
