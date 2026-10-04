@@ -1,4 +1,4 @@
-import { chatGPTUsage } from "../auth/chatgpt.ts";
+import { CHATGPT_BASE_URL, chatGPTFetchHeaders, chatGPTTokens } from "../auth/chatgpt.ts";
 import { providerInfo } from "./catalog.ts";
 import { credentials, type Credentials } from "./credentials.ts";
 
@@ -38,13 +38,23 @@ function formatWindow(label: string, fallback: string, window: Record<string, un
   return line;
 }
 
-async function get(url: string, apiKey?: string): Promise<unknown> {
-  const res = await fetch(url, {
-    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`Usage request failed (HTTP ${res.status}).${[401, 403].includes(res.status) ? " Run /login to update credentials." : ""}`);
+async function get(url: string, headers: Record<string, string>): Promise<unknown> {
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) });
+  const hint = [401, 403].includes(res.status) ? " Run /login to update credentials." : "";
+  if (!res.ok) throw Object.assign(new Error(`Usage request failed (HTTP ${res.status}).${hint}`), { status: res.status });
   return res.json();
+}
+
+const bearer = (apiKey?: string): Record<string, string> => (apiKey ? { Authorization: `Bearer ${apiKey}` } : {});
+
+/** Subscription limits from the ChatGPT backend Codex uses. A token revoked before it expires is refreshed once. */
+async function chatGPTUsage(): Promise<unknown> {
+  const url = `${CHATGPT_BASE_URL.replace(/\/codex\/?$/, "")}/wham/usage`;
+  const request = async (refresh: boolean) => get(url, chatGPTFetchHeaders(await chatGPTTokens(refresh)));
+  return request(false).catch((e: Error & { status?: number }) => {
+    if (e.status !== 401) throw e;
+    return request(true);
+  });
 }
 
 const endpoint = (creds: Credentials, path: string) => `${creds.baseURL!.replace(/\/$/, "")}${path}`;
@@ -60,14 +70,14 @@ const FETCHERS: Record<string, (creds: Credentials) => Promise<string[] | undefi
     return creds.source === "chatgpt" ? formatChatGPTUsage(await chatGPTUsage()) : undefined;
   },
   async openrouter(creds) {
-    const data = object(object(await get(endpoint(creds, "/key"), creds.apiKey)).data);
+    const data = object(object(await get(endpoint(creds, "/key"), bearer(creds.apiKey))).data);
     const lines = OPENROUTER_FIELDS.flatMap(([key, label]) => (number(data[key]) ? [`${label}: $${data[key]}`] : []));
     if (data.limit === null) lines.push("Key spending limit: unlimited");
     if (typeof data.limit_reset === "string") lines.push(`Limit reset: ${data.limit_reset}`);
     return lines;
   },
   async deepseek(creds) {
-    const data = object(await get(endpoint(creds, "/user/balance"), creds.apiKey));
+    const data = object(await get(endpoint(creds, "/user/balance"), bearer(creds.apiKey)));
     const lines: string[] = [];
     for (const entry of Array.isArray(data.balance_infos) ? data.balance_infos : []) {
       const balance = object(entry);

@@ -220,6 +220,8 @@ src/
     git/worktree.ts   git worktree create / list / status / remove
   lib/async.ts        withTimeout
   lib/fs.ts           pathExists, the async existsSync
+  lib/plural.ts       "1 line", "3 lines"
+  lib/cycle.ts        wrap-around list index
   ui/                 Ink (React) TUI and plain output
     App.tsx           layout, dialogs, keyboard shortcuts, command context
     commands.ts       slash command registry (name, description, handler)

@@ -3,8 +3,10 @@ import { useState } from "react";
 import { loadSettings } from "../adapters/settings.ts";
 import { configDir } from "../adapters/storage.ts";
 import { DEFAULT_SETTINGS, type PermissionMode, type Settings } from "../core/settings.ts";
+import { cycle } from "../lib/cycle.ts";
 import { Dialog } from "./Dialog.tsx";
 import { tildify } from "./format.ts";
+import { listStep } from "./Select.tsx";
 
 type Key = Exclude<keyof Settings, "model">;
 type Choice = { value: Settings[Key]; label: string };
@@ -95,10 +97,10 @@ export function ConfigMenu({
   const [index, setIndex] = useState(0);
   const rows = ENTRIES.length + 1; // row 0 is the model
 
-  const cycle = (e: Entry, step: number) => {
+  const cycleChoice = (e: Entry, step: number) => {
     const i = e.choices.findIndex((c) => c.value === settings[e.key]);
     // A value hand-edited into settings.json may not be a choice; start from the first one.
-    const next = e.choices[i === -1 ? 0 : (i + step + e.choices.length) % e.choices.length]!.value;
+    const next = e.choices[i === -1 ? 0 : cycle(i, step, e.choices.length)]!.value;
     const patch = { [e.key]: next } as Partial<Settings>;
     setSettings((s) => ({ ...s, ...patch }));
     onChange(patch);
@@ -106,12 +108,12 @@ export function ConfigMenu({
 
   useInput((input, key) => {
     if (key.escape) return onClose();
-    if (key.upArrow || (key.ctrl && input === "p")) return setIndex((i) => (i - 1 + rows) % rows);
-    if (key.downArrow || (key.ctrl && input === "n")) return setIndex((i) => (i + 1) % rows);
+    const step = listStep(input, key);
+    if (step) return setIndex((i) => cycle(i, step, rows));
     const activate = key.return || input === " ";
     if (index === 0) return activate ? onModel() : undefined;
-    if (activate || key.rightArrow) cycle(ENTRIES[index - 1]!, 1);
-    else if (key.leftArrow) cycle(ENTRIES[index - 1]!, -1);
+    if (activate || key.rightArrow) cycleChoice(ENTRIES[index - 1]!, 1);
+    else if (key.leftArrow) cycleChoice(ENTRIES[index - 1]!, -1);
   });
 
   const selected = index === 0 ? null : ENTRIES[index - 1]!;

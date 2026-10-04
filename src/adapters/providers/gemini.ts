@@ -1,14 +1,14 @@
 import { GoogleGenAI, FinishReason, ThinkingLevel, type Content, type Part } from "@google/genai";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Effort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
-import { fallbackCallId } from "./shared.ts";
+import { fallbackCallId, mergeTurns } from "./shared.ts";
 
 export class GeminiProvider implements Provider {
   client: GoogleGenAI;
-  filter?: (id: string) => boolean;
+  filter: (id: string) => boolean;
 
   // Without a key the SDK reads $GEMINI_API_KEY / $GOOGLE_API_KEY.
-  constructor(apiKey?: string, filter?: (id: string) => boolean) {
+  constructor(apiKey?: string, filter: (id: string) => boolean = () => true) {
     this.client = new GoogleGenAI(apiKey ? { apiKey } : {});
     this.filter = filter;
   }
@@ -17,7 +17,7 @@ export class GeminiProvider implements Provider {
     const ids: string[] = [];
     for await (const m of await this.client.models.list())
       if (m.name && m.supportedActions?.includes("generateContent")) ids.push(m.name.replace(/^models\//, ""));
-    return ids.filter((id) => !this.filter || this.filter(id)).reverse(); // newest first
+    return ids.filter(this.filter).reverse(); // newest first
   }
 
   async turn(req: TurnRequest): Promise<TurnResult> {
@@ -29,7 +29,7 @@ export class GeminiProvider implements Provider {
         abortSignal: req.signal,
         ...(thinkingConfig ? { thinkingConfig } : {}),
         systemInstruction: req.system,
-        tools: [{ functionDeclarations: req.tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.parameters })) }],
+        tools: [{ functionDeclarations: req.tools.map(({ parameters, ...tool }) => ({ ...tool, parametersJsonSchema: parameters })) }],
       },
     });
 
@@ -80,30 +80,18 @@ function mapStop(r: FinishReason | undefined, hasTools: boolean): StopReason {
   return "other";
 }
 
-export function toGemini(messages: Message[]): Content[] {
-  const out: Content[] = [];
-  const push = (role: "user" | "model", parts: Part[]) => {
-    if (!parts.length) return; // the API rejects empty turns, e.g. an empty reply
-    const last = out.at(-1);
-    if (last?.role === role) last.parts!.push(...parts);
-    else out.push({ role, parts: [...parts] });
-  };
-  for (const m of messages) {
-    if (m.role === "user") push("user", [{ text: m.text }]);
-    else if (m.role === "tool")
-      push(
-        "user",
-        m.results.flatMap((r): Part[] => [
-          { functionResponse: { id: r.id, name: r.name, response: r.isError ? { error: r.output } : { output: r.output } } },
-          ...(r.images ?? []).map((image) => ({ inlineData: { mimeType: image.mediaType, data: image.data } })),
-        ]),
-      );
-    else if (m.raw?.provider === "gemini") push("model", m.raw.content as Part[]);
-    else
-      push("model", [
-        ...(m.text ? [{ text: m.text }] : []),
-        ...m.toolCalls.map((c) => ({ functionCall: { id: c.id, name: c.name, args: c.input } })),
-      ]);
-  }
-  return out;
+function toTurn(m: Message): ["user" | "model", Part[]] {
+  if (m.role === "user") return ["user", [{ text: m.text }]];
+  if (m.role === "tool")
+    return ["user", m.results.flatMap((r): Part[] => [
+      { functionResponse: { id: r.id, name: r.name, response: r.isError ? { error: r.output } : { output: r.output } } },
+      ...(r.images ?? []).map((image) => ({ inlineData: { mimeType: image.mediaType, data: image.data } })),
+    ])];
+  if (m.raw?.provider === "gemini") return ["model", m.raw.content as Part[]];
+  return ["model", [
+    ...(m.text ? [{ text: m.text }] : []),
+    ...m.toolCalls.map((c) => ({ functionCall: { id: c.id, name: c.name, args: c.input } })),
+  ]];
 }
+
+export const toGemini = (messages: Message[]): Content[] => mergeTurns(messages.map(toTurn)).map(([role, parts]) => ({ role, parts }));

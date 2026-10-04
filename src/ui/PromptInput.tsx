@@ -1,5 +1,6 @@
 import { Box, Text, useInput, usePaste } from "ink";
 import { useEffect, useRef, useState } from "react";
+import { cycle } from "../lib/cycle.ts";
 import { promptCompletion } from "./autocomplete.ts";
 import type { Command } from "./commands.ts";
 import { KeyList } from "./KeyList.tsx";
@@ -114,11 +115,11 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
         return;
       }
       if (key.upArrow) {
-        if (menu.length) return setMenuIndex((i) => (i - 1 + menu.length) % menu.length);
+        if (menu.length) return setMenuIndex((i) => cycle(i, -1, menu.length));
         return onFirstLine ? browseHistory(-1) : moveVertical(-1);
       }
       if (key.downArrow) {
-        if (menu.length) return setMenuIndex((i) => (i + 1) % menu.length);
+        if (menu.length) return setMenuIndex((i) => cycle(i, 1, menu.length));
         return onLastLine ? browseHistory(1) : moveVertical(1);
       }
       // Some terminals send Option+arrows as readline's Escape+b / Escape+f.

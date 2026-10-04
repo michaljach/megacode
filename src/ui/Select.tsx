@@ -1,7 +1,14 @@
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useInput, type Key } from "ink";
 import { useState, type ReactNode } from "react";
+import { cycle } from "../lib/cycle.ts";
 
 export type Option<T> = { label: ReactNode; value: T; hint?: string };
+
+/** -1 for ↑ or ctrl+p, 1 for ↓ or ctrl+n, else 0. */
+export function listStep(input: string, key: Key): number {
+  if (key.upArrow || (key.ctrl && input === "p")) return -1;
+  return key.downArrow || (key.ctrl && input === "n") ? 1 : 0;
+}
 
 /**
  * Arrow-key list: ↑/↓ (or ctrl+p/n) to move, enter to pick, 1-9 to pick directly, esc to cancel.
@@ -25,8 +32,8 @@ export function Select<T>({
   const [index, setIndex] = useState(initialIndex);
 
   useInput((input, key) => {
-    if (key.upArrow || (key.ctrl && input === "p")) setIndex((i) => (i - 1 + options.length) % options.length);
-    else if (key.downArrow || (key.ctrl && input === "n")) setIndex((i) => (i + 1) % options.length);
+    const step = listStep(input, key);
+    if (step) setIndex((i) => cycle(i, step, options.length));
     else if (key.return) onSelect(options[index]!.value);
     else if (key.escape) onCancel?.();
     else if (/^[1-9]$/.test(input) && Number(input) <= options.length) onSelect(options[Number(input) - 1]!.value);

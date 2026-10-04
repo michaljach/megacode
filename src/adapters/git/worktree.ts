@@ -3,6 +3,7 @@ import { mkdir, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { pathExists } from "../../lib/fs.ts";
+import { plural } from "../../lib/plural.ts";
 import { loadSettings } from "../settings.ts";
 
 /** A git worktree megacode manages: <repo>/.megacode/worktrees/<name>, on branch worktree-<name>. */
@@ -13,15 +14,16 @@ export const WORKTREE_NAME = /^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/;
 
 const execGit = promisify(execFile);
 
-// Async so a slow git (large repo, network filesystem) never freezes the UI.
+// Async so a slow git (large repo, network filesystem) never freezes the UI. Failures carry git's own message.
 async function git(cwd: string, ...args: string[]): Promise<string> {
-  return (await execGit("git", args, { cwd, encoding: "utf8" })).stdout.trim();
+  try {
+    return (await execGit("git", args, { cwd, encoding: "utf8" })).stdout.trim();
+  } catch (e) {
+    throw new Error(`git ${args.slice(0, 2).join(" ")} failed: ${(e as { stderr?: string }).stderr?.trim() || (e as Error).message}`);
+  }
 }
 
 const tryGit = (cwd: string, ...args: string[]) => git(cwd, ...args).catch(() => null);
-
-/** git's own message for a failed command. */
-const gitError = (e: unknown) => (e as { stderr?: string }).stderr?.trim() || (e as Error).message;
 
 /** Root of the main checkout, also when called from inside a worktree. */
 export async function mainRoot(cwd = process.cwd()): Promise<string> {
@@ -88,9 +90,7 @@ export async function openWorktree(name?: string, cwd = process.cwd()): Promise<
   // Reuse a branch left behind by an earlier worktree of the same name rather than resetting it.
   const branchExists = await tryGit(root, "rev-parse", "--verify", "--quiet", `refs/heads/${wt.branch}`);
   const args = branchExists ? [wt.path, wt.branch] : ["-b", wt.branch, wt.path, await baseRef(cwd)];
-  await git(root, "worktree", "add", ...args).catch((e) => {
-    throw new Error(`git worktree add failed: ${gitError(e)}`);
-  });
+  await git(root, "worktree", "add", ...args);
   return { ...wt, created: true };
 }
 
@@ -106,17 +106,13 @@ export async function worktreeChanges(wt: Worktree): Promise<WorktreeChanges | n
 
 export function describeChanges(c: WorktreeChanges | null): string {
   if (!c) return "status unknown";
-  const parts = [];
-  if (c.files) parts.push(`${c.files} changed file${c.files === 1 ? "" : "s"}`);
-  if (c.commits) parts.push(`${c.commits} new commit${c.commits === 1 ? "" : "s"}`);
-  return parts.join(", ") || "no changes";
+  const parts = [c.files && plural(c.files, "changed file"), c.commits && plural(c.commits, "new commit")];
+  return parts.filter(Boolean).join(", ") || "no changes";
 }
 
 /** Deletes the worktree directory (discarding uncommitted changes) and its branch. */
 export async function removeWorktree(wt: Worktree) {
   if (process.cwd() === wt.path || process.cwd().startsWith(wt.path + path.sep)) process.chdir(wt.root);
-  await git(wt.root, "worktree", "remove", "--force", wt.path).catch((e) => {
-    throw new Error(`git worktree remove failed: ${gitError(e)}`);
-  });
+  await git(wt.root, "worktree", "remove", "--force", wt.path);
   await tryGit(wt.root, "branch", "-D", wt.branch);
 }

@@ -14,7 +14,9 @@ import { ApprovalDialog } from "./ApprovalDialog.tsx";
 import { busyMessage, COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
 import { ConfigMenu } from "./ConfigMenu.tsx";
 import { EffortPicker } from "./EffortPicker.tsx";
-import { plural, previewPrompt } from "./format.ts";
+import { cycle } from "../lib/cycle.ts";
+import { plural } from "../lib/plural.ts";
+import { previewPrompt } from "./format.ts";
 import { Help } from "./Help.tsx";
 import { loadHistory, saveHistory } from "./history.ts";
 import { useAgentSession } from "./hooks/useAgentSession.ts";
@@ -225,7 +227,7 @@ export function App({
       setShowHelp(false);
       return setValue("");
     }
-    if (key.shift && key.tab) setMode((m) => PERMISSION_MODES[(PERMISSION_MODES.indexOf(m) + 1) % PERMISSION_MODES.length]!);
+    if (key.shift && key.tab) setMode((m) => PERMISSION_MODES[cycle(PERMISSION_MODES.indexOf(m), 1, PERMISSION_MODES.length)]!);
   });
 
   return (

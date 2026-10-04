@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import OpenAI from "openai";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
-import { CHATGPT_BASE_URL, chatGPTHeaders, chatGPTTokens } from "../auth/chatgpt.ts";
+import { CHATGPT_BASE_URL, chatGPTFetchHeaders, chatGPTHeaders, chatGPTTokens } from "../auth/chatgpt.ts";
 import { imageDataUrl, parseToolArguments } from "./shared.ts";
 
 const FALLBACK_MODELS = ["gpt-5", "gpt-5-codex"];
@@ -23,9 +23,7 @@ export class ChatGPTProvider implements Provider {
   async listModels(): Promise<string[]> {
     const t = await chatGPTTokens();
     try {
-      const res = await fetch(`${CHATGPT_BASE_URL}/models?client_version=1.0.0`, {
-        headers: { authorization: `Bearer ${t.access}`, ...chatGPTHeaders(t) },
-      });
+      const res = await fetch(`${CHATGPT_BASE_URL}/models?client_version=1.0.0`, { headers: chatGPTFetchHeaders(t) });
       if (!res.ok) throw new Error(String(res.status));
       const body = (await res.json()) as { models?: { slug?: string; id?: string; visibility?: string }[] };
       const ids = (body.models ?? []).filter((m) => m.visibility !== "hide").map((m) => m.slug ?? m.id).filter(Boolean) as string[];

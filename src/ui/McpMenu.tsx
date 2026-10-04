@@ -12,7 +12,8 @@ import {
 import { mcp, type McpStatus } from "../adapters/mcp/manager.ts";
 import { configDir } from "../adapters/storage.ts";
 import { previousAddStep, serverNameError, targetError, type AddStep } from "./mcpWizard.ts";
-import { plural, tildify } from "./format.ts";
+import { plural } from "../lib/plural.ts";
+import { tildify } from "./format.ts";
 import { Dialog } from "./Dialog.tsx";
 import { Select } from "./Select.tsx";
 import { TextField } from "./TextField.tsx";

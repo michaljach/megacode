@@ -7,13 +7,13 @@ import { fallbackCallId, imageDataUrl, parseToolArguments } from "./shared.ts";
 // (OpenRouter, Ollama, Groq, DeepSeek, LM Studio, vLLM, ...).
 export class OpenAIProvider implements Provider {
   client: OpenAI;
-  filter?: (id: string) => boolean;
+  filter: (id: string) => boolean;
   /** Models that rejected reasoning_effort; it isn't sent to them again this session. */
   #noEffort = new Set<string>();
 
   constructor(opts: { apiKey?: string; baseURL?: string; filter?: (id: string) => boolean } = {}) {
     this.client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL });
-    this.filter = opts.filter;
+    this.filter = opts.filter ?? (() => true);
   }
 
   async listModels(): Promise<string[]> {
@@ -23,7 +23,7 @@ export class OpenAIProvider implements Provider {
     return models
       .sort((a, b) => (b.created ?? 0) - (a.created ?? 0) || a.id.localeCompare(b.id))
       .map((m) => m.id)
-      .filter((id) => !this.filter || this.filter(id));
+      .filter(this.filter);
   }
 
   #stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
@@ -34,7 +34,7 @@ export class OpenAIProvider implements Provider {
         stream: true,
         stream_options: { include_usage: true },
         messages: [{ role: "system", content: req.system }, ...toOpenAI(req.messages)],
-        tools: req.tools.map((t) => ({ type: "function" as const, function: { name: t.name, description: t.description, parameters: t.parameters } })),
+        tools: req.tools.map((tool) => ({ type: "function" as const, function: tool })),
       },
       { signal: req.signal },
     );
@@ -74,7 +74,9 @@ export class OpenAIProvider implements Provider {
       if (choice.finish_reason) finish = choice.finish_reason;
     }
 
-    const toolCalls: ToolCall[] = calls.filter(Boolean).map((c, i) => ({ id: c.id || fallbackCallId(i), name: c.name, input: parseToolArguments(c.args) }));
+    const toolCalls: ToolCall[] = calls
+      .filter(Boolean)
+      .map((c, i) => ({ id: c.id || fallbackCallId(i), name: c.name, input: parseToolArguments(c.args) }));
     return { message: { role: "assistant", text, toolCalls }, stop: mapStop(finish, toolCalls.length > 0), usage };
   }
 }
@@ -105,7 +107,11 @@ export function toOpenAI(messages: Message[]): OpenAI.ChatCompletionMessageParam
     }
     // An assistant message needs content or tool calls; leave out empty replies.
     if (!m.text && !m.toolCalls.length) return [];
-    const toolCalls = m.toolCalls.map((c) => ({ id: c.id, type: "function" as const, function: { name: c.name, arguments: JSON.stringify(c.input) } }));
+    const toolCalls = m.toolCalls.map((c) => ({
+      id: c.id,
+      type: "function" as const,
+      function: { name: c.name, arguments: JSON.stringify(c.input) },
+    }));
     return [{ role: "assistant", content: m.text || null, ...(toolCalls.length && { tool_calls: toolCalls }) }];
   });
 }

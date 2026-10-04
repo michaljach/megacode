@@ -1,6 +1,7 @@
 import { glob, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { FileChange, Tool, ToolContext } from "../../core/tools.ts";
+import { plural } from "../../lib/plural.ts";
 import { compactOutput, filePage } from "./output.ts";
 import { displayPath, resolvePath } from "./paths.ts";
 
@@ -91,8 +92,7 @@ export const editFile: Tool<{ path: string; old_string: string; new_string: stri
     const after = replace_all ? before.replaceAll(old_string, () => new_string) : before.replace(old_string, () => new_string);
     const change = await applyChange(ctx, { tool: "edit_file", action: "edit", file, before, after });
     if (!change) return "User denied the edit.";
-    const replaced = replace_all ? matches : 1;
-    return { output: `Edited ${file} (${replaced} replacement${replaced === 1 ? "" : "s"})`, isError: false, change };
+    return { output: `Edited ${file} (${plural(replace_all ? matches : 1, "replacement")})`, isError: false, change };
   },
 };
 

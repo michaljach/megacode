@@ -3,6 +3,7 @@ import { stripVTControlCharacters, styleText } from "node:util";
 import chalk from "chalk";
 import type { ToolCall } from "../core/conversation.ts";
 import type { ApprovalRequest, FileChange } from "../core/tools.ts";
+import { plural } from "../lib/plural.ts";
 import { buildDiff, diffToAnsi, type DiffModel } from "./diff.ts";
 
 const TOOL_LABELS: Record<string, string> = {
@@ -46,8 +47,6 @@ export function previewPrompt(text: string): string {
   return chars.length > 200 ? chars.slice(0, 199).join("") + "…" : chars.join("");
 }
 
-export const plural = (n: number, word: string) => `${n.toLocaleString("en-US")} ${word}${n === 1 ? "" : "s"}`;
-
 /** First few lines of tool output for the transcript. */
 export function previewOutput(output: string, lines = 3): string {
   const all = output.trimEnd().split("\n");
@@ -55,7 +54,7 @@ export function previewOutput(output: string, lines = 3): string {
   return all.length > lines ? `${head}\n${styleText("dim", `… +${plural(all.length - lines, "line")}`)}` : head;
 }
 
-const count = (n: number, word: string) => `${chalk.bold(n.toLocaleString("en-US"))} ${word}${n === 1 ? "" : "s"}`;
+const count = (n: number, word: string) => plural(n, word).replace(/^\S+/, (number) => chalk.bold(number));
 
 /** Claude Code's summary of an applied change: "Added 2 lines, removed 1 line", "Wrote 14 lines to a.ts". */
 export function describeChange(change: FileChange, model: DiffModel | null = buildDiff(change, 0)): string {

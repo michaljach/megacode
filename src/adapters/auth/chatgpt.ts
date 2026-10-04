@@ -16,6 +16,8 @@ type TokenResponse = { id_token?: string; access_token: string; refresh_token?: 
 
 /** Headers the ChatGPT backend expects on every request. */
 export const chatGPTHeaders = (t: ChatGPTTokens) => ({ "ChatGPT-Account-ID": t.accountId, originator: ORIGINATOR });
+/** The same plus authorization, for plain fetches (the OpenAI client adds authorization itself). */
+export const chatGPTFetchHeaders = (t: ChatGPTTokens) => ({ authorization: `Bearer ${t.access}`, ...chatGPTHeaders(t) });
 
 function toTokens(res: TokenResponse, prev?: ChatGPTTokens): ChatGPTTokens {
   const id = res.id_token ? jwtClaims(res.id_token) : {};
@@ -84,18 +86,4 @@ export async function chatGPTTokens(force = false): Promise<ChatGPTTokens> {
   const refreshed = toTokens(await tokenRequest({ client_id: CLIENT_ID, grant_type: "refresh_token", refresh_token: tokens.refresh }, "json"), tokens);
   saveCredentials("openai", { ...saved, chatgpt: refreshed });
   return refreshed;
-}
-
-/** Live subscription limits from the same backend used by Codex. */
-export async function chatGPTUsage(): Promise<unknown> {
-  const signal = AbortSignal.timeout(15_000);
-  const url = `${CHATGPT_BASE_URL.replace(/\/codex\/?$/, "")}/wham/usage`;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const t = await chatGPTTokens(attempt > 0);
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${t.access}`, ...chatGPTHeaders(t) }, signal });
-    if (res.status === 401 && attempt === 0) continue; // token revoked early: refresh once
-    if (!res.ok) throw new Error(`Usage request failed (HTTP ${res.status}).${res.status === 401 || res.status === 403 ? " Run /login to update credentials." : ""}`);
-    return res.json();
-  }
-  throw new Error("Unable to fetch ChatGPT usage.");
 }

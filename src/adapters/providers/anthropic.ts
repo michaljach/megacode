@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
+import { mergeTurns } from "./shared.ts";
 
 /** Output cap when the model's own limit is unknown, and the most we ask for even when it's higher. */
 const MAX_OUTPUT = 64_000;
@@ -58,7 +59,11 @@ export class AnthropicProvider implements Provider {
       message: { role: "assistant", text, toolCalls, raw: { provider: "anthropic", content: msg.content } },
       stop: mapStop(msg.stop_reason),
       responseModel: msg.model,
-      usage: { input: uncached + cacheRead + cacheCreation, output: msg.usage.output_tokens, inputBreakdown: { uncached, cacheRead, cacheCreation } },
+      usage: {
+        input: uncached + cacheRead + cacheCreation,
+        output: msg.usage.output_tokens,
+        inputBreakdown: { uncached, cacheRead, cacheCreation },
+      },
     };
   }
 }
@@ -84,31 +89,18 @@ function mapStop(r: Anthropic.StopReason | null): StopReason {
   }
 }
 
-export function toAnthropic(messages: Message[]): Anthropic.MessageParam[] {
-  const out: Anthropic.MessageParam[] = [];
-  const push = (role: "user" | "assistant", blocks: Anthropic.ContentBlockParam[]) => {
-    if (!blocks.length) return; // the API rejects empty turns, e.g. an empty reply
-    const last = out.at(-1);
-    // Merge consecutive same-role turns (e.g. an interrupted tool result followed by new user text).
-    if (last && last.role === role && Array.isArray(last.content)) last.content.push(...blocks);
-    else out.push({ role, content: [...blocks] });
-  };
-  for (const m of messages) {
-    if (m.role === "user") push("user", [{ type: "text", text: m.text }]);
-    else if (m.role === "tool")
-      push(
-        "user",
-        m.results.map((r) => ({ type: "tool_result", tool_use_id: r.id, content: r.images?.length
-          ? [{ type: "text", text: r.output }, ...r.images.map((image) => ({ type: "image" as const, source: { type: "base64" as const, media_type: image.mediaType, data: image.data } }))]
-          : r.output, is_error: r.isError })),
-      );
-    else if (m.raw?.provider === "anthropic") push("assistant", m.raw.content as Anthropic.ContentBlockParam[]);
-    else {
-      const blocks: Anthropic.ContentBlockParam[] = [];
-      if (m.text) blocks.push({ type: "text", text: m.text });
-      for (const c of m.toolCalls) blocks.push({ type: "tool_use", id: c.id, name: c.name, input: c.input });
-      push("assistant", blocks);
-    }
-  }
-  return out;
+function toTurn(m: Message): ["user" | "assistant", Anthropic.ContentBlockParam[]] {
+  if (m.role === "user") return ["user", [{ type: "text", text: m.text }]];
+  if (m.role === "tool")
+    return ["user", m.results.map((r) => ({ type: "tool_result", tool_use_id: r.id, content: r.images?.length
+      ? [{ type: "text", text: r.output }, ...r.images.map((image) => ({ type: "image" as const, source: { type: "base64" as const, media_type: image.mediaType, data: image.data } }))]
+      : r.output, is_error: r.isError }))];
+  if (m.raw?.provider === "anthropic") return ["assistant", m.raw.content as Anthropic.ContentBlockParam[]];
+  return ["assistant", [
+    ...(m.text ? [{ type: "text" as const, text: m.text }] : []),
+    ...m.toolCalls.map((c) => ({ type: "tool_use" as const, id: c.id, name: c.name, input: c.input })),
+  ]];
 }
+
+export const toAnthropic = (messages: Message[]): Anthropic.MessageParam[] =>
+  mergeTurns(messages.map(toTurn)).map(([role, content]) => ({ role, content }));

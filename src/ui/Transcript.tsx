@@ -37,10 +37,9 @@ export function ItemView({ item, model }: { item: Item; model: string }) {
     case "user":
       return (
         <Box marginTop={1}>
-          <Box width={2} flexShrink={0}><Text dimColor>{"> "}</Text></Box>
-          <Box flexDirection="column" flexGrow={1} flexShrink={1} flexBasis={0} minWidth={0}>
+          <TranscriptRow prefix={<Text dimColor>{"> "}</Text>} width={2}>
             <Text wrap="wrap">{previewPrompt(item.text)}</Text>
-          </Box>
+          </TranscriptRow>
         </Box>
       );
     case "assistant":

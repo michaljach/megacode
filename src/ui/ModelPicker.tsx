@@ -1,9 +1,10 @@
-import { Box, Text, useInput, usePaste } from "ink";
+import { Box, Text, useInput } from "ink";
 import { useEffect, useMemo, useState } from "react";
 import { PROVIDER_INFO } from "../adapters/providers/catalog.ts";
 import { isConfigured } from "../adapters/providers/credentials.ts";
 import { listModels } from "../adapters/providers/registry.ts";
 import { Dialog } from "./Dialog.tsx";
+import { TextField } from "./TextField.tsx";
 
 type ListState = { status: "loading" } | { status: "ok"; models: string[] } | { status: "error"; error: string };
 
@@ -92,28 +93,25 @@ export function ModelPicker({
     setIndex((i) => Math.max(0, Math.min(rows.length - 1, i + d)));
   };
 
-  usePaste((text) => setQuery((q) => q + text.trim()));
-  useInput((input, key) => {
-    if (key.escape) return onCancel();
+  // Typing goes to the TextField; this handles moving through the list.
+  useInput((_, key) => {
     if (key.upArrow) return move(-1);
     if (key.downArrow) return move(1);
     if (key.pageUp) return move(-WINDOW);
     if (key.pageDown) return move(WINDOW);
-    if (key.return) {
-      const row = rows[index];
-      if (row?.action.type === "model") onSelect(row.action.spec);
-      else if (row?.action.type === "login") onLogin(row.action.provider);
-      return;
-    }
-    if (key.backspace || key.delete) return setQuery((q) => q.slice(0, -1));
-    if (key.ctrl && input === "u") return setQuery("");
-    if (key.ctrl || key.meta || key.tab || key.leftArrow || key.rightArrow) return;
-    if (input) {
-      setTouched(true);
-      setIndex(0);
-      setQuery((q) => q + input);
-    }
   });
+
+  function filter(next: string) {
+    setTouched(true);
+    setIndex(0);
+    setQuery(next);
+  }
+
+  function choose() {
+    const row = rows[index];
+    if (row?.action.type === "model") onSelect(row.action.spec);
+    else if (row?.action.type === "login") onLogin(row.action.provider);
+  }
 
   const start = Math.max(0, Math.min(index - Math.floor(WINDOW / 2), rows.length - WINDOW));
   const visible = rows.slice(start, start + WINDOW);
@@ -125,11 +123,13 @@ export function ModelPicker({
       subtitle={`${rows.filter((r) => r.action.type === "model").length} models${loading ? " · loading…" : ""}`}
       footer="↑↓ navigate · enter select · esc cancel · /login to add a provider"
     >
-      <Text>
-        <Text color="cyan">⌕ </Text>
-        {query || <Text dimColor>type to filter, or provider:model for anything unlisted</Text>}
-        {query ? <Text inverse> </Text> : null}
-      </Text>
+      <TextField
+        value={query}
+        onChange={filter}
+        onSubmit={choose}
+        onCancel={onCancel}
+        placeholder="type to filter, or provider:model for anything unlisted"
+      />
       <Box flexDirection="column" marginTop={1}>
         {start > 0 && <Text dimColor>{`  ↑ ${start} more`}</Text>}
         {visible.map((r, i) => {

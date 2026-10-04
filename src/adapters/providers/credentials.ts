@@ -14,10 +14,10 @@ export type Credentials = {
 export function credentials(name: string): Credentials {
   const info = providerInfo(name);
   const saved = savedCredentials(name) ?? {};
-  const envKey = info.env.map((k) => process.env[k]).find(Boolean);
+  const envName = envKeyName(info);
   const envURL = info.baseURLEnv && process.env[info.baseURLEnv];
   const baseURL = envURL || saved.baseURL || info.baseURL;
-  if (envKey) return { apiKey: envKey, baseURL, source: "env" };
+  if (envName) return { apiKey: process.env[envName], baseURL, source: "env" };
   if (saved.chatgpt) return { source: "chatgpt" };
   if (saved.apiKey) return { apiKey: saved.apiKey, baseURL, source: "saved" };
   if (info.local) return { baseURL, source: "local" };
