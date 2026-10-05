@@ -6,6 +6,12 @@ import { KeyList } from "../components/KeyList.tsx";
 import { promptCompletion } from "./autocomplete.ts";
 import { lineBounds, verticalMove, wordEnd, wordStart } from "./editing.ts";
 import { PromptText } from "./PromptText.tsx";
+import {
+  commitCursor,
+  freshCursor,
+  moveCursor,
+  type HistoryCursor,
+} from "./historyCursor.ts";
 
 type Props = {
   value: string;
@@ -27,8 +33,7 @@ type Props = {
 export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, history, autocomplete, suggestion, commands, placeholder }: Props) {
   const [cursor, setCursor] = useState(value.length);
   const [menuIndex, setMenuIndex] = useState(0);
-  const historyPos = useRef(-1); // -1 = editing a fresh draft
-  const draft = useRef("");
+  const hist = useRef<HistoryCursor>(freshCursor);
 
   // Keep the cursor valid when the value is changed from outside (clear, history, etc.).
   useEffect(() => setCursor((c) => Math.min(c, value.length)), [value]);
@@ -41,29 +46,26 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
     onChange(v);
     setCursor(c);
   };
-  const insert = (text: string) => set(value.slice(0, cursor) + text + value.slice(cursor), cursor + text.length);
+  /** Sets the text as an edit rather than a history navigation, so the next arrow press
+  starts a fresh browse from the latest entry. */
+  const commit = (v: string, c = v.length) => {
+    hist.current = commitCursor(hist.current);
+    set(v, c);
+  };
+  const insert = (text: string) =>
+    commit(value.slice(0, cursor) + text + value.slice(cursor), cursor + text.length);
 
   const { start: lineStart, end: lineEnd } = lineBounds(value, cursor);
 
+  /** Applies an ↑/↓ history press: advances the cursor and loads the entry it lands on. */
   const browseHistory = (dir: -1 | 1) => {
-    if (!history.length) return;
-    if (historyPos.current === -1) {
-      if (dir === 1) return;
-      draft.current = value;
-      historyPos.current = history.length;
-    }
-    const next = historyPos.current + dir;
-    if (next < 0) return;
-    if (next >= history.length) {
-      historyPos.current = -1;
-      return set(draft.current);
-    }
-    historyPos.current = next;
-    set(history[next]!);
+    const { cursor: next, text } = moveCursor(hist.current, dir, history, value);
+    hist.current = next;
+    if (text !== null) set(text);
   };
 
   const submit = (text: string) => {
-    historyPos.current = -1;
+    hist.current = freshCursor;
     onSubmit(text);
   };
 
@@ -76,13 +78,13 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
 
       if (key.return) {
         if (key.meta) return insert("\n");
-        if (value[cursor - 1] === "\\") return set(value.slice(0, cursor - 1) + "\n" + value.slice(cursor), cursor);
+        if (value[cursor - 1] === "\\") return commit(value.slice(0, cursor - 1) + "\n" + value.slice(cursor), cursor);
         if (menu.length && value !== menu[menuIndex]!.name) return submit(menu[menuIndex]!.name);
         return submit(value);
       }
       if (key.tab) {
-        if (menu.length) set(menu[menuIndex]!.name + " ");
-        else if (completion) set(value + completion);
+        if (menu.length) return commit(menu[menuIndex]!.name + " ");
+        if (completion) return commit(value + completion);
         return;
       }
       if (key.upArrow) {
@@ -100,17 +102,19 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
       if (key.rightArrow || (key.ctrl && input === "f")) return setCursor(Math.min(value.length, cursor + 1));
       if (key.home || (key.ctrl && input === "a")) return setCursor(lineStart);
       if (key.end || (key.ctrl && input === "e")) return setCursor(lineEnd);
-      if (key.ctrl && input === "u") return set(value.slice(0, lineStart) + value.slice(cursor), lineStart);
-      if (key.ctrl && input === "k") return set(value.slice(0, cursor) + value.slice(lineEnd), cursor);
+      if (key.ctrl && input === "u")
+        return commit(value.slice(0, lineStart) + value.slice(cursor), lineStart);
+      if (key.ctrl && input === "k")
+        return commit(value.slice(0, cursor) + value.slice(lineEnd), cursor);
       if ((key.ctrl && input === "w") || (key.meta && key.backspace)) {
         const start = wordStart(value, cursor);
-        return set(value.slice(0, start) + value.slice(cursor), start);
+        return commit(value.slice(0, start) + value.slice(cursor), start);
       }
       if (key.backspace) {
-        if (cursor > 0) set(value.slice(0, cursor - 1) + value.slice(cursor), cursor - 1);
+        if (cursor > 0) commit(value.slice(0, cursor - 1) + value.slice(cursor), cursor - 1);
         return;
       }
-      if (key.delete) return set(value.slice(0, cursor) + value.slice(cursor + 1), cursor);
+      if (key.delete) return commit(value.slice(0, cursor) + value.slice(cursor + 1), cursor);
       if (key.ctrl || key.meta || !input) return;
 
       if (input === "?" && value === "") return onHelp();
