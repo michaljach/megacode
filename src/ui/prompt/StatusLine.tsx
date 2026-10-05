@@ -9,7 +9,7 @@ const MODE_LABELS: Partial<Record<PermissionMode, { text: string; color: string 
 };
 
 const contextLabel = ({ tokens, window }: ContextUsage) =>
-  window ? `${formatTokens(tokens)}/${formatTokens(window)} context (${Math.round((tokens / window) * 100)}%)` : `${formatTokens(tokens)} context`;
+  window ? `${formatTokens(tokens)} (${Math.round((tokens / window) * 100)}%)` : `${formatTokens(tokens)}`;
 
 /**
  * Row under the prompt: permission mode and cwd on the left; model, worktree, tokens and, when turned on in /config,
