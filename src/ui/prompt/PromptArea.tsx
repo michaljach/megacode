@@ -34,7 +34,7 @@ export function PromptArea({
   updateVersion?: string | null;
 }) {
   return (
-    <Box marginTop={1} flexDirection="column">
+    <Box flexDirection="column">
       <PromptInput
         value={value}
         onChange={onChange}
