@@ -73,6 +73,9 @@ export function PromptInput({ value, onChange, onSubmit, onHelp, isActive, histo
 
   useInput(
     (input, key) => {
+      // Ink strips ESC from late kitty keyboard-query replies, leaving them looking like text.
+      if (/^\[\?\d+u$/.test(input)) return;
+
       // Handled by the app: interrupt, exit, permission mode.
       if ((key.ctrl && (input === "c" || input === "d")) || key.escape || (key.shift && key.tab)) return;
 
