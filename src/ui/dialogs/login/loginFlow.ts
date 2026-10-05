@@ -23,7 +23,7 @@ export function stepBack(step: LoginStep, info: ProviderInfo | undefined, opened
 
 /** After credentials fail, the step where the likely cause can be fixed. */
 export function stepAfterFailure(info: ProviderInfo, method: LoginMethod | undefined, key: string): LoginStep {
-  if (info.local || (info.keyOptional && !key)) return "url"; // the endpoint is the likely problem
+  if (info.keyOptional && !key) return "url"; // the endpoint is the likely problem
   if (method && method !== "key") return "method"; // a browser sign-in: try again or pick another way
   return "key";
 }

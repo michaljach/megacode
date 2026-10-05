@@ -38,6 +38,30 @@ test('prompt displays contextual ghost text only when enabled and matching', () 
   assert.doesNotMatch(view({ isActive: false }), /Run the tests|tab to accept/);
 });
 
+test('a remembered local model opens the prompt instead of first-run login', async (t) => {
+  const { App } = await import('../src/ui/App.tsx');
+  const { createAgent } = await import('../src/composition.ts');
+  const { defaultModel } = await import('../src/adapters/providers/registry.ts');
+  const { updateSettings } = await import('../src/adapters/settings.ts');
+  const { setConfigDir, configDir } = await import('../src/adapters/storage.ts');
+  const dir = mkdtempSync(join(tmpdir(), 'megacode-startup-'));
+  const previousDir = configDir();
+  t.after(() => { setConfigDir(previousDir); rmSync(dir, { recursive: true, force: true }); });
+  setConfigDir(dir);
+  const env = { ...process.env };
+  t.after(() => { process.env = env; });
+  delete process.env.MEGACODE_MODEL;
+  for (const name of Object.keys(process.env).filter(name => /API_KEY|AUTH_TOKEN|BASE_URL/.test(name))) delete process.env[name];
+  for (const model of ['ollama:llama3.2', 'lmstudio:local-model']) {
+    updateSettings({ model });
+    assert.equal(defaultModel(), model);
+    const output = stripVTControlCharacters(renderToString(createElement(App, {
+      agent: createAgent(defaultModel()), initialMode: 'ask',
+    }), { columns: 80 }));
+    assert.doesNotMatch(output, /Connect a model provider to get started/);
+  }
+});
+
 const renderItem = (item, columns) => stripVTControlCharacters(renderToString(
   createElement(ItemView, { item, model: 'test' }), { columns },
 )).split('\n').filter(line => line.trim());

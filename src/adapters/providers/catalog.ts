@@ -74,8 +74,8 @@ export const PROVIDER_INFO: ProviderInfo[] = [
     baseURL: "https://api.deepseek.com",
     keyUrl: "https://platform.deepseek.com/api_keys",
   },
-  { name: "ollama", label: "Ollama (local)", methods: ["url"], adapter: "openai", env: [], baseURL: "http://localhost:11434/v1", local: true },
-  { name: "lmstudio", label: "LM Studio (local)", methods: ["url"], adapter: "openai", env: [], baseURL: "http://localhost:1234/v1", local: true },
+  { name: "ollama", label: "Ollama (local)", methods: ["url"], adapter: "openai", env: [], baseURL: "http://localhost:11434/v1", local: true, keyOptional: true },
+  { name: "lmstudio", label: "LM Studio (local)", methods: ["url"], adapter: "openai", env: [], baseURL: "http://localhost:1234/v1", local: true, keyOptional: true },
   {
     name: "compat",
     label: "Custom OpenAI-compatible",

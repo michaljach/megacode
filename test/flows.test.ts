@@ -28,8 +28,17 @@ test("esc goes back one step, or closes when there is nothing before", () => {
   assert.equal(stepBack("url", ollama, false), "pick");
 });
 
+test("local servers allow optional keys and return to the key step to correct them", () => {
+  for (const name of ["ollama", "lmstudio"]) {
+    const info = providerInfo(name);
+    assert.equal(info.keyOptional, true);
+    assert.equal(stepBack("key", info, true), "url");
+    assert.equal(stepAfterFailure(info, undefined, "secret"), "key");
+  }
+});
+
 test("a failure returns to the step that can fix it", () => {
-  assert.equal(stepAfterFailure(ollama, undefined, ""), "url"); // not "key": local servers have none
+  assert.equal(stepAfterFailure(ollama, undefined, ""), "url");
   assert.equal(stepAfterFailure(compat, undefined, ""), "url");
   assert.equal(stepAfterFailure(compat, undefined, "sk-x"), "key");
   assert.equal(stepAfterFailure(groq, undefined, "gsk-x"), "key");

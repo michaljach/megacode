@@ -61,8 +61,7 @@ export function useLogin({
     const url = value || info.baseURL || "";
     if (!url) return setError("An endpoint URL is required.");
     setBaseURL(url);
-    if (info.local) verify("", method, url);
-    else setStep("key");
+    setStep("key");
   }
 
   function submitKey(value: string) {

@@ -48,7 +48,9 @@ export function App({
   const { push, notice } = transcript;
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
-    PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name)) ? null : { type: "login", welcome: true },
+    isConfigured(providerOf(agent.model)) || PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name))
+      ? null
+      : { type: "login", welcome: true },
   );
   const [showHelp, setShowHelp] = useState(false);
   const [mode, setMode] = useState(initialMode);

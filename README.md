@@ -33,11 +33,13 @@ Run `/login` to connect a provider. Where a provider supports browser sign-in, i
 | Anthropic  | API key, or **Anthropic CLI** (`ant auth login`, which the SDK picks up)        |
 | Others     | API key, or a server URL for Ollama / LM Studio / custom endpoints              |
 
+For Ollama and LM Studio, `/login` asks for the server URL, then an optional API key. Paste a key if your server requires authentication, or leave it empty and press enter.
+
 Credentials are verified (by fetching the model list) and saved to `~/.megacode/auth.json` (mode 600). ChatGPT tokens refresh automatically. `/logout` removes saved credentials. On first run with nothing configured, the login dialog opens by itself. An environment variable, if set, takes precedence over anything saved. Set `$BROWSER` to control how sign-in URLs are opened; the URL is also shown in the dialog.
 
 "Sign in with ChatGPT" uses the same OAuth client and backend as OpenAI's Codex CLI. That backend isn't a documented public API, so it may change without notice. Claude Pro/Max subscriptions can't be used: Anthropic doesn't permit third-party tools to use Claude.ai logins.
 
-`/model` lists every model from every connected provider, fetched live. Type to filter, then press enter. Anything unlisted can be used as `provider:model`. The last model you pick is remembered.
+`/model` lists every model from every connected provider, fetched live. Type to filter, then press enter. Anything unlisted can be used as `provider:model`. The last model you pick is remembered. A selected local model (Ollama or LM Studio) also skips the first-run provider dialog on restart.
 
 | Provider     | Env                                       | Notes                            |
 | ------------ | ----------------------------------------- | -------------------------------- |
