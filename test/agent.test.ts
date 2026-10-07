@@ -198,3 +198,14 @@ test("other request errors are not retried", async () => {
   await assert.rejects(agentWith(provider).send("hi", new AbortController().signal, recorder().events), /bad request/);
   assert.equal(calls, 1);
 });
+
+test("interrupting ends the turn even while the context-window lookup hangs", async () => {
+  const { provider } = scripted([{}]);
+  const agent = agentWith({ ...provider, contextWindow: () => new Promise<number | null>(() => {}) });
+  const ctrl = new AbortController();
+  const sent = agent.send("hi", ctrl.signal, recorder().events);
+  setTimeout(() => ctrl.abort(new Error("Interrupted")), 20);
+  const deadline = new Promise((resolve) => setTimeout(() => resolve("still waiting"), 1_000));
+  const outcome = await Promise.race([sent.then(() => "finished", () => "ended"), deadline]);
+  assert.equal(outcome, "ended");
+});

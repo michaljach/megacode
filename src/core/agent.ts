@@ -45,6 +45,16 @@ export type ContextUsage = { tokens: number; window: number | null };
 type SendContext = { provider: Provider; model: string; contextWindow: number | null; signal: AbortSignal; ev: AgentEvents };
 
 const INTERRUPTED = "Interrupted by user.";
+
+/** `promise`, or a rejection with the signal's reason as soon as it aborts. */
+function untilAborted<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(signal.reason);
+    if (signal.aborted) return abort();
+    signal.addEventListener("abort", abort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+  });
+}
 const IMAGE_REJECTED = "Image not sent: the model rejected it.";
 
 /** The agent loop: model turn → run requested tools → repeat until the model stops. */
@@ -90,12 +100,13 @@ export class Agent {
   }
 
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
-    // Pick up installed skills and project context between turns, never mid-turn.
-    const system = await this.#deps.systemPrompt();
     const { provider, model } = this.#deps.resolveModel(this.#model);
     const { maxSteps, effort } = this.#deps.settings();
     const { tools } = this.#deps;
-    const ctx: SendContext = { provider, model, contextWindow: (await provider.contextWindow?.(model)) ?? null, signal, ev };
+    // Pick up installed skills and project context between turns, never mid-turn. A slow or hung lookup mustn't
+    // outlast an interrupt, so the setup ends as soon as the signal aborts.
+    const [system, contextWindow] = await untilAborted(Promise.all([this.#deps.systemPrompt(), provider.contextWindow?.(model)]), signal);
+    const ctx: SendContext = { provider, model, contextWindow: contextWindow ?? null, signal, ev };
     this.#contextWindow = ctx.contextWindow;
     // Compacting before the new message keeps it verbatim.
     if (this.#nearLimit(ctx)) await this.#compact(ctx, false);

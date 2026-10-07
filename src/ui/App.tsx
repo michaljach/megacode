@@ -22,7 +22,7 @@ import { useWorktree } from "./hooks/useWorktree.ts";
 import { usePromptHistory } from "./prompt/history.ts";
 import { PromptArea } from "./prompt/PromptArea.tsx";
 import { QueuedMessages } from "./prompt/QueuedMessages.tsx";
-import { globalShortcut } from "./shortcuts.ts";
+import { globalShortcut, type Shortcut } from "./shortcuts.ts";
 import { AssistantText } from "./transcript/AssistantText.tsx";
 import { ItemView } from "./transcript/ItemView.tsx";
 import { RunningTool } from "./transcript/RunningTool.tsx";
@@ -111,8 +111,10 @@ export function App({
 
   // Leaving a worktree asks whether to keep it, like Claude Code.
   function quit() {
-    if (worktree) return setDialog({ type: "exit-worktree" });
-    exit();
+    if (!worktree) return exit();
+    // Asked already: quitting again keeps the worktree, which loses nothing.
+    if (dialog?.type === "exit-worktree") return exitWorktree(false);
+    setDialog({ type: "exit-worktree" });
   }
 
   async function exitWorktree(remove: boolean) {
@@ -171,9 +173,8 @@ export function App({
     exitWorktree,
   };
 
-  useInput((input, key) => {
-    const shortcut = globalShortcut(input, key, { running: session.running, dialogOpen, blocking, hasInput: !!value, exitArmed });
-    switch (shortcut?.type) {
+  function run(shortcut: Shortcut) {
+    switch (shortcut.type) {
       case "interrupt":
         return session.interrupt();
       case "close-dialog":
@@ -193,6 +194,12 @@ export function App({
       case "cycle-mode":
         return setMode((m) => PERMISSION_MODES[cycle(PERMISSION_MODES.indexOf(m), 1, PERMISSION_MODES.length)]!);
     }
+  }
+
+  useInput((input, key) => {
+    const exitPrompt = dialog?.type === "exit-worktree";
+    const state = { running: session.running, dialogOpen, blocking, hasInput: !!value, exitArmed, exitPrompt };
+    for (const shortcut of globalShortcut(input, key, state)) run(shortcut);
   });
 
   return (

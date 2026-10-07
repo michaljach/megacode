@@ -74,7 +74,7 @@ Successful `edit_file` and `write_file` calls show persistent diffs in the conve
 | `esc`                      | interrupt the running turn, or clear the input                |
 | `shift+tab`                | cycle permission mode: ask → accept edits → bypass (default)  |
 | `ctrl+a` `ctrl+e` `ctrl+u` `ctrl+k` `ctrl+w` | readline-style editing                      |
-| `ctrl+c`                   | interrupt, clear input, or exit (press twice)                 |
+| `ctrl+c`                   | interrupt, close a dialog, or clear input; press twice to exit, even mid-turn |
 
 ## Settings
 
@@ -155,7 +155,7 @@ Like Claude Code, megacode can work in a separate git worktree so the agent's ch
 
 - `megacode -w [name]` starts in a worktree, creating it if needed (random name if omitted). The argument after `-w` is taken as the name if it looks like one (letters, digits, `-`, `_`); otherwise it's part of the prompt.
 - `/worktree` opens a menu to create a worktree, switch between them, or return to the main checkout (keeping or removing the worktree). `/worktree <name>` switches directly.
-- Exiting while in a worktree asks whether to keep it or remove it along with its branch, showing any uncommitted files and unmerged commits that removal would discard.
+- Exiting while in a worktree asks whether to keep it or remove it along with its branch, showing any uncommitted files and unmerged commits that removal would discard. Pressing `ctrl+c` again at that question exits and keeps the worktree.
 - In one-shot mode there's no one to ask: a worktree created by that run and left untouched is removed; anything else is kept.
 
 ## Tools

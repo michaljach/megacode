@@ -47,7 +47,8 @@ export class ChatGPTProvider implements Provider {
   async #fetchModels(): Promise<ListedModel[]> {
     const t = await chatGPTTokens();
     try {
-      const res = await fetch(`${CHATGPT_BASE_URL}/models?client_version=1.0.0`, { headers: chatGPTFetchHeaders(t) });
+      const url = `${CHATGPT_BASE_URL}/models?client_version=1.0.0`;
+      const res = await fetch(url, { headers: chatGPTFetchHeaders(t), signal: AbortSignal.timeout(15_000) });
       if (!res.ok) throw new Error(String(res.status));
       type Listed = { slug?: string; id?: string; visibility?: string; context_window?: number };
       const body = (await res.json()) as { models?: Listed[] };

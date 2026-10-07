@@ -21,7 +21,7 @@ export function ExitWorktreeDialog({
   const summary = changes === undefined ? "" : describeChanges(changes);
   const clean = changes?.files === 0 && changes.commits === 0;
   return (
-    <Dialog title={`Exiting worktree ${worktree.name}`} tone="warn" footer="esc to stay">
+    <Dialog title={`Exiting worktree ${worktree.name}`} tone="warn" footer="esc to stay · ctrl+c keep it and exit">
       <Text dimColor>
         {tildify(worktree.path)} · branch {worktree.branch}
         {summary && ` · ${summary}`}
