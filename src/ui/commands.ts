@@ -117,7 +117,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "/clear",
-    description: "Clear conversation history and screen",
+    description: "Start a new conversation and clear the screen (the old one stays saved)",
     run(ctx) {
       if (ctx.running) return ctx.notice(busyMessage("clear"), "warn");
       ctx.clear();

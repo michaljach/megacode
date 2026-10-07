@@ -3,6 +3,8 @@ import { WORKTREE_NAME } from "./adapters/git/worktree.ts";
 
 type CliOptions = {
   model?: string;
+  /** Id of a saved session to continue. */
+  resume?: string;
   ask: boolean;
   help: boolean;
   /** -w was given; `name` is undefined for a random one. */
@@ -30,9 +32,11 @@ export function parseCliArgs(argv: string[]): CliOptions {
     allowPositionals: true,
     options: {
       model: { type: "string", short: "m" },
+      resume: { type: "string", short: "r" },
       ask: { type: "boolean", short: "a" },
       help: { type: "boolean", short: "h" },
     },
   });
-  return { model: values.model, ask: !!values.ask, help: !!values.help, worktree, prompt: positionals.join(" ") };
+  const { model, resume } = values;
+  return { model, resume, ask: !!values.ask, help: !!values.help, worktree, prompt: positionals.join(" ") };
 }

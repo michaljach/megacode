@@ -14,6 +14,7 @@ megacode -m ollama:qwen3:8b
 megacode -m openrouter:anthropic/claude-sonnet-5
 megacode -w                      # work in a new git worktree
 megacode -w fix-auth "fix login" # named worktree, one-shot
+megacode --resume <id>           # continue a saved conversation
 ```
 
 ## Automatic updates
@@ -149,6 +150,21 @@ Consult references/checklist.md when needed.
 - Tools appear to the model as `mcp__<server>__<tool>` and go through the same approval as shell commands (asked in ask / accept-edits mode, automatic in bypass). Server instructions are added to the system prompt.
 - Not supported yet: OAuth sign-in for remote servers (use a header with a token), project-level `.mcp.json`, and MCP resources and prompts.
 
+## Sessions
+
+Every conversation is saved after each turn, so you can pick it up later. When you quit, megacode prints how:
+
+```
+Resume this session with: megacode --resume 9ce0eb78-6b0b-4bd1-bfe0-e9ec2b3fd0cd
+```
+
+- `megacode --resume <id>` (or `-r`) opens the conversation again: earlier messages are shown (edits as their summary line, without the diff), the model continues with the full history, provider-native content included, and it keeps saving under the same id. `-m` picks a different model; otherwise the session's model is used.
+- With a prompt, `megacode -r <id> "next step"` continues it in one-shot mode. One-shot runs are saved too, but print no resume hint (look in `sessions/`).
+- In a worktree that you keep on exit, the command includes it: `megacode -w <name> --resume <id>`.
+- Quitting mid-turn saves what was done; tool calls cut off by quitting are marked as interrupted when the session is resumed.
+- `/clear` starts a new session; the old one stays saved.
+- Sessions are stored in `sessions/<id>.json` in the config folder (`~/.megacode` or `$MEGACODE_CONFIG_DIR`), readable only by you. They hold your code and command output, and megacode doesn't delete them; remove old ones by hand.
+
 ## Worktrees
 
 Like Claude Code, megacode can work in a separate git worktree so the agent's changes stay off your checkout. Worktrees live in `<repo>/.megacode/worktrees/<name>` (hidden from `git status`) on a branch named `worktree-<name>`, branched from the remote's default branch or your current commit (see `/config`).
@@ -204,6 +220,7 @@ src/
     project.ts        working directory and AGENTS.md / CLAUDE.md for the system prompt
     accounts.ts       /login and /logout use cases: verify, save, remove credentials
     skills.ts         skill discovery and installation
+    sessions.ts       saved conversations for --resume
     update.ts         background automatic updates for global npm installs
     providers/
       catalog.ts      known providers and OpenAI-compatible presets
@@ -248,6 +265,7 @@ src/
     hooks/
       useAgentSession.ts     React binding for AgentSession
       useTranscript.ts       finished transcript items, notices, /clear
+      useSavedSession.ts     saving the conversation after each turn, its session id
       useSettingsActions.ts  model, effort, settings and login/logout changes
       useStreamedText.ts     streamed-text buffering
       usePromptSuggestion.ts next-prompt suggestions
@@ -255,7 +273,7 @@ src/
       useLoaded.ts           run a promise once on mount
     components/       Dialog (the frame every dialog uses), Select, TextField, KeyList, Spinner, Waiting
     transcript/       ItemView (one finished entry), ToolResult, AssistantText, RunningTool, CallHeader,
-                      TranscriptRow, DiffLines
+                      TranscriptRow, DiffLines; fromMessages.ts (a resumed conversation's entries)
     prompt/           PromptArea (input, status line, help), PromptInput, PromptText, StatusLine,
                       QueuedMessages, Help; editing.ts (cursor moves), history.ts, autocomplete.ts
     dialogs/

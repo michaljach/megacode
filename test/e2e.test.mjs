@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -16,13 +16,13 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR
 
 /**
  * Runs megacode against `server` in a fresh workspace (seeded with `files`) and a fresh config
- * folder (seeded with `settings`). Never touches ~/.megacode.
+ * folder (seeded with `settings`), or `configDir` from an earlier run. Never touches ~/.megacode.
  */
-async function megacode(t, server, args, { files = {}, settings } = {}) {
+async function megacode(t, server, args, { files = {}, settings, configDir: reuse } = {}) {
   const cwd = await mkdtemp(path.join(os.tmpdir(), 'megacode-e2e-'));
   t.after(() => rm(cwd, { recursive: true, force: true }));
-  const configDir = path.join(cwd, '.config');
-  await mkdir(configDir);
+  const configDir = reuse ?? path.join(cwd, '.config');
+  await mkdir(configDir, { recursive: true });
   if (settings) await writeFile(path.join(configDir, 'settings.json'), JSON.stringify(settings));
   for (const [name, content] of Object.entries(files)) await writeFile(path.join(cwd, name), content);
 
@@ -34,7 +34,7 @@ async function megacode(t, server, args, { files = {}, settings } = {}) {
   child.stdout.setEncoding('utf8').on('data', (d) => (stdout += d));
   child.stderr.setEncoding('utf8').on('data', (d) => (stderr += d));
   const code = await new Promise((resolve) => child.on('close', resolve));
-  return { code, stdout, stderr, cwd };
+  return { code, stdout, stderr, cwd, configDir };
 }
 
 /** Starts a fake server and stops it when the test ends. */
@@ -137,4 +137,29 @@ test('a history near the context window the server reports is compacted before t
   assert.equal(run.code, 0, run.stderr);
   assert.match(run.stdout, /Conversation compacted[\s\S]*done/);
   assert.deepEqual(server.requests.map((r) => (isCompaction(r) ? 'summary' : 'turn')), ['turn', 'summary', 'turn']);
+});
+
+test('a one-shot run is saved, and --resume continues it with the earlier messages', async (t) => {
+  const server = await fakeModel(t, (_, i) => [{ text: 'noted' }, { text: 'it was otter' }][i]);
+  const first = await megacode(t, server, ['remember the word otter']);
+  assert.equal(first.code, 0, first.stderr);
+  const [file] = await readdir(path.join(first.configDir, 'sessions'));
+  const second = await megacode(t, server, ['--resume', file.replace(/\.json$/, ''), 'what was the word?'], { configDir: first.configDir });
+
+  assert.equal(second.code, 0, second.stderr);
+  assert.match(second.stdout, /it was otter/);
+  assert.deepEqual(server.requests[1].messages.slice(1).map((m) => [m.role, m.content]), [
+    ['user', 'remember the word otter'],
+    ['assistant', 'noted'],
+    ['user', 'what was the word?'],
+  ]);
+});
+
+test('--resume with an unknown id fails and says where sessions are kept', async (t) => {
+  const server = await fakeModel(t, () => ({ text: 'unused' }));
+  const run = await megacode(t, server, ['--resume', 'no-such-session', 'hi']);
+
+  assert.equal(run.code, 1);
+  assert.match(run.stderr, /No saved session no-such-session in .*sessions/);
+  assert.equal(server.requests.length, 0);
 });

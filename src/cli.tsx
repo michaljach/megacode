@@ -6,8 +6,9 @@ import { mcp } from "./adapters/mcp/manager.ts";
 import { PROVIDERS } from "./adapters/providers/catalog.ts";
 import { defaultModel } from "./adapters/providers/registry.ts";
 import { loadSettings } from "./adapters/settings.ts";
+import { loadSession, newSessionId, saveSession } from "./adapters/sessions.ts";
 import { runSkillsCommand } from "./adapters/skills.ts";
-import { setConfigDir } from "./adapters/storage.ts";
+import { configDir, setConfigDir } from "./adapters/storage.ts";
 import { parseCliArgs } from "./args.ts";
 import { createAgent } from "./composition.ts";
 import type { Agent } from "./core/agent.ts";
@@ -28,6 +29,7 @@ Options:
   -a, --ask                     ask before writes, edits and shell commands (default: set in /config)
   -w, --worktree [name]         work in a git worktree at .megacode/worktrees/<name> on branch worktree-<name>
                                 (created if needed; random name if omitted)
+  -r, --resume <id>             continue a saved conversation (the id is printed when you quit)
   -h, --help
 
 Providers: ${PROVIDERS.join(", ")}
@@ -56,10 +58,15 @@ async function withPipedInput(prompt: string): Promise<string> {
   return [prompt, piped.trim()].filter(Boolean).join("\n\n");
 }
 
-async function runOnce(agent: Agent, prompt: string, mode: PermissionMode, worktree: (Worktree & { created: boolean }) | null, home: string) {
+/** What both run modes work with: the agent, the permission mode, the worktree (if any) and the session id. */
+type Run = { agent: Agent; mode: PermissionMode; worktree: (Worktree & { created: boolean }) | null; home: string; sessionId: string };
+
+async function runOnce({ agent, mode, worktree, home, sessionId }: Run, prompt: string) {
   for (const failure of await mcp.start()) console.error(failure);
   const code = await runPlain(agent, prompt, mode);
   await mcp.closeAll();
+  // Saved like interactive sessions, so `megacode --resume <id> "…"` can continue it.
+  await saveSession({ id: sessionId, cwd: process.cwd(), model: agent.model, messages: agent.messages }).catch(() => {});
   if (worktree) {
     // No one to ask: remove a worktree this run created and left untouched; keep anything else.
     const changes = await worktreeChanges(worktree);
@@ -70,10 +77,17 @@ async function runOnce(agent: Agent, prompt: string, mode: PermissionMode, workt
   return code;
 }
 
-async function runInteractive(agent: Agent, mode: PermissionMode, worktree: Worktree | null, home: string) {
+async function runInteractive({ agent, mode, worktree, home, sessionId }: Run) {
   let exitMessage = "";
   const app = render(
-    <App agent={agent} initialMode={mode} initialWorktree={worktree} home={home} onExitMessage={(m) => (exitMessage = m)} />,
+    <App
+      agent={agent}
+      initialMode={mode}
+      initialWorktree={worktree}
+      home={home}
+      sessionId={sessionId}
+      onExitMessage={(m) => (exitMessage = m)}
+    />,
     // The kitty keyboard protocol (where the terminal supports it) tells ctrl+1…9 apart from plain digits.
     { exitOnCtrlC: false, kittyKeyboard: { mode: "auto" } },
   );
@@ -102,10 +116,14 @@ const home = process.cwd();
 const worktree = options.worktree ? await openWorktree(options.worktree.name).catch((e: Error) => fail(e.message)) : null;
 if (worktree) process.chdir(worktree.path);
 
-const agent = orFail(() => createAgent(options.model ?? defaultModel()));
+const resumed = options.resume ? await loadSession(options.resume) : null;
+if (options.resume && !resumed) fail(`No saved session ${options.resume} in ${configDir()}/sessions.`);
+const agent = orFail(() => createAgent(options.model ?? resumed?.model ?? defaultModel()));
+if (resumed) agent.restore(resumed.messages);
 const mode = options.ask ? "ask" : loadSettings().permissionMode;
+const run: Run = { agent, mode, worktree, home, sessionId: resumed?.id ?? newSessionId() };
 const prompt = await withPipedInput(options.prompt);
 
 const interactive = !prompt && process.stdin.isTTY && process.stdout.isTTY;
 if (!interactive && !prompt) fail("No prompt given. Run megacode in a terminal for the interactive UI, or pass a prompt.");
-process.exit(interactive ? await runInteractive(agent, mode, worktree, home) : await runOnce(agent, prompt, mode, worktree, home));
+process.exit(interactive ? await runInteractive(run) : await runOnce(run, prompt));

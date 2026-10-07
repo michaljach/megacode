@@ -4,10 +4,12 @@ import type { Worktree } from "../adapters/git/worktree.ts";
 import { mcp } from "../adapters/mcp/manager.ts";
 import { PROVIDER_INFO, providerInfo } from "../adapters/providers/catalog.ts";
 import { isConfigured, needsLogin, providerOf } from "../adapters/providers/credentials.ts";
+import { resumeCommand } from "../adapters/sessions.ts";
 import { autoUpdate } from "../adapters/update.ts";
 import type { Agent } from "../core/agent.ts";
 import { PERMISSION_MODES, type PermissionMode } from "../core/settings.ts";
 import { cycle } from "../lib/cycle.ts";
+import { plural } from "../lib/plural.ts";
 import { busyMessage, COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
 import { Spinner } from "./components/Spinner.tsx";
 import { ActiveDialog, type DialogActions } from "./dialogs/ActiveDialog.tsx";
@@ -16,6 +18,7 @@ import { Questionnaire } from "./dialogs/Questionnaire.tsx";
 import { useAgentSession } from "./hooks/useAgentSession.ts";
 import { useLoaded } from "./hooks/useLoaded.ts";
 import { usePromptSuggestion } from "./hooks/usePromptSuggestion.ts";
+import { useSavedSession } from "./hooks/useSavedSession.ts";
 import { useSettingsActions } from "./hooks/useSettingsActions.ts";
 import { useTranscript } from "./hooks/useTranscript.ts";
 import { useWorktree } from "./hooks/useWorktree.ts";
@@ -24,6 +27,7 @@ import { PromptArea } from "./prompt/PromptArea.tsx";
 import { QueuedMessages } from "./prompt/QueuedMessages.tsx";
 import { globalShortcut, type Shortcut } from "./shortcuts.ts";
 import { AssistantText } from "./transcript/AssistantText.tsx";
+import { itemsFromMessages } from "./transcript/fromMessages.ts";
 import { ItemView } from "./transcript/ItemView.tsx";
 import { RunningTool } from "./transcript/RunningTool.tsx";
 
@@ -32,6 +36,7 @@ export function App({
   initialMode,
   initialWorktree = null,
   home = process.cwd(),
+  sessionId,
   onExitMessage,
 }: {
   agent: Agent;
@@ -40,11 +45,18 @@ export function App({
   initialWorktree?: Worktree | null;
   /** Directory to return to when leaving a worktree. */
   home?: string;
+  /** Id the conversation is saved under; a resumed session's own. */
+  sessionId: string;
   /** Receives a message to print after the UI closes. */
   onExitMessage?: (message: string) => void;
 }) {
   const { exit } = useApp();
-  const transcript = useTranscript();
+  // A resumed conversation is shown again, then marked as resumed.
+  const transcript = useTranscript(() => {
+    if (!agent.messages.length) return [];
+    const text = `Resumed session ${sessionId} · ${plural(agent.messages.length, "message")}`;
+    return [...itemsFromMessages(agent.messages), { kind: "notice", text, level: "info" }];
+  });
   const { push, notice } = transcript;
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
@@ -80,6 +92,7 @@ export function App({
   });
   const settings = useSettingsActions(agent, { notice, setDialog, setMode });
   const { model, autocomplete, statusDetails, selectModel, selectEffort, logout } = settings;
+  const saved = useSavedSession(agent, sessionId, session.running);
   const { worktree, enter, leave } = useWorktree(initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {
     enabled: autocomplete,
@@ -107,19 +120,38 @@ export function App({
   function clear() {
     agent.clear();
     transcript.reset();
+    saved.restart();
   }
 
   // Leaving a worktree asks whether to keep it, like Claude Code.
   function quit() {
-    if (!worktree) return exit();
+    if (!worktree) return void exitApp();
     // Asked already: quitting again keeps the worktree, which loses nothing.
-    if (dialog?.type === "exit-worktree") return exitWorktree(false);
+    if (dialog?.type === "exit-worktree") return void exitWorktree(false);
     setDialog({ type: "exit-worktree" });
   }
 
+  async function exitApp() {
+    await saveForExit();
+    closeApp();
+  }
+
   async function exitWorktree(remove: boolean) {
+    if (!worktree) return;
+    await saveForExit();
+    closeApp(await leave(remove).catch((e: Error) => e.message), remove ? undefined : worktree.name);
+  }
+
+  /** Stops the turn and saves the conversation, while still in the directory it ran in. */
+  async function saveForExit() {
     session.abort();
-    onExitMessage?.(await leave(remove).catch((e: Error) => e.message));
+    await saved.save();
+  }
+
+  /** Closes the UI, printing `message` and how to resume the conversation (with -w while its worktree is kept). */
+  function closeApp(message = "", keptWorktree?: string) {
+    const resume = agent.messages.length ? `Resume this session with: ${resumeCommand(saved.id, keptWorktree)}` : "";
+    onExitMessage?.([message, resume].filter(Boolean).join("\n"));
     exit();
   }
 

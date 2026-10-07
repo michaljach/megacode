@@ -92,6 +92,13 @@ export class Agent {
     this.#model = spec;
   }
 
+  /** Continues a saved conversation. Tool calls cut off by quitting mid-turn get "interrupted" results. */
+  restore(messages: Message[]) {
+    this.messages = messages;
+    this.#contextTokens = null;
+    closeOpenToolCalls(this.messages, INTERRUPTED);
+  }
+
   clear() {
     this.messages = [];
     this.usage = { input: 0, output: 0 };

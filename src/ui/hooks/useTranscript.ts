@@ -2,9 +2,12 @@ import { useState } from "react";
 import type { NoticeLevel } from "../../core/agent.ts";
 import type { Item } from "../transcript/ItemView.tsx";
 
-/** The finished transcript, rendered once into <Static>; `epoch` changes when it's cleared, to remount <Static>. */
-export function useTranscript() {
-  const [items, setItems] = useState<Item[]>([{ kind: "banner" }]);
+/**
+ * The finished transcript, rendered once into <Static>, starting with `initial` after the banner; `epoch` changes when
+ * it's cleared, to remount <Static>.
+ */
+export function useTranscript(initial: () => Item[]) {
+  const [items, setItems] = useState<Item[]>(() => [{ kind: "banner" }, ...initial()]);
   const [epoch, setEpoch] = useState(0);
   const push = (...add: Item[]) => setItems((prev) => [...prev, ...add]);
 
