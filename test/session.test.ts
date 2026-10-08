@@ -212,6 +212,18 @@ test("rejected credentials point to /login; other errors are shown as they are",
   assert.deepEqual(broken.notices, ["error: socket hang up"]);
 });
 
+test("non-Error failures are reported without crashing the session", async () => {
+  for (const error of [null, undefined, "offline"]) {
+    const { session, notices } = setup(async () => { throw error; });
+    await session.submit("go");
+    assert.deepEqual(notices, [`error: ${String(error)}`]);
+    assert.equal(session.state.running, false);
+  }
+  const { session, notices } = setup(async () => { throw { status: 403 }; });
+  await session.submit("go");
+  assert.deepEqual(notices, ["error: Anthropic rejected the credentials. Run /login to update them."]);
+});
+
 test("tool results are added to the transcript with their diff and a summary", async () => {
   const { session, items } = setup(async (_, __, ev) => {
     const call = { id: "1", name: "edit_file", input: { path: "a.ts" } };

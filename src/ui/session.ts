@@ -1,5 +1,6 @@
 import { providerInfo } from "../adapters/providers/catalog.ts";
 import { providerOf } from "../adapters/providers/credentials.ts";
+import { isHttpErrorLike } from "../core/provider.ts";
 import type { Agent, AgentEvents, NoticeLevel } from "../core/agent.ts";
 import type { ToolCall } from "../core/conversation.ts";
 import { autoApproved, EDIT_TOOLS, type PermissionMode } from "../core/settings.ts";
@@ -176,9 +177,9 @@ export class AgentSession {
     else if (interrupted && this.#sendNow === "all") notice("Interrupted to send queued messages.");
     else if (interrupted && this.#sendNow !== null) notice("Interrupted to send a queued message.");
     else if (interrupted) notice("Interrupted. What should megacode do instead?", "warn");
-    else if ([401, 403].includes((error as { status?: number }).status!))
+    else if (isHttpErrorLike(error) && [401, 403].includes(error.status))
       notice(`${providerInfo(providerOf(this.#agent.model)).label} rejected the credentials. Run /login to update them.`, "error");
-    else notice((error as Error).message, "error");
+    else notice(error instanceof Error ? error.message : String(error), "error");
   }
 
   #approve: Approve = (req) => {

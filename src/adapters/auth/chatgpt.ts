@@ -19,6 +19,12 @@ export const chatGPTHeaders = (t: ChatGPTTokens) => ({ "ChatGPT-Account-ID": t.a
 /** The same plus authorization, for plain fetches (the OpenAI client adds authorization itself). */
 export const chatGPTFetchHeaders = (t: ChatGPTTokens) => ({ authorization: `Bearer ${t.access}`, ...chatGPTHeaders(t) });
 
+function stringClaim(claims: unknown, key: string): string | undefined {
+  if (typeof claims !== "object" || claims === null) return undefined;
+  const value: unknown = Reflect.get(claims, key);
+  return typeof value === "string" ? value : undefined;
+}
+
 function toTokens(res: TokenResponse, prev?: ChatGPTTokens): ChatGPTTokens {
   const id = res.id_token ? jwtClaims(res.id_token) : {};
   const access = jwtClaims(res.access_token);
@@ -26,10 +32,11 @@ function toTokens(res: TokenResponse, prev?: ChatGPTTokens): ChatGPTTokens {
   return {
     access: res.access_token,
     refresh: res.refresh_token ?? prev?.refresh ?? "",
-    expires: access.exp ? access.exp * 1000 : Date.now() + (res.expires_in ?? 3600) * 1000,
-    accountId: auth.chatgpt_account_id ?? prev?.accountId ?? "",
-    email: id.email ?? id["https://api.openai.com/profile"]?.email ?? prev?.email,
-    plan: auth.chatgpt_plan_type ?? prev?.plan,
+    expires: typeof access.exp === "number" && Number.isFinite(access.exp)
+      ? access.exp * 1000 : Date.now() + (res.expires_in ?? 3600) * 1000,
+    accountId: stringClaim(auth, "chatgpt_account_id") ?? prev?.accountId ?? "",
+    email: stringClaim(id, "email") ?? stringClaim(id["https://api.openai.com/profile"], "email") ?? prev?.email,
+    plan: stringClaim(auth, "chatgpt_plan_type") ?? prev?.plan,
   };
 }
 

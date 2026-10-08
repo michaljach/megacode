@@ -1,6 +1,6 @@
 import { COMPACT_AT, compactHistory } from "./compaction.ts";
 import { closeOpenToolCalls, dropImages, type Message, type ToolCall, type ToolMessage, type ToolResult } from "./conversation.ts";
-import { ContextOverflowError, type ModelResolver, type Provider, type TurnRequest, type TurnResult, type Usage } from "./provider.ts";
+import { ContextOverflowError, isHttpErrorLike, type ModelResolver, type Provider, type TurnRequest, type TurnResult, type Usage } from "./provider.ts";
 import type { Settings } from "./settings.ts";
 import { canSuggest, suggestNextPrompt } from "./suggestion.ts";
 import type { ExecutionResult, ToolContext, ToolSource } from "./tools.ts";
@@ -190,7 +190,7 @@ export class Agent {
           throw new ContextOverflowError("The conversation is still too long for the model after compacting. Run /clear to start over.");
         });
       }
-      if ((e as { status?: number }).status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
+      if (!isHttpErrorLike(e) || e.status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
       ctx.ev.onNotice("The model rejected an image, so it was removed from the conversation.", "warn");
       return ctx.provider.turn({ ...req, messages: this.messages });
     }

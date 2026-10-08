@@ -37,6 +37,10 @@ export type TurnResult = {
 /** The conversation no longer fits the model's context window. Adapters throw it for their API's "too long" errors. */
 export class ContextOverflowError extends Error {}
 
+/** Whether a provider error carries a numeric HTTP status. */
+export const isHttpErrorLike = (error: unknown): error is { status: number } =>
+  typeof error === "object" && error !== null && "status" in error && typeof error.status === "number";
+
 /** Port implemented by every model backend (Anthropic, OpenAI, Gemini, …). */
 export interface Provider {
   turn(req: TurnRequest): Promise<TurnResult>;

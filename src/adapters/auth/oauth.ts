@@ -65,10 +65,16 @@ export async function callbackServer(opts: { port: number; path: string; state?:
   return { port, code, close };
 }
 
+const isClaimsObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 /** Decode a JWT payload without verifying it (we only read our own tokens' claims). */
-export function jwtClaims(token: string): Record<string, any> {
+export function jwtClaims(token: string): Record<string, unknown> {
   try {
-    return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8"));
+    const payload = token.split(".")[1];
+    if (!payload) return {};
+    const claims: unknown = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return isClaimsObject(claims) ? claims : {};
   } catch {
     return {};
   }

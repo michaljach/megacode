@@ -45,6 +45,17 @@ test("each API's \"too long\" rejection becomes ContextOverflowError; rate limit
     assert.equal(asContextOverflow(error), error, error.message);
 });
 
+test("overflow handling preserves unknown errors and accepts status-only rejections", async () => {
+  const { asContextOverflow } = await import("../src/adapters/providers/shared.ts");
+  const { ContextOverflowError } = await import("../src/core/provider.ts");
+  for (const error of [null, undefined, "offline", 400, { status: "400", message: "context length" }, { status: 400, message: 123 }])
+    assert.equal(asContextOverflow(error), error);
+  const rejected = { status: 400, code: "context_length_exceeded" };
+  const overflow = asContextOverflow(rejected);
+  assert.ok(overflow instanceof ContextOverflowError);
+  assert.equal(overflow.cause, rejected);
+});
+
 test("context windows come from each API's model info; a failed lookup means unknown", async () => {
   const { AnthropicProvider } = await import("../src/adapters/providers/anthropic.ts");
   const { GeminiProvider } = await import("../src/adapters/providers/gemini.ts");

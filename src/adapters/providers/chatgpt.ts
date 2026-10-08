@@ -4,6 +4,7 @@ import type { Message, ToolCall } from "../../core/conversation.ts";
 import {
   ContextOverflowError,
   explicitEffort,
+  isHttpErrorLike,
   type Provider,
   type StopReason,
   type TurnRequest,
@@ -79,7 +80,7 @@ export class ChatGPTProvider implements Provider {
     try {
       stream = await (await this.#client()).responses.create(params, { signal: req.signal });
     } catch (e) {
-      if ((e as { status?: number }).status !== 401) throw e;
+      if (!isHttpErrorLike(e) || e.status !== 401) throw e;
       stream = await (await this.#client(true)).responses.create(params, { signal: req.signal }); // token revoked early
     }
 
