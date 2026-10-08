@@ -1,4 +1,5 @@
 import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -29,4 +30,21 @@ export function writeJson(file: string, data: unknown, opts: { secret?: boolean 
   } catch {
     // persistence is a convenience; ignore write failures
   }
+}
+
+/** readJson without blocking the event loop, for files that can be large (saved sessions). */
+export async function readJsonAsync<T>(file: string, fallback: T): Promise<T> {
+  try {
+    return JSON.parse(await readFile(path.join(dir, file), "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+/** writeJson without blocking the event loop; `file` may be in a subfolder. Throws if the write fails. */
+export async function writeJsonAsync(file: string, data: unknown, opts: { secret?: boolean } = {}) {
+  const p = path.join(dir, file);
+  await mkdir(path.dirname(p), { recursive: true, mode: 0o700 });
+  await writeFile(p, JSON.stringify(data), { mode: opts.secret ? 0o600 : 0o644 });
+  if (opts.secret) await chmod(p, 0o600); // mode is ignored when the file already exists
 }

@@ -10,7 +10,7 @@ import {
   type TurnResult,
 } from "../../core/provider.ts";
 import { CHATGPT_BASE_URL, chatGPTFetchHeaders, chatGPTHeaders, chatGPTTokens } from "../auth/chatgpt.ts";
-import { imageDataUrl, isHttpErrorLike, parseToolArguments, saysTooLong } from "./shared.ts";
+import { imageDataUrl, parseToolArguments, saysTooLong } from "./shared.ts";
 
 const FALLBACK_MODELS = ["gpt-5", "gpt-5-codex"];
 
@@ -47,11 +47,11 @@ export class ChatGPTProvider implements Provider {
   async #fetchModels(): Promise<ListedModel[]> {
     const t = await chatGPTTokens();
     try {
-      const res = await fetch(`${CHATGPT_BASE_URL}/models?client_version=1.0.0`, { headers: chatGPTFetchHeaders(t) });
+      const url = `${CHATGPT_BASE_URL}/models?client_version=1.0.0`;
+      const res = await fetch(url, { headers: chatGPTFetchHeaders(t), signal: AbortSignal.timeout(15_000) });
       if (!res.ok) throw new Error(String(res.status));
       type Listed = { slug?: string; id?: string; visibility?: string; context_window?: number };
-      const raw = (await res.json()) as unknown;
-      const body = (typeof raw === "object" && raw !== null && "models" in raw) ? (raw as { models?: Listed[] }) : { models: [] };
+      const body = (await res.json()) as { models?: Listed[] };
       return (body.models ?? []).flatMap((m) => {
         const id = m.slug ?? m.id;
         return m.visibility === "hide" || !id ? [] : [{ id, contextWindow: m.context_window ?? null }];
@@ -79,7 +79,7 @@ export class ChatGPTProvider implements Provider {
     try {
       stream = await (await this.#client()).responses.create(params, { signal: req.signal });
     } catch (e) {
-      if (!isHttpErrorLike(e) || e.status !== 401) throw e;
+      if ((e as { status?: number }).status !== 401) throw e;
       stream = await (await this.#client(true)).responses.create(params, { signal: req.signal }); // token revoked early
     }
 
@@ -135,10 +135,9 @@ export function toResponses(messages: Message[]): OpenAI.Responses.ResponseInput
       }
       return results;
     }
-    if (m.raw?.provider === "openai-responses") {
+    if (m.raw?.provider === "openai-responses")
       // With store: false the server keeps nothing, so item ids can't be referenced; resend items without them.
       return (m.raw.content as Record<string, unknown>[]).map(({ id: _id, ...item }) => item as unknown as OpenAI.Responses.ResponseInputItem);
-    }
     return [
       ...(m.text ? [{ role: "assistant" as const, content: m.text }] : []),
       ...m.toolCalls.map((c) => ({ type: "function_call" as const, call_id: c.id, name: c.name, arguments: JSON.stringify(c.input) })),

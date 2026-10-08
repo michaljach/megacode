@@ -15,16 +15,10 @@ const tick = () => new Promise((resolve) => setImmediate(resolve));
 const untilAborted = (signal: AbortSignal) =>
   new Promise<void>((_, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
 
-/** User messages in the transcript, in order. */
-const userTexts = (items: Item[]) =>
-  items.filter((i): i is Extract<Item, { kind: "user" }> => i.kind === "user").map((i) => i.text);
-
-/** Notices in the transcript as "level: text", mirroring the old host recorder. */
-const noticeTexts = (items: Item[]) =>
-  items.filter((i): i is Extract<Item, { kind: "notice" }> => i.kind === "notice").map((i) => `${i.level}: ${i.text}`);
-
 function setup(send: Send, overrides: Partial<SessionHost> = {}) {
   const sent: string[] = [];
+  const items: Item[] = [];
+  const notices: string[] = [];
   const restored: string[] = [];
   let mode: PermissionMode = "ask";
   let allowEdits = 0;
@@ -33,20 +27,23 @@ function setup(send: Send, overrides: Partial<SessionHost> = {}) {
     send: (text, signal, ev) => (sent.push(text), send(text, signal, ev)),
   } as SessionAgent;
   const host: SessionHost = {
+    push: (...add) => items.push(...add),
+    notice: (text, level = "info") => notices.push(`${level}: ${text}`),
     canSend: () => true,
     mode: () => mode,
-    setMode: (m) => (mode = m),
     onAllowEdits: () => ((allowEdits++), (mode = "accept-edits")),
     restoreInput: (text) => restored.push(text),
+    onText() {},
+    onStepEnd() {},
     ...overrides,
   };
   const session = new AgentSession(agent, host);
-  return { session, sent, restored, allowEdits: () => allowEdits };
+  return { session, sent, items, notices, restored, allowEdits: () => allowEdits };
 }
 
 test("messages sent during a turn are queued, then sent together", async () => {
   let finish!: () => void;
-  const { session, sent } = setup(async (text) => {
+  const { session, sent, items } = setup(async (text) => {
     if (text === "first") await new Promise<void>((resolve) => (finish = resolve));
   });
   const done = session.submit("first");
@@ -57,36 +54,36 @@ test("messages sent during a turn are queued, then sent together", async () => {
   finish();
   await done;
   assert.deepEqual(sent, ["first", "second\nthird"]);
-  assert.deepEqual(userTexts(session.items), ["first", "second\nthird"]);
+  assert.deepEqual(items.map((i) => i.kind === "user" && i.text), ["first", "second\nthird"]);
   assert.equal(session.state.running, false);
   assert.deepEqual(session.state.queued, []);
   assert.equal(session.state.completedTurns, 2);
 });
 
 test("an interrupt hands queued messages back instead of sending them", async () => {
-  const { session, sent, restored } = setup((_, signal) => untilAborted(signal));
+  const { session, sent, notices, restored } = setup((_, signal) => untilAborted(signal));
   const done = session.submit("first");
   await session.submit("queued");
   session.interrupt();
   await done;
   assert.deepEqual(sent, ["first"]);
   assert.deepEqual(restored, ["queued"]);
-  assert.deepEqual(noticeTexts(session.items), ["warn: Interrupted. What should megacode do instead?"]);
+  assert.deepEqual(notices, ["warn: Interrupted. What should megacode do instead?"]);
   assert.equal(session.state.completedTurns, 0);
 });
 
 test("flushing the queue interrupts the turn and sends the queue right away", async () => {
-  const { session, sent, restored } = setup((text, signal) => (text === "first" ? untilAborted(signal) : Promise.resolve()));
+  const { session, sent, notices, restored } = setup((text, signal) => (text === "first" ? untilAborted(signal) : Promise.resolve()));
   const done = session.submit("first");
   session.flushQueue("now");
   await done;
   assert.deepEqual(sent, ["first", "now"]);
   assert.deepEqual(restored, []);
-  assert.deepEqual(noticeTexts(session.items), ["info: Interrupted to send queued messages."]);
+  assert.deepEqual(notices, ["info: Interrupted to send queued messages."]);
 });
 
 test("sending one queued message interrupts the turn, runs it, then sends the rest", async () => {
-  const { session, sent, restored } = setup((text, signal) => (text === "first" ? untilAborted(signal) : Promise.resolve()));
+  const { session, sent, notices, restored } = setup((text, signal) => (text === "first" ? untilAborted(signal) : Promise.resolve()));
   const done = session.submit("first");
   await session.submit("one");
   await session.submit("two");
@@ -95,7 +92,7 @@ test("sending one queued message interrupts the turn, runs it, then sends the re
   await done;
   assert.deepEqual(sent, ["first", "two", "one\nthree"]);
   assert.deepEqual(restored, []);
-  assert.deepEqual(noticeTexts(session.items), ["info: Interrupted to send a queued message."]);
+  assert.deepEqual(notices, ["info: Interrupted to send a queued message."]);
   assert.deepEqual(session.state.queued, []);
 });
 
@@ -119,10 +116,10 @@ test("flushing an empty queue leaves the turn running", async () => {
 });
 
 test("held-back messages never start a turn", async () => {
-  const { session, sent } = setup(async () => {}, { canSend: () => false });
+  const { session, sent, items } = setup(async () => {}, { canSend: () => false });
   await session.submit("hello");
   assert.deepEqual(sent, []);
-  assert.deepEqual(session.items, [{ kind: "banner" }]);
+  assert.deepEqual(items, []);
   assert.equal(session.state.running, false);
 });
 
@@ -160,7 +157,7 @@ test("'always' on an edit switches the session to accept-edits", async () => {
 
 test("denying stops the turn and says so", async () => {
   let approved: boolean | undefined;
-  const { session } = setup(async (_, signal, ev) => {
+  const { session, notices } = setup(async (_, signal, ev) => {
     approved = await ev.approve({ tool: "bash", title: "Bash", body: "rm -rf build" });
     signal.throwIfAborted();
   });
@@ -169,7 +166,7 @@ test("denying stops the turn and says so", async () => {
   session.answerApproval("no");
   await done;
   assert.equal(approved, false);
-  assert.deepEqual(noticeTexts(session.items), ["warn: Denied. Tell megacode what to do instead."]);
+  assert.deepEqual(notices, ["warn: Denied. Tell megacode what to do instead."]);
 });
 
 test("an interrupt during an approval denies it", async () => {
@@ -206,24 +203,24 @@ test("rejected credentials point to /login; other errors are shown as they are",
     throw Object.assign(new Error("401"), { status: 401 });
   });
   await unauthorized.session.submit("go");
-  assert.deepEqual(noticeTexts(unauthorized.session.items), ["error: Anthropic rejected the credentials. Run /login to update them."]);
+  assert.deepEqual(unauthorized.notices, ["error: Anthropic rejected the credentials. Run /login to update them."]);
 
   const broken = setup(async () => {
     throw new Error("socket hang up");
   });
   await broken.session.submit("go");
-  assert.deepEqual(noticeTexts(broken.session.items), ["error: socket hang up"]);
+  assert.deepEqual(broken.notices, ["error: socket hang up"]);
 });
 
 test("tool results are added to the transcript with their diff and a summary", async () => {
-  const { session } = setup(async (_, __, ev) => {
+  const { session, items } = setup(async (_, __, ev) => {
     const call = { id: "1", name: "edit_file", input: { path: "a.ts" } };
     ev.onToolStart(call);
     assert.equal(session.state.activeTool, call);
     ev.onToolEnd(call, { output: "Edited", isError: false, change: { file: "a.ts", before: "a\n", after: "b\n" } });
   });
   await session.submit("go");
-  const tool = session.items.find((i) => i.kind === "tool");
+  const tool = items.find((i) => i.kind === "tool");
   assert.ok(tool?.kind === "tool" && tool.diff);
   assert.equal(plain(tool.output), "Added 1 line, removed 1 line"); // counts are bold when color is on
   assert.deepEqual(tool.diff.rows.map((r) => r.type), ["remove", "add"]);

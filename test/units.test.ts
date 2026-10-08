@@ -35,18 +35,22 @@ test("model specs split on the first colon only", () => {
   assert.deepEqual(parseModelSpec("anthropic"), { provider: "anthropic" });
 });
 
-test("cli args parse model, ask, host, port, and prompt", () => {
+test("-w takes an optional name before the prompt", () => {
+  assert.deepEqual(parseCliArgs(["-w", "fix-auth", "fix", "login"]).worktree, { name: "fix-auth" });
+  assert.equal(parseCliArgs(["-w", "fix-auth", "fix", "login"]).prompt, "fix login");
+  assert.deepEqual(parseCliArgs(["-w", "fix the bug"]), {
+    model: undefined, resume: undefined, ask: false, help: false, worktree: {}, prompt: "fix the bug",
+  });
+  assert.deepEqual(parseCliArgs(["--worktree=x", "-m", "openai:gpt-5"]).worktree, { name: "x" });
   assert.equal(parseCliArgs(["-m", "openai:gpt-5"]).model, "openai:gpt-5");
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5", "--ask"]).ask, true);
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5", "--ask"]).prompt, "");
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5"]).help, false);
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5", "-H", "127.0.0.1"]).host, "127.0.0.1");
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5", "-H", "127.0.0.1", "-p", "8080"]).host, "127.0.0.1");
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5", "-p", "8080"]).port, 8080);
-  assert.equal(parseCliArgs(["-m", "openai:gpt-5", "-p", "0"]).port, 0);
-  assert.equal(parseCliArgs(["hello world"]).prompt, "hello world");
-  assert.equal(parseCliArgs([]).prompt, "");
-  assert.throws(() => parseCliArgs(["-p", "99999"]), /99999/);
+  assert.equal(parseCliArgs([]).worktree, undefined);
+});
+
+test("--resume and -r take a session id, and a prompt can follow", () => {
+  assert.equal(parseCliArgs(["--resume", "abc-123"]).resume, "abc-123");
+  assert.deepEqual(parseCliArgs(["-r", "abc-123", "carry", "on"]), {
+    model: undefined, resume: "abc-123", ask: false, help: false, worktree: undefined, prompt: "carry on",
+  });
 });
 
 test("MCP drafts become server configs", () => {

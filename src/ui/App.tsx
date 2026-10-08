@@ -1,42 +1,63 @@
 import { Box, Static, useApp, useInput } from "ink";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import type { Worktree } from "../adapters/git/worktree.ts";
 import { mcp } from "../adapters/mcp/manager.ts";
 import { PROVIDER_INFO, providerInfo } from "../adapters/providers/catalog.ts";
 import { isConfigured, needsLogin, providerOf } from "../adapters/providers/credentials.ts";
+import { resumeCommand } from "../adapters/sessions.ts";
 import { autoUpdate } from "../adapters/update.ts";
-import type { Agent, NoticeLevel } from "../core/agent.ts";
+import type { Agent } from "../core/agent.ts";
 import { PERMISSION_MODES, type PermissionMode } from "../core/settings.ts";
 import { cycle } from "../lib/cycle.ts";
+import { plural } from "../lib/plural.ts";
 import { busyMessage, COMMANDS, isCommand, runCommand, type CommandContext, type Dialog } from "./commands.ts";
 import { Spinner } from "./components/Spinner.tsx";
 import { ActiveDialog, type DialogActions } from "./dialogs/ActiveDialog.tsx";
 import { ApprovalDialog } from "./dialogs/ApprovalDialog.tsx";
 import { Questionnaire } from "./dialogs/Questionnaire.tsx";
 import { useAgentSession } from "./hooks/useAgentSession.ts";
-import type { AgentSession } from "./session.ts";
 import { useLoaded } from "./hooks/useLoaded.ts";
 import { usePromptSuggestion } from "./hooks/usePromptSuggestion.ts";
+import { useSavedSession } from "./hooks/useSavedSession.ts";
 import { useSettingsActions } from "./hooks/useSettingsActions.ts";
+import { useTranscript } from "./hooks/useTranscript.ts";
+import { useWorktree } from "./hooks/useWorktree.ts";
 import { usePromptHistory } from "./prompt/history.ts";
 import { PromptArea } from "./prompt/PromptArea.tsx";
 import { QueuedMessages } from "./prompt/QueuedMessages.tsx";
-import { globalShortcut } from "./shortcuts.ts";
+import { globalShortcut, type Shortcut } from "./shortcuts.ts";
 import { AssistantText } from "./transcript/AssistantText.tsx";
+import { itemsFromMessages } from "./transcript/fromMessages.ts";
 import { ItemView } from "./transcript/ItemView.tsx";
 import { RunningTool } from "./transcript/RunningTool.tsx";
 
 export function App({
   agent,
   initialMode,
+  initialWorktree = null,
+  home = process.cwd(),
+  sessionId,
+  onExitMessage,
 }: {
   agent: Agent;
   initialMode: PermissionMode;
+  /** Worktree the session started in (-w). */
+  initialWorktree?: Worktree | null;
+  /** Directory to return to when leaving a worktree. */
+  home?: string;
+  /** Id the conversation is saved under; a resumed session's own. */
+  sessionId: string;
+  /** Receives a message to print after the UI closes. */
+  onExitMessage?: (message: string) => void;
 }) {
   const { exit } = useApp();
-  // The transcript and the in-flight reply now live on the session, so the session's
-  // notice/print/reset drive them. `canSend` runs only after mount (during a send),
-  // so it can safely read the session back through this ref.
-  const sessionRef = useRef<AgentSession | null>(null);
+  // A resumed conversation is shown again, then marked as resumed.
+  const transcript = useTranscript(() => {
+    if (!agent.messages.length) return [];
+    const text = `Resumed session ${sessionId} · ${plural(agent.messages.length, "message")}`;
+    return [...itemsFromMessages(agent.messages), { kind: "notice", text, level: "info" }];
+  });
+  const { push, notice } = transcript;
   // First run with nothing configured: open the login flow right away.
   const [dialog, setDialog] = useState<Dialog | null>(() =>
     isConfigured(providerOf(agent.model)) || PROVIDER_INFO.some((p) => !p.local && isConfigured(p.name))
@@ -54,34 +75,32 @@ export function App({
   /** Puts text back in the input, ahead of anything typed since. */
   const restoreInput = (text: string) => setValue((current) => (current.trim() ? `${text}\n${current}` : text));
 
-  const { session, state, items, epoch, streaming } = useAgentSession(agent, {
+  const session = useAgentSession(agent, {
+    mode: () => mode,
+    push,
+    notice,
     canSend(text) {
       if (!needsLogin(agent.model)) return true;
       const provider = providerOf(agent.model);
       restoreInput(text);
-      sessionRef.current?.notice(`Not logged in to ${providerInfo(provider).label}.`, "warn");
+      notice(`Not logged in to ${providerInfo(provider).label}.`, "warn");
       setDialog({ type: "login", provider });
       return false;
     },
-    mode: () => mode,
-    setMode: (nextMode) => setMode(nextMode),
     onAllowEdits: () => setMode("accept-edits"),
     restoreInput,
   });
-  const notice = (text: string, level?: NoticeLevel) => session.notice(text, level);
-  const print = (text: string) => session.print(text);
-  const reset = () => session.reset();
   const settings = useSettingsActions(agent, { notice, setDialog, setMode });
   const { model, autocomplete, statusDetails, selectModel, selectEffort, logout } = settings;
+  const saved = useSavedSession(agent, sessionId, session.running);
+  const { worktree, enter, leave } = useWorktree(initialWorktree, home);
   const suggestion = usePromptSuggestion(agent, {
     enabled: autocomplete,
-    running: state.running,
-    completedTurn: state.completedTurns,
-    epoch,
+    running: session.running,
+    completedTurn: session.completedTurns,
+    epoch: transcript.epoch,
     model,
   });
-
-  useEffect(() => { sessionRef.current = session; }, [session]);
 
   // Connect MCP servers in the background; their tools join the next turn once ready.
   useEffect(() => {
@@ -93,30 +112,61 @@ export function App({
   /** Runs `action` unless a turn is running, reporting its message or error. */
   const whenIdle = (what: string, action: () => Promise<string>) => {
     setDialog(null);
-    if (state.running) return notice(busyMessage(what), "warn");
+    if (session.running) return notice(busyMessage(what), "warn");
     action().then(notice, (e: Error) => notice(e.message, "error"));
   };
+  const switchWorktree = (name?: string) => whenIdle("switch worktrees", () => enter(name));
 
   function clear() {
     agent.clear();
-    reset();
+    transcript.reset();
+    saved.restart();
   }
 
+  // Leaving a worktree asks whether to keep it, like Claude Code.
   function quit() {
+    if (!worktree) return void exitApp();
+    // Asked already: quitting again keeps the worktree, which loses nothing.
+    if (dialog?.type === "exit-worktree") return void exitWorktree(false);
+    setDialog({ type: "exit-worktree" });
+  }
+
+  async function exitApp() {
+    await saveForExit();
+    closeApp();
+  }
+
+  async function exitWorktree(remove: boolean) {
+    if (!worktree) return;
+    await saveForExit();
+    closeApp(await leave(remove).catch((e: Error) => e.message), remove ? undefined : worktree.name);
+  }
+
+  /** Stops the turn and saves the conversation, while still in the directory it ran in. */
+  async function saveForExit() {
+    session.abort();
+    await saved.save();
+  }
+
+  /** Closes the UI, printing `message` and how to resume the conversation (with -w while its worktree is kept). */
+  function closeApp(message = "", keptWorktree?: string) {
+    const resume = agent.messages.length ? `Resume this session with: ${resumeCommand(saved.id, keptWorktree)}` : "";
+    onExitMessage?.([message, resume].filter(Boolean).join("\n"));
     exit();
   }
 
   const commands: CommandContext = {
     model,
-    running: state.running,
+    running: session.running,
     notice,
-    print,
+    print: transcript.print,
     open: setDialog,
     showHelp: () => setShowHelp(true),
     clear,
     quit,
     selectModel,
     selectEffort,
+    enterWorktree: switchWorktree,
     logout,
   };
 
@@ -133,13 +183,13 @@ export function App({
   /** ctrl+s: queue whatever is in the input, then stop the running turn so the queue is sent right away. */
   function sendQueuedNow() {
     const text = value.trim();
-    if (!state.running) return text ? submit(text) : undefined;
+    if (!session.running) return text ? submit(text) : undefined;
     const queueInput = text && !isCommand(text);
     if (queueInput) setValue("");
     session.flushQueue(queueInput ? text : undefined);
   }
 
-  const blocking = !!(state.approval || state.questionnaire);
+  const blocking = !!(session.approval || session.questionnaire);
   const dialogOpen = dialog !== null;
 
   const dialogActions: DialogActions = {
@@ -150,11 +200,13 @@ export function App({
     changeSettings: settings.changeSettings,
     loggedIn: settings.loggedIn,
     logout,
+    enterWorktree: switchWorktree,
+    leaveWorktree: (remove) => whenIdle("leave the worktree", () => leave(remove)),
+    exitWorktree,
   };
 
-  useInput((input, key) => {
-    const shortcut = globalShortcut(input, key, { running: state.running, dialogOpen, blocking, hasInput: !!value, exitArmed });
-    switch (shortcut?.type) {
+  function run(shortcut: Shortcut) {
+    switch (shortcut.type) {
       case "interrupt":
         return session.interrupt();
       case "close-dialog":
@@ -174,29 +226,35 @@ export function App({
       case "cycle-mode":
         return setMode((m) => PERMISSION_MODES[cycle(PERMISSION_MODES.indexOf(m), 1, PERMISSION_MODES.length)]!);
     }
+  }
+
+  useInput((input, key) => {
+    const exitPrompt = dialog?.type === "exit-worktree";
+    const state = { running: session.running, dialogOpen, blocking, hasInput: !!value, exitArmed, exitPrompt };
+    for (const shortcut of globalShortcut(input, key, state)) run(shortcut);
   });
 
   return (
     <Box flexDirection="column">
-      <Static key={epoch} items={items} style={{ width: "100%" }}>
+      <Static key={transcript.epoch} items={transcript.items} style={{ width: "100%" }}>
         {(item, i) => <ItemView key={i} item={item} model={model} />}
       </Static>
 
-      {streaming.text.trim() && <AssistantText text={streaming.text.trimEnd()} first={streaming.first} />}
+      {session.streaming.text.trim() && <AssistantText text={session.streaming.text.trimEnd()} first={session.streaming.first} />}
 
-      {state.activeTool && !state.questionnaire && <RunningTool call={state.activeTool} waiting={!!state.approval} />}
+      {session.activeTool && !session.questionnaire && <RunningTool call={session.activeTool} waiting={!!session.approval} />}
 
-      {state.questionnaire && (
-        <Questionnaire questions={state.questionnaire.questions} onSubmit={state.questionnaire.resolve} onCancel={session.interrupt} />
+      {session.questionnaire && (
+        <Questionnaire questions={session.questionnaire.questions} onSubmit={session.questionnaire.resolve} onCancel={session.interrupt} />
       )}
 
-      {state.approval && <ApprovalDialog request={state.approval} onAnswer={session.answerApproval} />}
+      {session.approval && <ApprovalDialog request={session.approval} onAnswer={session.answerApproval} />}
 
-      {dialog && <ActiveDialog dialog={dialog} model={model} mode={mode} actions={dialogActions} />}
+      {dialog && <ActiveDialog dialog={dialog} model={model} mode={mode} worktree={worktree} actions={dialogActions} />}
 
-      {state.running && !blocking && <Spinner verb={state.verb} />}
+      {session.running && !blocking && <Spinner verb={session.verb} />}
 
-      <QueuedMessages queued={state.queued} />
+      <QueuedMessages queued={session.queued} />
 
       {!dialogOpen && !blocking && (
         <PromptArea
@@ -212,9 +270,9 @@ export function App({
           commands={COMMANDS}
           suggestion={suggestion}
           autocomplete={autocomplete}
-          running={state.running}
+          running={session.running}
           status={{
-            mode, model, loggedIn: !needsLogin(model), exitArmed, usage: agent.usage,
+            mode, model, loggedIn: !needsLogin(model), exitArmed, usage: agent.usage, worktree: worktree?.name,
             context: statusDetails.showContext ? agent.context : undefined,
             speed: statusDetails.showSpeed ? agent.speed : undefined,
           }}

@@ -14,7 +14,7 @@ megacode -m ollama:qwen3:8b
 megacode -m openrouter:anthropic/claude-sonnet-5
 megacode -w                      # work in a new git worktree
 megacode -w fix-auth "fix login" # named worktree, one-shot
-megacode -p 8080                 # serve the session to a remote front-end
+megacode --resume <id>           # continue a saved conversation
 ```
 
 ## Automatic updates
@@ -75,14 +75,7 @@ Successful `edit_file` and `write_file` calls show persistent diffs in the conve
 | `esc`                      | interrupt the running turn, or clear the input                |
 | `shift+tab`                | cycle permission mode: ask → accept edits → bypass (default)  |
 | `ctrl+a` `ctrl+e` `ctrl+u` `ctrl+k` `ctrl+w` | readline-style editing                      |
-| `ctrl+c`                   | interrupt, clear input, or exit (press twice)                 |
-
-## Remote front-ends
-
-`-H <host>` and `-p <port>` serve the session to a remote front-end (an iOS app or any WebSocket client), so the same conversation can be watched and steered from another device. Defaults: `0.0.0.0`, and port `0` picks a free one. The process stays alive until **Ctrl+C** or a `SIGTERM`; a plain prompt can't run while the server is up.
-
-- `GET /` and `GET /health` return the session as JSON: model, auth status, permission mode, queued messages, finished transcript entries, the in-flight reply, and any pending approval or questionnaire.
-- A WebSocket at `ws://<host>:<port>` receives the full snapshot on connect and after every change. Commands are small JSON messages: `submit`, `interrupt`, `flushQueue` (interrupt and send the queue, optionally adding the input text first), `sendQueued` (send one queued message), `answerApproval` (`yes` / `always` / `no`), `answerQuestionnaire`, `setMode`, `setModel`, `clear`. Failed commands come back as an `error` event; if an interrupt hands queued messages back to the input, an `restoreInput` event repopulates it.
+| `ctrl+c`                   | interrupt, close a dialog, or clear input; press twice to exit, even mid-turn |
 
 ## Settings
 
@@ -157,13 +150,28 @@ Consult references/checklist.md when needed.
 - Tools appear to the model as `mcp__<server>__<tool>` and go through the same approval as shell commands (asked in ask / accept-edits mode, automatic in bypass). Server instructions are added to the system prompt.
 - Not supported yet: OAuth sign-in for remote servers (use a header with a token), project-level `.mcp.json`, and MCP resources and prompts.
 
+## Sessions
+
+Every conversation is saved after each turn, so you can pick it up later. When you quit, megacode prints how:
+
+```
+Resume this session with: megacode --resume 9ce0eb78-6b0b-4bd1-bfe0-e9ec2b3fd0cd
+```
+
+- `megacode --resume <id>` (or `-r`) opens the conversation again: earlier messages are shown (edits as their summary line, without the diff), the model continues with the full history, provider-native content included, and it keeps saving under the same id. `-m` picks a different model; otherwise the session's model is used.
+- With a prompt, `megacode -r <id> "next step"` continues it in one-shot mode. One-shot runs are saved too, but print no resume hint (look in `sessions/`).
+- In a worktree that you keep on exit, the command includes it: `megacode -w <name> --resume <id>`.
+- Quitting mid-turn saves what was done; tool calls cut off by quitting are marked as interrupted when the session is resumed.
+- `/clear` starts a new session; the old one stays saved.
+- Sessions are stored in `sessions/<id>.json` in the config folder (`~/.megacode` or `$MEGACODE_CONFIG_DIR`), readable only by you. They hold your code and command output, and megacode doesn't delete them; remove old ones by hand.
+
 ## Worktrees
 
 Like Claude Code, megacode can work in a separate git worktree so the agent's changes stay off your checkout. Worktrees live in `<repo>/.megacode/worktrees/<name>` (hidden from `git status`) on a branch named `worktree-<name>`, branched from the remote's default branch or your current commit (see `/config`).
 
 - `megacode -w [name]` starts in a worktree, creating it if needed (random name if omitted). The argument after `-w` is taken as the name if it looks like one (letters, digits, `-`, `_`); otherwise it's part of the prompt.
 - `/worktree` opens a menu to create a worktree, switch between them, or return to the main checkout (keeping or removing the worktree). `/worktree <name>` switches directly.
-- Exiting while in a worktree asks whether to keep it or remove it along with its branch, showing any uncommitted files and unmerged commits that removal would discard.
+- Exiting while in a worktree asks whether to keep it or remove it along with its branch, showing any uncommitted files and unmerged commits that removal would discard. Pressing `ctrl+c` again at that question exits and keeps the worktree.
 - In one-shot mode there's no one to ask: a worktree created by that run and left untouched is removed; anything else is kept.
 
 ## Tools
@@ -212,6 +220,7 @@ src/
     project.ts        working directory and AGENTS.md / CLAUDE.md for the system prompt
     accounts.ts       /login and /logout use cases: verify, save, remove credentials
     skills.ts         skill discovery and installation
+    sessions.ts       saved conversations for --resume
     update.ts         background automatic updates for global npm installs
     providers/
       catalog.ts      known providers and OpenAI-compatible presets
@@ -247,24 +256,24 @@ src/
   lib/fs.ts           pathExists, the async existsSync
   lib/plural.ts       "1 line", "3 lines"
   lib/cycle.ts        wrap-around list index
-  server/
-    protocol.ts       wire types: session snapshot, client commands, server events
-    server.ts         RemoteServer: WebSocket + JSON endpoints over one AgentSession
   ui/                 Ink (React) TUI and plain output
     App.tsx           layout and wiring: session, dialogs, prompt, command context
     commands.ts       slash command registry (name, description, handler)
-    session.ts        AgentSession: turns, queue, interrupts, approvals, questionnaires and the transcript (no React)
+    session.ts        AgentSession: turns, queue, interrupts, approvals, questionnaires (no React)
     shortcuts.ts      app-level keyboard shortcuts as data (ctrl+c, esc, ctrl+s, shift+tab, …)
     plain.ts          one-shot / piped output
     hooks/
       useAgentSession.ts     React binding for AgentSession
+      useTranscript.ts       finished transcript items, notices, /clear
+      useSavedSession.ts     saving the conversation after each turn, its session id
       useSettingsActions.ts  model, effort, settings and login/logout changes
+      useStreamedText.ts     streamed-text buffering
       usePromptSuggestion.ts next-prompt suggestions
       useWorktree.ts         entering and leaving worktrees
       useLoaded.ts           run a promise once on mount
     components/       Dialog (the frame every dialog uses), Select, TextField, KeyList, Spinner, Waiting
     transcript/       ItemView (one finished entry), ToolResult, AssistantText, RunningTool, CallHeader,
-                      TranscriptRow, DiffLines
+                      TranscriptRow, DiffLines; fromMessages.ts (a resumed conversation's entries)
     prompt/           PromptArea (input, status line, help), PromptInput, PromptText, StatusLine,
                       QueuedMessages, Help; editing.ts (cursor moves), history.ts, autocomplete.ts
     dialogs/

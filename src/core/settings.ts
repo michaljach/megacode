@@ -25,6 +25,8 @@ export type Settings = {
   showSpeed: boolean;
   /** Show how much of the model's context window the conversation fills on the status line. */
   showContext: boolean;
+  /** What new worktrees branch from: the remote's default branch, or the current commit. */
+  worktreeBase: "fresh" | "head";
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -37,4 +39,5 @@ export const DEFAULT_SETTINGS: Settings = {
   promptAutocomplete: true,
   showSpeed: false,
   showContext: true,
+  worktreeBase: "fresh",
 };

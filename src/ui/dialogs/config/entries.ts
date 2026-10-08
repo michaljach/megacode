@@ -48,6 +48,15 @@ export const ENTRIES: Entry[] = [
     choices: onOff,
   },
   {
+    key: "worktreeBase",
+    label: "Worktree base",
+    description: "What /worktree and -w branch from: the remote's default branch (origin/HEAD), or the commit you're on",
+    choices: [
+      { value: "fresh", label: "default branch" },
+      { value: "head", label: "current commit" },
+    ],
+  },
+  {
     key: "promptAutocomplete",
     label: "Prompt autocomplete",
     description: "Suggest a next prompt from the current conversation; tab accepts without sending. Uses an extra model request after each turn",

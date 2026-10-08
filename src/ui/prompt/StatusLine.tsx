@@ -12,7 +12,7 @@ const contextLabel = ({ tokens, window }: ContextUsage) =>
   window ? `${formatTokens(tokens)} (${Math.round((tokens / window) * 100)}%)` : `${formatTokens(tokens)}`;
 
 /**
- * Row under the prompt: permission mode and cwd on the left; model, tokens and, when turned on in /config,
+ * Row under the prompt: permission mode and cwd on the left; model, worktree, tokens and, when turned on in /config,
  * context use and output speed on the right.
  */
 export function StatusLine({
@@ -21,6 +21,7 @@ export function StatusLine({
   loggedIn,
   exitArmed,
   usage,
+  worktree,
   context,
   speed,
 }: {
@@ -29,11 +30,12 @@ export function StatusLine({
   loggedIn: boolean;
   exitArmed: boolean;
   usage: { input: number; output: number };
+  worktree?: string;
   /** Left out when the setting is off; null until a response reports usage. */
   context?: ContextUsage | null;
   speed?: number | null;
 }) {
-  // Give exit confirmation the whole row instead of competing with model metadata.
+  // Give exit confirmation the whole row instead of competing with model/worktree metadata.
   if (exitArmed)
     return (
       <Box paddingX={2}>
@@ -61,6 +63,7 @@ export function StatusLine({
         <Text dimColor={loggedIn} color={loggedIn ? undefined : "yellow"} wrap="truncate-end">
           {modelDisplay(model)}
           {loggedIn ? "" : " · not logged in (/login)"}
+          {worktree ? ` · ⎇ ${worktree}` : ""}
           {tokens ? ` · ${formatTokens(tokens)} tokens` : ""}
           {context ? ` · ${contextLabel(context)}` : ""}
           {speed ? ` · ${speed.toFixed(1)} tok/s` : ""}

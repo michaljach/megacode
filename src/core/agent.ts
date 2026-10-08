@@ -1,10 +1,9 @@
 import { COMPACT_AT, compactHistory } from "./compaction.ts";
 import { closeOpenToolCalls, dropImages, type Message, type ToolCall, type ToolMessage, type ToolResult } from "./conversation.ts";
-import { ContextOverflowError, type ModelResolver, type Provider, type StopReason, type TurnRequest, type TurnResult, type Usage } from "./provider.ts";
+import { ContextOverflowError, type ModelResolver, type Provider, type TurnRequest, type TurnResult, type Usage } from "./provider.ts";
 import type { Settings } from "./settings.ts";
 import { canSuggest, suggestNextPrompt } from "./suggestion.ts";
 import type { ExecutionResult, ToolContext, ToolSource } from "./tools.ts";
-import { isHttpErrorLike } from "../adapters/providers/shared.ts";
 
 export type NoticeLevel = "info" | "warn" | "error";
 
@@ -46,6 +45,16 @@ export type ContextUsage = { tokens: number; window: number | null };
 type SendContext = { provider: Provider; model: string; contextWindow: number | null; signal: AbortSignal; ev: AgentEvents };
 
 const INTERRUPTED = "Interrupted by user.";
+
+/** `promise`, or a rejection with the signal's reason as soon as it aborts. */
+function untilAborted<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(signal.reason);
+    if (signal.aborted) return abort();
+    signal.addEventListener("abort", abort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+  });
+}
 const IMAGE_REJECTED = "Image not sent: the model rejected it.";
 
 /** The agent loop: model turn → run requested tools → repeat until the model stops. */
@@ -83,6 +92,13 @@ export class Agent {
     this.#model = spec;
   }
 
+  /** Continues a saved conversation. Tool calls cut off by quitting mid-turn get "interrupted" results. */
+  restore(messages: Message[]) {
+    this.messages = messages;
+    this.#contextTokens = null;
+    closeOpenToolCalls(this.messages, INTERRUPTED);
+  }
+
   clear() {
     this.messages = [];
     this.usage = { input: 0, output: 0 };
@@ -91,12 +107,13 @@ export class Agent {
   }
 
   async send(text: string, signal: AbortSignal, ev: AgentEvents): Promise<void> {
-    // Pick up installed skills and project context between turns, never mid-turn.
-    const system = await this.#deps.systemPrompt();
     const { provider, model } = this.#deps.resolveModel(this.#model);
     const { maxSteps, effort } = this.#deps.settings();
     const { tools } = this.#deps;
-    const ctx: SendContext = { provider, model, contextWindow: (await provider.contextWindow?.(model)) ?? null, signal, ev };
+    // Pick up installed skills and project context between turns, never mid-turn. A slow or hung lookup mustn't
+    // outlast an interrupt, so the setup ends as soon as the signal aborts.
+    const [system, contextWindow] = await untilAborted(Promise.all([this.#deps.systemPrompt(), provider.contextWindow?.(model)]), signal);
+    const ctx: SendContext = { provider, model, contextWindow: contextWindow ?? null, signal, ev };
     this.#contextWindow = ctx.contextWindow;
     // Compacting before the new message keeps it verbatim.
     if (this.#nearLimit(ctx)) await this.#compact(ctx, false);
@@ -173,7 +190,7 @@ export class Agent {
           throw new ContextOverflowError("The conversation is still too long for the model after compacting. Run /clear to start over.");
         });
       }
-      if (!isHttpErrorLike(e) || e.status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
+      if ((e as { status?: number }).status !== 400 || !dropImages(this.messages, IMAGE_REJECTED)) throw e;
       ctx.ev.onNotice("The model rejected an image, so it was removed from the conversation.", "warn");
       return ctx.provider.turn({ ...req, messages: this.messages });
     }
