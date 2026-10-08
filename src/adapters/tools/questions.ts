@@ -9,7 +9,8 @@ const isText = (v: unknown, max: number): v is string => typeof v === "string" &
 const inRange = (list: unknown[], max: number) => list.length >= 1 && list.length <= max;
 
 function parseQuestion(item: unknown): Question {
-  const { question, options } = (item && typeof item === "object" ? item : {}) as { question?: unknown; options?: unknown };
+  const obj = typeof item === "object" && item !== null ? item : {};
+  const { question, options } = obj as { question?: unknown; options?: unknown };
   if (!isText(question, MAX_QUESTION_LENGTH))
     throw new Error(`Each question must have non-empty question text (up to ${MAX_QUESTION_LENGTH} characters).`);
   if (options === undefined) return { question: question.trim() };

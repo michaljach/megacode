@@ -1,5 +1,4 @@
 import { savedProviders } from "../adapters/auth/store.ts";
-import { mainRoot } from "../adapters/git/worktree.ts";
 import { PROVIDERS, providerInfo } from "../adapters/providers/catalog.ts";
 import { providerOf } from "../adapters/providers/credentials.ts";
 import { providerUsage } from "../adapters/providers/usage.ts";
@@ -14,9 +13,7 @@ export type Dialog =
   | { type: "logout" }
   | { type: "config" }
   | { type: "effort" }
-  | { type: "worktree" }
-  | { type: "mcp" }
-  | { type: "exit-worktree" };
+  | { type: "mcp" };
 
 /** What commands may do to the session. App implements it. */
 export type CommandContext = {
@@ -31,7 +28,6 @@ export type CommandContext = {
   quit(): void;
   selectModel(spec: string): void;
   selectEffort(effort: Effort): void;
-  enterWorktree(name: string): void;
   logout(provider: string): void;
 };
 
@@ -103,17 +99,6 @@ export const COMMANDS: Command[] = [
     name: "/mcp",
     description: "Manage MCP servers (add, remove, reconnect, see tools)",
     run: (ctx) => ctx.open({ type: "mcp" }),
-  },
-  {
-    name: "/worktree",
-    description: "Create or switch git worktrees (or /worktree name)",
-    run(ctx, arg) {
-      if (arg) return ctx.enterWorktree(arg);
-      mainRoot().then(
-        () => ctx.open({ type: "worktree" }),
-        (e: Error) => ctx.notice(e.message, "warn"),
-      );
-    },
   },
   {
     name: "/clear",

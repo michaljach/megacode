@@ -192,10 +192,10 @@ test('status line keeps the mode whole and gives up the path before the details'
   mkdirSync(deep, { recursive: true });
   process.chdir(deep);
   t.after(() => (process.chdir(home), rmSync(root, { recursive: true, force: true })));
-  const props = { model: 'openai:gpt-6-astra', loggedIn: true, exitArmed: false, usage: { input: 12000, output: 3400 }, worktree: 'nimble-river-737' };
+  const props = { model: 'openai:gpt-6-astra', loggedIn: true, exitArmed: false, usage: { input: 12000, output: 3400 },  };
   const wide = view(createElement(StatusLine, { ...props, mode: 'ask' }), 100);
   assert.equal(wide.length, 1);
-  assert.match(wide[0], /^ {2}ask mode ….*that-the-path-cannot-fit {2}openai:gpt-6-astra · ⎇ nimble-river-737 · 15\.4k tokens$/);
+  assert.match(wide[0], /^ {2}ask mode ….*that-the-path-cannot-fit {2}openai:gpt-6-astra · 15\.4k tokens$/);
   for (const columns of [40, 50, 60]) {
     const narrow = view(createElement(StatusLine, { ...props, mode: 'ask' }), columns);
     assert.equal(narrow.length, 1, narrow.join('\n'));

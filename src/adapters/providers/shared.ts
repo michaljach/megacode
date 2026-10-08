@@ -1,6 +1,10 @@
 import type { ImageContent } from "../../core/conversation.ts";
 import { ContextOverflowError, type Provider } from "../../core/provider.ts";
 
+/** Narrow an unknown value to a small HTTP-error-like shape with status, code, and message. */
+export const isHttpErrorLike = (error: unknown): error is { status: number; code?: unknown; message: string } =>
+  typeof error === "object" && error !== null && "status" in error && "message" in error;
+
 /** How the APIs word "too long": OpenAI, OpenRouter, DeepSeek and vLLM, Responses, Anthropic, Gemini, Groq. */
 const TOO_LONG = /context length|context window|prompt is too long|exceeds the maximum (number of tokens|size)|reduce the length/i;
 
@@ -23,7 +27,11 @@ export const imageDataUrl = (image: ImageContent) => `data:${image.mediaType};ba
 
 /** A request rejected (400 or 413) for being too long for the model, as ContextOverflowError; other errors unchanged. */
 export function asContextOverflow(error: unknown): unknown {
-  const { status, code, message = "" } = error as { status?: number; code?: unknown; message?: string };
+  const isHttp = typeof error === "object" && error !== null && "status" in error;
+  if (!isHttp) return error;
+  const status = (error as { status: number }).status;
+  const code = (error as { code?: unknown }).code;
+  const message = "message" in error ? (error as { message: string }).message : "";
   if (status !== 400 && status !== 413) return error;
   return code === "context_length_exceeded" || saysTooLong(message) ? new ContextOverflowError(message, { cause: error }) : error;
 }

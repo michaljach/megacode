@@ -2,13 +2,16 @@ import type { ToolSpec } from "../../core/tools.ts";
 
 type PropertySchema = { type?: string; minimum?: number };
 
+/** Check whether a value is a non-null object (not array). */
+const isObject = (v: unknown) => v != null && typeof v === "object" && !Array.isArray(v);
+
 const TYPE_CHECKS: Record<string, (value: unknown) => boolean> = {
   string: (v) => typeof v === "string",
   boolean: (v) => typeof v === "boolean",
   number: (v) => typeof v === "number" && Number.isFinite(v),
   integer: (v) => Number.isSafeInteger(v),
   array: Array.isArray,
-  object: (v) => !!v && typeof v === "object" && !Array.isArray(v),
+  object: isObject,
 };
 
 /**

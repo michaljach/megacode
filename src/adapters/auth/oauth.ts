@@ -65,10 +65,20 @@ export async function callbackServer(opts: { port: number; path: string; state?:
   return { port, code, close };
 }
 
+/** Claims present in OpenAI's ChatGPT JWT payload. */
+export interface JwtClaims {
+  "https://api.openai.com/auth"?: { chatgpt_account_id?: string; chatgpt_plan_type?: string };
+  "https://api.openai.com/profile"?: { email?: string };
+  exp?: number;
+  email?: string;
+  /** Arbitrary claim not known ahead of time. */
+  [key: string]: unknown;
+}
+
 /** Decode a JWT payload without verifying it (we only read our own tokens' claims). */
-export function jwtClaims(token: string): Record<string, any> {
+export function jwtClaims(token: string): JwtClaims {
   try {
-    return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8"));
+    return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")) as JwtClaims;
   } catch {
     return {};
   }

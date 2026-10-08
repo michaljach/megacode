@@ -1,38 +1,42 @@
 import { parseArgs } from "node:util";
-import { WORKTREE_NAME } from "./adapters/git/worktree.ts";
 
 type CliOptions = {
   model?: string;
   ask: boolean;
   help: boolean;
-  /** -w was given; `name` is undefined for a random one. */
-  worktree?: { name?: string };
+  host?: string;
+  port?: number;
   prompt: string;
 };
 
-/**
- * Parses command-line arguments. -w takes an optional name (`megacode -w`, `megacode -w fix-auth "prompt"`),
- * which parseArgs can't express: the next argument is the name if it looks like one, otherwise it's left for the prompt.
- */
-export function parseCliArgs(argv: string[]): CliOptions {
-  const args = [...argv];
-  let worktree: CliOptions["worktree"];
-  const wi = args.findIndex((a) => a === "-w" || a === "--worktree" || a.startsWith("--worktree="));
-  if (wi !== -1) {
-    const [flag] = args.splice(wi, 1);
-    if (flag!.startsWith("--worktree=")) worktree = { name: flag!.slice("--worktree=".length) || undefined };
-    else if (args[wi] !== undefined && WORKTREE_NAME.test(args[wi]!)) worktree = { name: args.splice(wi, 1)[0] };
-    else worktree = {};
-  }
+/** `parseArgs` has no number type, so `-p` arrives as a string. Port 0 means "pick one". */
+function parsePort(raw?: string): number | undefined {
+  if (raw === undefined) return undefined;
+  const port = Number(raw);
+  if (!Number.isInteger(port) || port < 0 || port > 65535)
+    throw new Error(`-p expects a port between 0 and 65535 (0 picks one); ${raw} is not one.`);
+  return port;
+}
 
+/** Parses command-line arguments. */
+export function parseCliArgs(argv: string[]): CliOptions {
   const { values, positionals } = parseArgs({
-    args,
+    args: argv,
     allowPositionals: true,
     options: {
       model: { type: "string", short: "m" },
       ask: { type: "boolean", short: "a" },
+      host: { type: "string", short: "H" },
+      port: { type: "string", short: "p" },
       help: { type: "boolean", short: "h" },
     },
   });
-  return { model: values.model, ask: !!values.ask, help: !!values.help, worktree, prompt: positionals.join(" ") };
+  return {
+    model: values.model,
+    ask: !!values.ask,
+    help: !!values.help,
+    host: values.host,
+    port: parsePort(values.port),
+    prompt: positionals.join(" "),
+  };
 }

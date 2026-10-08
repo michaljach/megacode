@@ -14,6 +14,7 @@ megacode -m ollama:qwen3:8b
 megacode -m openrouter:anthropic/claude-sonnet-5
 megacode -w                      # work in a new git worktree
 megacode -w fix-auth "fix login" # named worktree, one-shot
+megacode -p 8080                 # serve the session to a remote front-end
 ```
 
 ## Automatic updates
@@ -75,6 +76,13 @@ Successful `edit_file` and `write_file` calls show persistent diffs in the conve
 | `shift+tab`                | cycle permission mode: ask → accept edits → bypass (default)  |
 | `ctrl+a` `ctrl+e` `ctrl+u` `ctrl+k` `ctrl+w` | readline-style editing                      |
 | `ctrl+c`                   | interrupt, clear input, or exit (press twice)                 |
+
+## Remote front-ends
+
+`-H <host>` and `-p <port>` serve the session to a remote front-end (an iOS app or any WebSocket client), so the same conversation can be watched and steered from another device. Defaults: `0.0.0.0`, and port `0` picks a free one. The process stays alive until **Ctrl+C** or a `SIGTERM`; a plain prompt can't run while the server is up.
+
+- `GET /` and `GET /health` return the session as JSON: model, auth status, permission mode, queued messages, finished transcript entries, the in-flight reply, and any pending approval or questionnaire.
+- A WebSocket at `ws://<host>:<port>` receives the full snapshot on connect and after every change. Commands are small JSON messages: `submit`, `interrupt`, `flushQueue` (interrupt and send the queue, optionally adding the input text first), `sendQueued` (send one queued message), `answerApproval` (`yes` / `always` / `no`), `answerQuestionnaire`, `setMode`, `setModel`, `clear`. Failed commands come back as an `error` event; if an interrupt hands queued messages back to the input, an `restoreInput` event repopulates it.
 
 ## Settings
 
@@ -239,17 +247,18 @@ src/
   lib/fs.ts           pathExists, the async existsSync
   lib/plural.ts       "1 line", "3 lines"
   lib/cycle.ts        wrap-around list index
+  server/
+    protocol.ts       wire types: session snapshot, client commands, server events
+    server.ts         RemoteServer: WebSocket + JSON endpoints over one AgentSession
   ui/                 Ink (React) TUI and plain output
     App.tsx           layout and wiring: session, dialogs, prompt, command context
     commands.ts       slash command registry (name, description, handler)
-    session.ts        AgentSession: turns, queue, interrupts, approvals, questionnaires (no React)
+    session.ts        AgentSession: turns, queue, interrupts, approvals, questionnaires and the transcript (no React)
     shortcuts.ts      app-level keyboard shortcuts as data (ctrl+c, esc, ctrl+s, shift+tab, …)
     plain.ts          one-shot / piped output
     hooks/
       useAgentSession.ts     React binding for AgentSession
-      useTranscript.ts       finished transcript items, notices, /clear
       useSettingsActions.ts  model, effort, settings and login/logout changes
-      useStreamedText.ts     streamed-text buffering
       usePromptSuggestion.ts next-prompt suggestions
       useWorktree.ts         entering and leaving worktrees
       useLoaded.ts           run a promise once on mount
