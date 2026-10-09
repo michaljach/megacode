@@ -80,9 +80,9 @@ export async function compactHistory(
       if (!summary) throw new Error("Couldn't compact the conversation: the model returned an empty summary. Run /clear to start over.");
       const compacted = [{ role: "user" as const, text: [SUMMARY_INTRO, summary, ...(continuing ? [CONTINUE] : [])].join("\n\n") }];
       // Recent messages: keep the last N exchanges verbatim so the provider's prompt cache
-      // can reuse them across turns (they stay identical). Budget 4000 chars for recent
-      // (about 2-3 full exchanges) so the cacheable prefix stays large.
-      const recentBudget = Math.min(4000, budget - compacted[0].text.length);
+      // can reuse them across turns (they stay identical). Budget 6000 chars for recent
+      // (about 3-4 full exchanges) so the cacheable prefix stays large.
+      const recentBudget = Math.min(6000, budget - compacted[0].text.length);
       const recent: Message[] = [];
       for (const m of messages.toReversed()) {
         const text = m.role === "tool" ? m.results.map((r) => r.output).join("\n") : m.text;
@@ -132,7 +132,7 @@ export async function softCompact(
     try {
       const res = await provider.turn({
         model,
-        system: "Summarize this conversation so a coding agent can continue without the original messages. Quote the latest user request verbatim. List key decisions, files read/changed, and the exact next step. Keep identifiers, paths, and error messages exact. Be concise.",
+        system: "Summarize so a coding agent can continue without original messages. Quote the latest user request verbatim. List key decisions, files changed, commands run, errors resolved. State current state and exact next steps. Keep identifiers, paths, commands, error messages exact. Be concise.",
         messages: [{ role: "user", text: compactionTranscript(olderMessages, budget) }],
         tools: [],
         signal,
