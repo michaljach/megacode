@@ -48,13 +48,16 @@ export class OpenAIProvider implements Provider {
   }
 
   #stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
+    // Embed tool definitions in the system message so OpenAI's prompt caching can include them.
+    const toolsText = req.tools.map((t) => `Tool: ${t.name}\n${t.description}\nSchema: ${JSON.stringify(t.parameters)}`).join("\n\n");
+    const systemWithTools = [req.system, toolsText].filter(Boolean).join("\n\n");
     return this.client.chat.completions.create(
       {
         model: req.model,
         ...(effort ? { reasoning_effort: effort } : {}),
         stream: true,
         stream_options: { include_usage: true },
-        messages: [{ role: "system", content: req.system }, ...toOpenAI(req.messages)],
+        messages: [{ role: "system", content: systemWithTools }, ...toOpenAI(req.messages)],
         tools: req.tools.map((tool) => ({ type: "function" as const, function: tool })),
       },
       { signal: req.signal },

@@ -63,9 +63,12 @@ export class ChatGPTProvider implements Provider {
   }
 
   async turn(req: TurnRequest): Promise<TurnResult> {
+    // Embed tool definitions in the instructions so OpenAI's prompt caching can include them.
+    const toolsText = req.tools.map((t) => `Tool: ${t.name}\n${t.description}\nSchema: ${JSON.stringify(t.parameters)}`).join("\n\n");
+    const instructions = [req.system, toolsText].filter(Boolean).join("\n\n");
     const params: OpenAI.Responses.ResponseCreateParamsStreaming = {
       model: req.model,
-      instructions: req.system,
+      instructions,
       input: toResponses(req.messages),
       tools: req.tools.map((t) => ({ type: "function", name: t.name, description: t.description, parameters: t.parameters, strict: false })),
       tool_choice: "auto",

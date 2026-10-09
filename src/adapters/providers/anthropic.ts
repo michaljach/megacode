@@ -36,14 +36,17 @@ export class AnthropicProvider implements Provider {
   async turn(req: TurnRequest): Promise<TurnResult> {
     const info = await this.#modelInfo(req.model);
     const effort = supportedEffort(explicitEffort(req.effort), info);
+    // Embed tool definitions in the cached system prompt so they're cached with the preamble.
+    // The model still needs the `tools` parameter for structured tool calling.
+    const toolsText = req.tools.map((t) => `Tool: ${t.name}\n${t.description}\nSchema: ${JSON.stringify(t.parameters)}`).join("\n\n");
+    const systemWithTools = [req.system, toolsText].filter(Boolean).join("\n\n");
     const stream = this.client.messages.stream(
       {
         model: req.model,
         ...(effort ? { output_config: { effort } } : {}),
         // Older models allow fewer output tokens; asking for more is a 400 on every turn.
         max_tokens: Math.min(info?.max_tokens ?? MAX_OUTPUT, MAX_OUTPUT),
-        system: req.system,
-        cache_control: { type: "ephemeral" },
+        system: [{ type: "text", text: systemWithTools, cache_control: { type: "ephemeral" } }],
         tools: req.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.parameters })),
         messages: toAnthropic(req.messages),
       },
