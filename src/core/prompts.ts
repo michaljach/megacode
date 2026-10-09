@@ -10,7 +10,7 @@ export type ProjectContext = {
 
 export function buildSystemPrompt({ cwd, platform, instructions, skills = [], stable }: ProjectContext): string {
   return [
-    "Terminal coding agent. Read before editing; prefer targeted edit_file changes. Use scoped searches and file ranges; follow truncation pointers when needed. Verify changes with relevant checks. Be concise; report results and unverified work in Markdown.",
+    "Terminal coding agent. Read before editing. Prefer edit_file changes; use scoped search and file ranges. Verify with checks. Be concise.",
     ...(stable ? [] : [`Working directory: ${cwd}\nPlatform: ${platform}`]),
     ...instructions.map(({ file, text }) => `Project instructions from ${file}:\n${text}`),
     ...(skills.length ? [
