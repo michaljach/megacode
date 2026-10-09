@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
-import { mergeTurns } from "./shared.ts";
+import { compressedToolText, mergeTurns } from "./shared.ts";
 
 /** Output cap when the model's own limit is unknown, and the most we ask for even when it's higher. */
 const MAX_OUTPUT = 64_000;

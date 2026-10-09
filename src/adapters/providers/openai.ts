@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
-import { fallbackCallId, imageDataUrl, parseToolArguments } from "./shared.ts";
+import { compressedToolText, fallbackCallId, imageDataUrl, parseToolArguments } from "./shared.ts";
 
 // Chat Completions adapter: works for OpenAI and any OpenAI-compatible endpoint
 // (OpenRouter, Ollama, Groq, DeepSeek, LM Studio, vLLM, ...).
@@ -49,7 +49,7 @@ export class OpenAIProvider implements Provider {
 
   #stream(req: TurnRequest, effort: ReturnType<typeof explicitEffort>) {
     // Embed tool definitions in the system message so OpenAI's prompt caching can include them.
-    const toolsText = req.tools.map((t) => `Tool: ${t.name}\n${t.description}\nSchema: ${JSON.stringify(t.parameters)}`).join("\n\n");
+    const toolsText = req.tools.map((t) => compressedToolText(t)).join("\n\n");
     const systemWithTools = [req.system, toolsText].filter(Boolean).join("\n\n");
     return this.client.chat.completions.create(
       {

@@ -11,7 +11,7 @@ import {
   type TurnResult,
 } from "../../core/provider.ts";
 import { CHATGPT_BASE_URL, chatGPTFetchHeaders, chatGPTHeaders, chatGPTTokens } from "../auth/chatgpt.ts";
-import { imageDataUrl, parseToolArguments, saysTooLong } from "./shared.ts";
+import { compressedToolText, imageDataUrl, parseToolArguments, saysTooLong } from "./shared.ts";
 
 const FALLBACK_MODELS = ["gpt-5", "gpt-5-codex"];
 
@@ -64,7 +64,7 @@ export class ChatGPTProvider implements Provider {
 
   async turn(req: TurnRequest): Promise<TurnResult> {
     // Embed tool definitions in the instructions so OpenAI's prompt caching can include them.
-    const toolsText = req.tools.map((t) => `Tool: ${t.name}\n${t.description}\nSchema: ${JSON.stringify(t.parameters)}`).join("\n\n");
+    const toolsText = req.tools.map((t) => compressedToolText(t)).join("\n\n");
     const instructions = [req.system, toolsText].filter(Boolean).join("\n\n");
     const params: OpenAI.Responses.ResponseCreateParamsStreaming = {
       model: req.model,

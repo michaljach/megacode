@@ -1,7 +1,7 @@
 import { GoogleGenAI, FinishReason, ThinkingLevel, type Content, type Part } from "@google/genai";
 import type { Message, ToolCall } from "../../core/conversation.ts";
 import { explicitEffort, type Effort, type Provider, type StopReason, type TurnRequest, type TurnResult } from "../../core/provider.ts";
-import { fallbackCallId, mergeTurns } from "./shared.ts";
+import { compressedToolText, fallbackCallId, mergeTurns } from "./shared.ts";
 
 export class GeminiProvider implements Provider {
   filter: (id: string) => boolean;
@@ -38,7 +38,7 @@ export class GeminiProvider implements Provider {
   async turn(req: TurnRequest): Promise<TurnResult> {
     const thinkingConfig = thinkingFor(req.model, explicitEffort(req.effort));
     // Embed tool definitions in the system instruction so Gemini's automatic prompt caching can include them.
-    const toolsText = req.tools.map((t) => `Tool: ${t.name}\n${t.description}\nSchema: ${JSON.stringify(t.parameters)}`).join("\n\n");
+    const toolsText = req.tools.map((t) => compressedToolText(t)).join("\n\n");
     const systemWithTools = [req.system, toolsText].filter(Boolean).join("\n\n");
     const stream = await this.client.models.generateContentStream({
       model: req.model,
