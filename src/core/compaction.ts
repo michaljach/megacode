@@ -3,8 +3,10 @@ import { elideMiddle } from "./elide.ts";
 import { COMPACT_SYSTEM } from "./prompts.ts";
 import { ContextOverflowError, type Provider, type Usage } from "./provider.ts";
 
-/** Compact once the last request used this share of the model's context window. */
-export const COMPACT_AT = 0.8;
+/** Compact once the last request used this share of the model's context window.
+ * Lower threshold keeps the conversation smaller so the cacheable prefix
+ * (system prompt + tools + recent messages) dominates more turns. */
+export const COMPACT_AT = 0.6;
 
 /** Transcript characters per token of context window: about half the window at a conservative 4 characters per token. */
 const CHARS_PER_WINDOW_TOKEN = 2;
@@ -78,9 +80,9 @@ export async function compactHistory(
       if (!summary) throw new Error("Couldn't compact the conversation: the model returned an empty summary. Run /clear to start over.");
       const compacted = [{ role: "user" as const, text: [SUMMARY_INTRO, summary, ...(continuing ? [CONTINUE] : [])].join("\n\n") }];
       // Recent messages: keep the last N exchanges verbatim so the provider's prompt cache
-      // can reuse them across turns (they stay identical). Budget 1500 chars for recent;
-      // the rest goes into the summary.
-      const recentBudget = Math.min(1500, budget - compacted[0].text.length);
+      // can reuse them across turns (they stay identical). Budget 4000 chars for recent
+      // (about 2-3 full exchanges) so the cacheable prefix stays large.
+      const recentBudget = Math.min(4000, budget - compacted[0].text.length);
       const recent: Message[] = [];
       for (const m of messages.toReversed()) {
         const text = m.role === "tool" ? m.results.map((r) => r.output).join("\n") : m.text;
