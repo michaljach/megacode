@@ -39,6 +39,34 @@ export const withOverflowErrors = (provider: Provider): Provider => ({
   contextWindow: async (model) => (await provider.contextWindow?.(model).catch(() => null)) ?? null,
 });
 
+/** Compressed tool description for embedding in the system prompt. Saves ~80% vs full JSON schema while keeping
+ * name, description, arg names, types and defaults. The full schema is still sent via the tools parameter. */
+export function compressedToolText(tool: { name: string; description: string; parameters: Record<string, unknown> }): string {
+  const p = tool.parameters;
+  const props = p.properties ?? {};
+  const required = Array.isArray(p.required) ? (p.required as string[]) : [];
+  const lines: string[] = [`Tool: ${tool.name} ${tool.description}`];
+
+  if (typeof p === "object" && props && Object.keys(props).length > 0) {
+    for (const [k, v] of Object.entries(props)) {
+      const prop = v as Record<string, unknown>;
+      const req = required.includes(k) ? "!" : "";
+      const type = typeof prop.type === "string" ? prop.type : "object";
+      const def = prop.default;
+      const min = prop.minimum;
+      const max = prop.maximum;
+      const parts: string[] = [k + req];
+      if (type !== "object") parts.push(type);
+      if (min !== undefined) parts.push("min:" + min);
+      if (max !== undefined) parts.push("max:" + max);
+      if (def !== undefined) parts.push("d:" + def);
+      lines.push(" " + parts.join(":"));
+    }
+  }
+
+  return lines.join("\n");
+}
+
 /**
  * [role, blocks] turns with consecutive same-role turns merged (e.g. an interrupted tool result followed by new user
  * text) and empty ones dropped (e.g. an empty reply). Anthropic and Gemini reject both.

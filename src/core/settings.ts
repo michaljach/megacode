@@ -27,6 +27,8 @@ export type Settings = {
   showContext: boolean;
   /** What new worktrees branch from: the remote's default branch, or the current commit. */
   worktreeBase: "fresh" | "head";
+  /** Omit working directory and platform from the system prompt for cacheable prompts. */
+  stablePrompt: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,4 +42,5 @@ export const DEFAULT_SETTINGS: Settings = {
   showSpeed: false,
   showContext: true,
   worktreeBase: "fresh",
+  stablePrompt: false,
 };

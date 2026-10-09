@@ -107,7 +107,7 @@ test('rejected credentials end the run with an error', async (t) => {
 });
 
 /** The summarizer's request, which carries the compaction prompt as its system message. */
-const isCompaction = (body) => body.messages[0].content.startsWith('You summarize a coding-agent conversation');
+const isCompaction = (body) => body.messages[0].content.startsWith('Summarize a coding-agent conversation');
 
 test('a conversation too long for the model is compacted and the turn continues', async (t) => {
   const size = (body) => JSON.stringify(body.messages).length;
