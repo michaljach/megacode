@@ -57,6 +57,12 @@ export const ENTRIES: Entry[] = [
     ],
   },
   {
+    key: "stablePrompt",
+    label: "Stable system prompt",
+    description: "Omit working directory and platform from the system prompt for better prompt cache hit rates (the model infers cwd from context)",
+    choices: onOff,
+  },
+  {
     key: "promptAutocomplete",
     label: "Prompt autocomplete",
     description: "Suggest a next prompt from the current conversation; tab accepts without sending. Uses an extra model request after each turn",

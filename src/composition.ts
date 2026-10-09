@@ -14,7 +14,7 @@ export function createAgent(model: string, overrides: { effort?: Effort } = {}):
   return new Agent(model, {
     resolveModel,
     tools: combineToolSources(builtinTools, mcp),
-    systemPrompt: async () => buildSystemPrompt(await readProjectContext({ includeInstructions: loadSettings().projectInstructions })),
+    systemPrompt: async () => buildSystemPrompt({ ...(await readProjectContext({ includeInstructions: loadSettings().projectInstructions })), stable: loadSettings().stablePrompt }),
     settings: () => ({ ...loadSettings(), ...(overrides.effort ? { effort: overrides.effort } : {}) }),
   });
 }
