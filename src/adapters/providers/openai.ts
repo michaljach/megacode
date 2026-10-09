@@ -82,7 +82,16 @@ export class OpenAIProvider implements Provider {
     const calls: { id: string; name: string; args: string }[] = [];
 
     for await (const chunk of stream) {
-      if (chunk.usage) usage = { input: chunk.usage.prompt_tokens, output: chunk.usage.completion_tokens };
+      if (chunk.usage) {
+        const u = chunk.usage as unknown as Record<string, unknown>;
+        const cacheHit = typeof u.prompt_cache_hit_tokens === "number" ? u.prompt_cache_hit_tokens : 0;
+        const cacheMiss = typeof u.prompt_cache_miss_tokens === "number" ? u.prompt_cache_miss_tokens : 0;
+        usage = {
+          input: chunk.usage.prompt_tokens,
+          output: chunk.usage.completion_tokens,
+          inputBreakdown: { uncached: cacheMiss, cacheRead: cacheHit, cacheCreation: 0 },
+        };
+      }
       const choice = chunk.choices[0];
       if (!choice) continue;
       if (choice.delta.content) {

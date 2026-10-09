@@ -27,7 +27,20 @@ export async function startFakeOpenAI(respond, { contextLength } = {}) {
       const chunks = step.toolCalls
         ? [chunk({ tool_calls: step.toolCalls.map((c, index) => ({ index, id: `call_${requests.length}_${index}`, type: "function", function: { name: c.name, arguments: JSON.stringify(c.args) } })) }, "tool_calls")]
         : [chunk({ content: step.text }, "stop")];
-      if (step.usage) chunks.push({ ...chunk({}), choices: [], usage: { ...step.usage, total_tokens: step.usage.prompt_tokens + step.usage.completion_tokens } });
+      if (step.usage) {
+        const cacheHit = typeof step.usage.prompt_cache_hit_tokens === "number" ? step.usage.prompt_cache_hit_tokens : 0;
+        const cacheMiss = typeof step.usage.prompt_cache_miss_tokens === "number" ? step.usage.prompt_cache_miss_tokens : 0;
+        chunks.push({
+          ...chunk({}),
+          choices: [],
+          usage: {
+            ...step.usage,
+            total_tokens: step.usage.prompt_tokens + step.usage.completion_tokens,
+            prompt_cache_hit_tokens: cacheHit,
+            prompt_cache_miss_tokens: cacheMiss,
+          },
+        });
+      }
       res.writeHead(200, { "content-type": "text/event-stream" });
       for (const c of chunks) res.write(`data: ${JSON.stringify(c)}\n\n`);
       res.end("data: [DONE]\n\n");
