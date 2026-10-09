@@ -97,3 +97,63 @@ export async function compactHistory(
     }
   }
 }
+
+/**
+ * Replace the oldest half of the conversation with a brief summary, keeping the latest
+ * messages verbatim. This is a "soft compact" that runs more frequently than full
+ * compaction to keep the conversation small and cacheable.
+ *
+ * The result is a two-part history: a summary of the older messages, followed by the
+ * latest messages kept verbatim (which stay identical from turn to turn so the provider
+ * caches them).
+ */
+export async function softCompact(
+  provider: Provider,
+  { model, messages, signal }: {
+    model: string;
+    messages: Message[];
+    signal: AbortSignal;
+  },
+): Promise<{ messages: Message[]; usage: Usage }> {
+  const usage: Usage = { input: 0, output: 0 };
+
+  // Keep the last 4 messages verbatim (about 2 exchanges) so the provider caches them.
+  // The rest goes into the summary.
+  const keepCount = 4;
+  const olderMessages = messages.slice(0, -keepCount);
+  const recentMessages = messages.slice(-keepCount);
+
+  if (olderMessages.length === 0) {
+    return { messages: [...messages], usage };
+  }
+
+  let budget = 8000;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await provider.turn({
+        model,
+        system: "Summarize this conversation so a coding agent can continue without the original messages. Quote the latest user request verbatim. List key decisions, files read/changed, and the exact next step. Keep identifiers, paths, and error messages exact. Be concise.",
+        messages: [{ role: "user", text: compactionTranscript(olderMessages, budget) }],
+        tools: [],
+        signal,
+        onText: () => {},
+      });
+      usage.input += res.usage?.input ?? 0;
+      usage.output += res.usage?.output ?? 0;
+      const summary = res.message.text.trim();
+      if (!summary) break;
+
+      const summaryMsg: Message = {
+        role: "user",
+        text: [SUMMARY_INTRO, summary].join("\n\n"),
+      };
+      return { messages: [summaryMsg, ...recentMessages], usage };
+    } catch (e) {
+      if (!(e instanceof ContextOverflowError) || attempt === ATTEMPTS) break;
+      budget = Math.floor(budget / 2);
+    }
+  }
+
+  // Fallback if summarization fails: keep only recent messages.
+  return { messages: [...recentMessages], usage };
+}

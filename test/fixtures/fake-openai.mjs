@@ -19,23 +19,25 @@ export async function startFakeOpenAI(respond, { contextLength } = {}) {
       const body = JSON.parse(raw);
       requests.push(body);
       const step = respond(body, requests.length - 1);
-      if (step.status) {
-        res.writeHead(step.status, { "content-type": "application/json" });
-        return res.end(JSON.stringify({ error: step.error }));
+      // Default to a plain reply if the respond function didn't return anything
+      const reply = step ?? { text: 'ok' };
+      if (reply.status) {
+        res.writeHead(reply.status, { "content-type": "application/json" });
+        return res.end(JSON.stringify({ error: reply.error }));
       }
       const chunk = (delta, finish_reason = null) => ({ id: "x", object: "chat.completion.chunk", created: 0, model: "fake", choices: [{ index: 0, delta, finish_reason }] });
-      const chunks = step.toolCalls
-        ? [chunk({ tool_calls: step.toolCalls.map((c, index) => ({ index, id: `call_${requests.length}_${index}`, type: "function", function: { name: c.name, arguments: JSON.stringify(c.args) } })) }, "tool_calls")]
-        : [chunk({ content: step.text }, "stop")];
-      if (step.usage) {
-        const cacheHit = typeof step.usage.prompt_cache_hit_tokens === "number" ? step.usage.prompt_cache_hit_tokens : 0;
-        const cacheMiss = typeof step.usage.prompt_cache_miss_tokens === "number" ? step.usage.prompt_cache_miss_tokens : 0;
+      const chunks = reply.toolCalls
+        ? [chunk({ tool_calls: reply.toolCalls.map((c, index) => ({ index, id: `call_${requests.length}_${index}`, type: "function", function: { name: c.name, arguments: JSON.stringify(c.args) } })) }, "tool_calls")]
+        : [chunk({ content: reply.text }, "stop")];
+      if (reply.usage) {
+        const cacheHit = typeof reply.usage.prompt_cache_hit_tokens === "number" ? reply.usage.prompt_cache_hit_tokens : 0;
+        const cacheMiss = typeof reply.usage.prompt_cache_miss_tokens === "number" ? reply.usage.prompt_cache_miss_tokens : 0;
         chunks.push({
           ...chunk({}),
           choices: [],
           usage: {
-            ...step.usage,
-            total_tokens: step.usage.prompt_tokens + step.usage.completion_tokens,
+            ...reply.usage,
+            total_tokens: reply.usage.prompt_tokens + reply.usage.completion_tokens,
             prompt_cache_hit_tokens: cacheHit,
             prompt_cache_miss_tokens: cacheMiss,
           },

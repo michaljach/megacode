@@ -1,4 +1,4 @@
-import { COMPACT_AT, compactHistory } from "./compaction.ts";
+import { COMPACT_AT, compactHistory, softCompact } from "./compaction.ts";
 import { closeOpenToolCalls, dropImages, type Message, type ToolCall, type ToolMessage, type ToolResult } from "./conversation.ts";
 import { ContextOverflowError, isHttpErrorLike, type ModelResolver, type Provider, type TurnRequest, type TurnResult, type Usage } from "./provider.ts";
 import type { Settings } from "./settings.ts";
@@ -122,6 +122,20 @@ export class Agent {
     try {
       for (let step = 0; step < maxSteps; step++) {
         if (step > 0 && this.#nearLimit(ctx)) await this.#compact(ctx, true);
+        // Soft compact every 3 steps to keep the conversation small and cacheable.
+        // Replaces old messages with a brief summary, keeping recent ones verbatim.
+        // This boosts cache hit rate because the cacheable prefix (system + tools +
+        // recent messages) stays stable while the conversation size stays bounded.
+        // Only runs when there are enough messages to justify it (> 10 = 5 exchanges).
+        if (step > 0 && step % 3 === 0 && this.messages.length > 10) {
+          try {
+            const { messages: recent, usage } = await softCompact(ctx.provider, { model, messages: this.messages, signal });
+            this.#addUsage(usage);
+            this.messages = recent;
+          } catch {
+            // Soft compact is best-effort; ignore failures.
+          }
+        }
         const started = performance.now();
         let firstTextMs: number | null = null;
         let res: TurnResult | undefined;
