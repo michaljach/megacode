@@ -89,7 +89,8 @@ async function runInteractive({ agent, mode, worktree, home, sessionId }: Run) {
       onExitMessage={(m) => (exitMessage = m)}
     />,
     // The kitty keyboard protocol (where the terminal supports it) tells ctrl+1…9 apart from plain digits.
-    { exitOnCtrlC: false, kittyKeyboard: { mode: "auto" } },
+  // Disabled: late protocol-query replies leak through as visible text.
+    { exitOnCtrlC: false, kittyKeyboard: { mode: "disabled" } },
   );
   await app.waitUntilExit();
   await mcp.closeAll();
