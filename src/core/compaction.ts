@@ -45,8 +45,10 @@ export function compactionTranscript(messages: Message[], budget: number): strin
 }
 
 /**
- * A one-message history: the model's summary of `messages`. When even the transcript is too long for the model, tries
- * again with half as much. `continuing`: a turn is in progress, so the summary ends by telling the model to carry on.
+ * Compact the conversation to fit the model's context window. Returns a two-part history:
+ * a summary of the older conversation, followed by recent messages kept verbatim.
+ * Keeping recent messages verbatim lets the provider's prompt cache reuse them across turns,
+ * because they stay identical from one turn to the next.
  */
 export async function compactHistory(
   provider: Provider,
@@ -74,7 +76,19 @@ export async function compactHistory(
       usage.output += res.usage?.output ?? 0;
       const summary = res.message.text.trim();
       if (!summary) throw new Error("Couldn't compact the conversation: the model returned an empty summary. Run /clear to start over.");
-      return { messages: [{ role: "user", text: [SUMMARY_INTRO, summary, ...(continuing ? [CONTINUE] : [])].join("\n\n") }], usage };
+      const compacted = [{ role: "user" as const, text: [SUMMARY_INTRO, summary, ...(continuing ? [CONTINUE] : [])].join("\n\n") }];
+      // Recent messages: keep the last N exchanges verbatim so the provider's prompt cache
+      // can reuse them across turns (they stay identical). Budget 1500 chars for recent;
+      // the rest goes into the summary.
+      const recentBudget = Math.min(1500, budget - compacted[0].text.length);
+      const recent: Message[] = [];
+      for (const m of messages.toReversed()) {
+        const text = m.role === "tool" ? m.results.map((r) => r.output).join("\n") : m.text;
+        if (recent.some((r) => r === m)) continue; // skip duplicates
+        if (recentBudget && text.length > recentBudget) break;
+        recent.unshift(m);
+      }
+      return { messages: [...compacted, ...recent], usage };
     } catch (e) {
       if (!(e instanceof ContextOverflowError) || attempt === ATTEMPTS) throw e;
       budget = Math.floor(budget / 2);
