@@ -47,6 +47,8 @@ export class AnthropicProvider implements Provider {
         // Older models allow fewer output tokens; asking for more is a 400 on every turn.
         max_tokens: Math.min(info?.max_tokens ?? MAX_OUTPUT, MAX_OUTPUT),
         system: [{ type: "text", text: systemWithTools, cache_control: { type: "ephemeral" } }],
+        // prompt_params.cache_control caches the preamble (system + tools) as a reusable unit.
+        prompt_params: { cache_control: [{ type: "ephemeral", content: "system" }] },
         tools: req.tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.parameters })),
         messages: toAnthropic(req.messages),
       },
